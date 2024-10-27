@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 
@@ -12,6 +12,9 @@ const client = new Client({
     GatewayIntentBits.GuildMembers
   ]
 });
+
+const pointsEmoji = '<a:GearPoint:1300144849688723486>'; // Use your emoji ID here
+const betyEmoji = '<:Bety:1300151295180537978>';
 
 const filePath = 'usersPoints.json';
 let usersPoints: { [key: string]: { points: number, name: string } } = {};
@@ -247,12 +250,14 @@ client.on('messageCreate', async message => {
 
   const betAmount = parseInt(message.content);
   if (isNaN(betAmount) || betAmount <= 0) {
-    await message.reply('Invalid bet amount. Please try again.');
+    const reply = await message.reply('Invalid bet amount. Please try again.');
+    setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
     return;
   }
 
   if (usersPoints[userId].points < betAmount) {
-    await message.reply(':GearPunk: not enough. Try a lower amount.');
+    const reply = await message.reply(`${pointsEmoji} not enough. Try a lower amount.`);
+    setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
     return;
   }
 
@@ -260,10 +265,10 @@ client.on('messageCreate', async message => {
   currentBets[userId].amount = betAmount;
   savePoints();
 
-  const playerName = currentBet.betOn === 'player1' ? 'Player 1' : 'Player 2';
-
-  await message.reply(`You bet ${betAmount} :GearPunk: on ${playerName}.`);
+  // Ajouter une réaction au message de l'utilisateur
+  await message.react('👍'); // Remplace '👍' par l'emoji que tu préfères
 });
+
 
 const handleRegister = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
@@ -277,7 +282,7 @@ const handleRegister = async (interaction: CommandInteraction) => {
 
   usersPoints[userId] = { points: 100, name: userName };
   savePoints();
-  await interaction.reply({content:'Registration successful! You have received 100 :GearPunk:.', ephemeral:true});
+  await interaction.reply({content:'Registration successful! You have received 100 ${pointsEmoji}.', ephemeral:true});
 };
 
 const handlePlaceYourBets = async (interaction: CommandInteraction) => {
@@ -287,8 +292,8 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
   const player1Option = interaction.options.get('player1name');
   const player2Option = interaction.options.get('player2name');
 
-  const player1Name = player1Option ? player1Option.value as string : 'Joueur 1';
-  const player2Name = player2Option ? player2Option.value as string : 'Joueur 2';
+  const player1Name = player1Option ? player1Option.value as string : 'Player 1';
+  const player2Name = player2Option ? player2Option.value as string : 'Player 2';
 
   const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -304,9 +309,19 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
 
   await interaction.reply({ content: `The bets are on! You have 60 seconds to choose between ${player1Name} and ${player2Name}.`, components: [row] });
 
+  const channel = interaction.channel as TextChannel;
+  if (channel) {
+    channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+  }
+
   setTimeout(async () => {
     bettingOpen = false;
-    await interaction.followUp('Bets are closed !');
+    await interaction.followUp('Bets are closed!');
+
+    if (channel) {
+      channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+      channel.send('Thanks for the money');
+    }
   }, 60000);
 };
 
@@ -324,7 +339,7 @@ const handlePoints = async (interaction: CommandInteraction) => {
   }
 
   const userInfo = usersPoints[userId];
-  await interaction.reply({ content: `You have ${userInfo.points} :GearPunk:, ${userInfo.name}.`, ephemeral: true });
+  await interaction.reply({ content: `You have ${userInfo.points} ${pointsEmoji}, ${userInfo.name}.`, ephemeral: true });
 };
 
 const handleClearBets = async (interaction: CommandInteraction) => {
@@ -346,7 +361,7 @@ const handleLeaderboard = async (interaction: CommandInteraction) => {
   const top10 = sortedUsers.slice(0, 10);
   const leaderboard = top10.map(([userId, userInfo], index) => {
     const user = client.users.cache.get(userId);
-    return `${index + 1}. ${user?.tag || userInfo.name} - ${userInfo.points} :GearPunk: Points`;
+    return `${index + 1}. ${user?.tag || userInfo.name} - ${userInfo.points} ${pointsEmoji} Points`;
   }).join('\n');
 
   await interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
@@ -360,20 +375,22 @@ const handleBetsList = async (interaction: CommandInteraction) => {
     .filter(([, bet]) => bet.betOn === 'player1')
     .map(([userId, bet]) => {
       totalPlayer1Bets += bet.amount;
-      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} points`;
+      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
     });
 
   const player2Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player2')
     .map(([userId, bet]) => {
       totalPlayer2Bets += bet.amount;
-      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} points`;
+      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
     });
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;
+  const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
 
-  await interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} points\n**Total points bet on Player 2:** ${totalPlayer2Bets} points\n**Total points bet overall:** ${totalBets} points`);
+  await interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} ${pointsEmoji}\n**Total points bet on Player 2:** ${totalPlayer2Bets} ${pointsEmoji}\n**Total points bet overall:** ${totalBets} ${pointsEmoji}\n\n**Betting Ratio (Player 1 / Player 2):** ${ratio}`);
 };
+
 
 const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player1' | 'player2') => {
   let totalBetAmount = 0;
@@ -403,7 +420,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   currentBets = {};
   bettingOpen = false;
 
-  await interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! :GearPunk: Points have been redistributed.`);
+  await interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! ${pointsEmoji} Points have been redistributed.`);
 };
 
 const handleDeleteUser = async (interaction: CommandInteraction) => {
@@ -434,7 +451,7 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
   usersPoints[userId].points += pointsToAdd;
   savePoints();
 
-  await interaction.reply({ content: `${pointsToAdd} :GearPunk: Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
+  await interaction.reply({ content: `${pointsToAdd} ${pointsEmoji} Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);

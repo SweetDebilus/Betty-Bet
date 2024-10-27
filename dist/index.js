@@ -47,6 +47,8 @@ const client = new discord_js_1.Client({
         discord_js_1.GatewayIntentBits.GuildMembers
     ]
 });
+const pointsEmoji = '<a:GearPoint:1300144849688723486>'; // Use your emoji ID here
+const betyEmoji = '<:Bety:1300151295180537978>';
 const filePath = 'usersPoints.json';
 let usersPoints = {};
 let currentBets = {};
@@ -268,18 +270,20 @@ client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, functi
         return;
     const betAmount = parseInt(message.content);
     if (isNaN(betAmount) || betAmount <= 0) {
-        yield message.reply('Invalid bet amount. Please try again.');
+        const reply = yield message.reply('Invalid bet amount. Please try again.');
+        setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
         return;
     }
     if (usersPoints[userId].points < betAmount) {
-        yield message.reply(':GearPunk: not enough. Try a lower amount.');
+        const reply = yield message.reply(`${pointsEmoji} not enough. Try a lower amount.`);
+        setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
         return;
     }
     usersPoints[userId].points -= betAmount; // Assurez-vous d'accéder à la propriété 'points'
     currentBets[userId].amount = betAmount;
     savePoints();
-    const playerName = currentBet.betOn === 'player1' ? 'Player 1' : 'Player 2';
-    yield message.reply(`You bet ${betAmount} :GearPunk: on ${playerName}.`);
+    // Ajouter une réaction au message de l'utilisateur
+    yield message.react('👍'); // Remplace '👍' par l'emoji que tu préfères
 }));
 const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -291,15 +295,15 @@ const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, functi
     }
     usersPoints[userId] = { points: 100, name: userName };
     savePoints();
-    yield interaction.reply({ content: 'Registration successful! You have received 100 :GearPunk:.', ephemeral: true });
+    yield interaction.reply({ content: 'Registration successful! You have received 100 ${pointsEmoji}.', ephemeral: true });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     bettingOpen = true;
     currentBets = {};
     const player1Option = interaction.options.get('player1name');
     const player2Option = interaction.options.get('player2name');
-    const player1Name = player1Option ? player1Option.value : 'Joueur 1';
-    const player2Name = player2Option ? player2Option.value : 'Joueur 2';
+    const player1Name = player1Option ? player1Option.value : 'Player 1';
+    const player2Name = player2Option ? player2Option.value : 'Player 2';
     const row = new discord_js_1.ActionRowBuilder()
         .addComponents(new discord_js_1.ButtonBuilder()
         .setCustomId('player1')
@@ -309,9 +313,17 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
         .setLabel(player2Name)
         .setStyle(discord_js_1.ButtonStyle.Primary));
     yield interaction.reply({ content: `The bets are on! You have 60 seconds to choose between ${player1Name} and ${player2Name}.`, components: [row] });
+    const channel = interaction.channel;
+    if (channel) {
+        channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+    }
     setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
         bettingOpen = false;
-        yield interaction.followUp('Bets are closed !');
+        yield interaction.followUp('Bets are closed!');
+        if (channel) {
+            channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+            channel.send('Thanks for the money');
+        }
     }), 60000);
 });
 const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -325,7 +337,7 @@ const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function
         return;
     }
     const userInfo = usersPoints[userId];
-    yield interaction.reply({ content: `You have ${userInfo.points} :GearPunk:, ${userInfo.name}.`, ephemeral: true });
+    yield interaction.reply({ content: `You have ${userInfo.points} ${pointsEmoji}, ${userInfo.name}.`, ephemeral: true });
 });
 const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     for (const [userId, bet] of Object.entries(currentBets)) {
@@ -343,7 +355,7 @@ const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, fun
     const top10 = sortedUsers.slice(0, 10);
     const leaderboard = top10.map(([userId, userInfo], index) => {
         const user = client.users.cache.get(userId);
-        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.tag) || userInfo.name} - ${userInfo.points} :GearPunk: Points`;
+        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.tag) || userInfo.name} - ${userInfo.points} ${pointsEmoji} Points`;
     }).join('\n');
     yield interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
 });
@@ -355,17 +367,18 @@ const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, functi
         .map(([userId, bet]) => {
         var _a;
         totalPlayer1Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} points`;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
     });
     const player2Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player2')
         .map(([userId, bet]) => {
         var _a;
         totalPlayer2Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} points`;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
     });
     const totalBets = totalPlayer1Bets + totalPlayer2Bets;
-    yield interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} points\n**Total points bet on Player 2:** ${totalPlayer2Bets} points\n**Total points bet overall:** ${totalBets} points`);
+    const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
+    yield interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} ${pointsEmoji}\n**Total points bet on Player 2:** ${totalPlayer2Bets} ${pointsEmoji}\n**Total points bet overall:** ${totalBets} ${pointsEmoji}\n\n**Betting Ratio (Player 1 / Player 2):** ${ratio}`);
 });
 const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void 0, function* () {
     let totalBetAmount = 0;
@@ -389,7 +402,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
     savePoints();
     currentBets = {};
     bettingOpen = false;
-    yield interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! :GearPunk: Points have been redistributed.`);
+    yield interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! ${pointsEmoji} Points have been redistributed.`);
 });
 const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -415,6 +428,6 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
     }
     usersPoints[userId].points += pointsToAdd;
     savePoints();
-    yield interaction.reply({ content: `${pointsToAdd} :GearPunk: Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
+    yield interaction.reply({ content: `${pointsToAdd} ${pointsEmoji} Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
