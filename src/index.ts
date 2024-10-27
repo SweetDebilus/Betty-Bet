@@ -79,34 +79,34 @@ client.once('ready', async () => {
     },
     {
       name: 'betslist',
-      description: 'Voir la liste des joueurs ayant parié sur le joueur 1 et le joueur 2'
+      description: 'See the list of players who bet on player 1 and player 2'
     },
     {
       name: 'deleteuser',
-      description: 'Supprimer un utilisateur enregistré',
+      description: 'Delete a registered user',
       options: [
         {
           name: 'userid',
           type: ApplicationCommandOptionType.String,
-          description: 'ID de l\'utilisateur à supprimer',
+          description: 'ID of the user to delete',
           required: true
         }
       ]
     },
     {
       name: 'addpoints',
-      description: 'Ajouter des points à un utilisateur',
+      description: 'Add points to a user',
       options: [
         {
           name: 'user',
           type: ApplicationCommandOptionType.User,
-          description: 'Utilisateur à qui ajouter des points',
+          description: 'User to add points to',
           required: true
         },
         {
           name: 'points',
           type: ApplicationCommandOptionType.Integer,
-          description: 'Nombre de points à ajouter',
+          description: 'Number of points to add',
           required: true
         }
       ]
@@ -136,7 +136,7 @@ client.on('interactionCreate', async interaction => {
     const member = interaction.member as GuildMember;
 
     if (!member) {
-      await interaction.reply('Une erreur est survenue. Impossible de vérifier les rôles de l’utilisateur.');
+      await interaction.reply('An error has occurred. Unable to verify user roles.');
       return;
     }
 
@@ -153,13 +153,13 @@ client.on('interactionCreate', async interaction => {
       return now - joinedTimestamp >= sevenDaysInMillis;
     };
 
-    if (!hasRole('Deamon Punk')) {
-      await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+    if (!hasRole('Dæmon Punk')) {
+      await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
       return;
     }
 
     if (!joinedMoreThan7DaysAgo()) {
-      await interaction.reply({ content: 'Vous devez être membre du serveur depuis au moins 7 jours pour utiliser cette commande.', ephemeral: true });
+      await interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
       return;
     }
 
@@ -171,7 +171,7 @@ client.on('interactionCreate', async interaction => {
         if (hasRole('BetManager')) {
           await handlePlaceYourBets(interaction);
         } else {
-          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;
       case 'points':
@@ -181,7 +181,7 @@ client.on('interactionCreate', async interaction => {
         if (hasRole('BetManager')) {
           await handleClearBets(interaction);
         } else {
-          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;
       case 'leaderboard':
@@ -195,46 +195,46 @@ client.on('interactionCreate', async interaction => {
           if (winner === 1 || winner === 2) {
             await handleWin(interaction, winner === 1 ? 'player1' : 'player2');
             } else {
-            await interaction.reply('Le gagnant doit être 1 ou 2.');
+            await interaction.reply('The winner must be 1 or 2.');
           }
         } else {
-          await interaction.reply({content:'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral:true});
+          await interaction.reply({content:'You do not have permission to use this command.', ephemeral:true});
         }
         break;
       case 'betslist':
         if (hasRole('BetManager')) {
           await handleBetsList(interaction);
         } else {
-          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;
       case 'deleteuser':
         if (hasRole('BetManager')) {
           await handleDeleteUser(interaction);
         } else {
-          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;
       case 'addpoints':
         if (hasRole('BetManager')) {
           await handleAddPoints(interaction);
         } else {
-          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;                
       default:
-        await interaction.reply({ content: 'Commande inconnue.', ephemeral: true });
+        await interaction.reply({ content: 'Unknown command.', ephemeral: true });
         break;
     }
   } else if (interaction.isButton()) {
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-      await interaction.reply({ content: 'Inscrivez-vous d\'abord en utilisant /register.', ephemeral: true });
+      await interaction.reply({ content: 'First register using /register.', ephemeral: true });
       return;
     }
 
     currentBets[userId] = { amount: 0, betOn: interaction.customId as 'player1' | 'player2' };
-    await interaction.reply({ content: `Vous avez choisi ${interaction.customId}. Entrez le montant que vous souhaitez parier :`, ephemeral: true });
+    await interaction.reply({ content: `You have chosen ${interaction.customId}. Enter the amount you wish to bet:`, ephemeral: true });
   }
 });
 
@@ -247,12 +247,12 @@ client.on('messageCreate', async message => {
 
   const betAmount = parseInt(message.content);
   if (isNaN(betAmount) || betAmount <= 0) {
-    await message.reply('Montant du pari invalide. Essayez à nouveau.');
+    await message.reply('Invalid bet amount. Please try again.');
     return;
   }
 
   if (usersPoints[userId].points < betAmount) {
-    await message.reply('Points insuffisants. Essayez un montant inférieur.');
+    await message.reply(':GearPunk: not enough. Try a lower amount.');
     return;
   }
 
@@ -260,9 +260,9 @@ client.on('messageCreate', async message => {
   currentBets[userId].amount = betAmount;
   savePoints();
 
-  const playerName = currentBet.betOn === 'player1' ? 'Joueur 1' : 'Joueur 2';
+  const playerName = currentBet.betOn === 'player1' ? 'Player 1' : 'Player 2';
 
-  await message.reply(`Vous avez parié ${betAmount} points sur ${playerName}.`);
+  await message.reply(`You bet ${betAmount} :GearPunk: on ${playerName}.`);
 });
 
 const handleRegister = async (interaction: CommandInteraction) => {
@@ -271,13 +271,13 @@ const handleRegister = async (interaction: CommandInteraction) => {
   const userName = member.nickname || interaction.user.username;
 
   if (usersPoints[userId]) {
-    await interaction.reply({content:'Vous êtes déjà enregistré.', ephemeral:true});
+    await interaction.reply({content:'You are already registered.', ephemeral:true});
     return;
   }
 
   usersPoints[userId] = { points: 100, name: userName };
   savePoints();
-  await interaction.reply({content:'Inscription réussie ! Vous avez reçu 100 points.', ephemeral:true});
+  await interaction.reply({content:'Registration successful! You have received 100 :GearPunk:.', ephemeral:true});
 };
 
 const handlePlaceYourBets = async (interaction: CommandInteraction) => {
@@ -302,11 +302,11 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
         .setStyle(ButtonStyle.Primary),
     );
 
-  await interaction.reply({ content: `Les paris sont ouverts ! Vous avez 60 secondes pour choisir entre ${player1Name} et ${player2Name}.`, components: [row] });
+  await interaction.reply({ content: `The bets are on! You have 60 seconds to choose between ${player1Name} and ${player2Name}.`, components: [row] });
 
   setTimeout(async () => {
     bettingOpen = false;
-    await interaction.followUp('Les paris sont fermés !');
+    await interaction.followUp('Bets are closed !');
   }, 60000);
 };
 
@@ -319,12 +319,12 @@ const handlePoints = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply('Vous n\'êtes pas encore enregistré. Utilisez /register pour vous inscrire.');
+    await interaction.reply('You are not registered yet. Use /register to register.');
     return;
   }
 
   const userInfo = usersPoints[userId];
-  await interaction.reply({ content: `Vous avez ${userInfo.points} points, ${userInfo.name}.`, ephemeral: true });
+  await interaction.reply({ content: `You have ${userInfo.points} :GearPunk:, ${userInfo.name}.`, ephemeral: true });
 };
 
 const handleClearBets = async (interaction: CommandInteraction) => {
@@ -338,7 +338,7 @@ const handleClearBets = async (interaction: CommandInteraction) => {
   currentBets = {};
   bettingOpen = false;
 
-  await interaction.reply('Tous les paris ont été annulés et les points ont été restitués.');
+  await interaction.reply('All bets were void and points were refunded.');
 };
 
 const handleLeaderboard = async (interaction: CommandInteraction) => {
@@ -346,22 +346,33 @@ const handleLeaderboard = async (interaction: CommandInteraction) => {
   const top10 = sortedUsers.slice(0, 10);
   const leaderboard = top10.map(([userId, userInfo], index) => {
     const user = client.users.cache.get(userId);
-    return `${index + 1}. ${user?.tag || userInfo.name} - ${userInfo.points} points`;
+    return `${index + 1}. ${user?.tag || userInfo.name} - ${userInfo.points} :GearPunk: Points`;
   }).join('\n');
 
-  await interaction.reply(`Classement des meilleurs parieurs :\n\n${leaderboard}`);
+  await interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
 };
 
 const handleBetsList = async (interaction: CommandInteraction) => {
+  let totalPlayer1Bets = 0;
+  let totalPlayer2Bets = 0;
+
   const player1Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player1')
-    .map(([userId, bet]) => `${client.users.cache.get(userId)?.tag || 'Utilisateur inconnu'}: ${bet.amount} points`);
+    .map(([userId, bet]) => {
+      totalPlayer1Bets += bet.amount;
+      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} points`;
+    });
 
   const player2Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player2')
-    .map(([userId, bet]) => `${client.users.cache.get(userId)?.tag || 'Utilisateur inconnu'}: ${bet.amount} points`);
+    .map(([userId, bet]) => {
+      totalPlayer2Bets += bet.amount;
+      return `${client.users.cache.get(userId)?.tag || 'Unknown User'}: ${bet.amount} points`;
+    });
 
-  await interaction.reply(`Liste des paris :\n\n**Joueur 1 :**\n${player1Bets.join('\n') || 'Aucun pari'}\n\n**Joueur 2 :**\n${player2Bets.join('\n') || 'Aucun pari'}`);
+  const totalBets = totalPlayer1Bets + totalPlayer2Bets;
+
+  await interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} points\n**Total points bet on Player 2:** ${totalPlayer2Bets} points\n**Total points bet overall:** ${totalBets} points`);
 };
 
 const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player1' | 'player2') => {
@@ -376,7 +387,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   }
 
   if (winnerBetAmount === 0) {
-    await interaction.reply('Aucun pari n\'a été placé sur le gagnant.');
+    await interaction.reply('No bets were placed on the winner.');
     return;
   }
 
@@ -392,7 +403,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   currentBets = {};
   bettingOpen = false;
 
-  await interaction.reply(`Le joueur ${winningPlayer === 'player1' ? 1 : 2} a gagné ! Les points ont été redistribués.`);
+  await interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! :GearPunk: Points have been redistributed.`);
 };
 
 const handleDeleteUser = async (interaction: CommandInteraction) => {
@@ -402,9 +413,9 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
     const userNameToDelete = usersPoints[userIdToDelete].name;
     delete usersPoints[userIdToDelete];
     savePoints();
-    await interaction.reply({ content: `L'utilisateur ${userNameToDelete} (${userIdToDelete}) a été supprimé.`, ephemeral: true });
+    await interaction.reply({ content: `The user ${userNameToDelete} (${userIdToDelete}) has been deleted.`, ephemeral: true });
   } else {
-    await interaction.reply({ content: 'Utilisateur non trouvé.', ephemeral: true });
+    await interaction.reply({ content: 'User no found', ephemeral: true });
   }
 };
 
@@ -416,14 +427,14 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
   const pointsToAdd = pointsOption?.value as number;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: `L'utilisateur avec l'ID ${userId} n'est pas enregistré.`, ephemeral: true });
+    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
     return;
   }
 
   usersPoints[userId].points += pointsToAdd;
   savePoints();
 
-  await interaction.reply({ content: `${pointsToAdd} points ont été ajoutés à ${usersPoints[userId].name}.`, ephemeral: true });
+  await interaction.reply({ content: `${pointsToAdd} :GearPunk: Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);

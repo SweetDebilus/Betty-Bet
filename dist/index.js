@@ -109,34 +109,34 @@ client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
         },
         {
             name: 'betslist',
-            description: 'Voir la liste des joueurs ayant parié sur le joueur 1 et le joueur 2'
+            description: 'See the list of players who bet on player 1 and player 2'
         },
         {
             name: 'deleteuser',
-            description: 'Supprimer un utilisateur enregistré',
+            description: 'Delete a registered user',
             options: [
                 {
                     name: 'userid',
                     type: discord_js_1.ApplicationCommandOptionType.String,
-                    description: 'ID de l\'utilisateur à supprimer',
+                    description: 'ID of the user to delete',
                     required: true
                 }
             ]
         },
         {
             name: 'addpoints',
-            description: 'Ajouter des points à un utilisateur',
+            description: 'Add points to a user',
             options: [
                 {
                     name: 'user',
                     type: discord_js_1.ApplicationCommandOptionType.User,
-                    description: 'Utilisateur à qui ajouter des points',
+                    description: 'User to add points to',
                     required: true
                 },
                 {
                     name: 'points',
                     type: discord_js_1.ApplicationCommandOptionType.Integer,
-                    description: 'Nombre de points à ajouter',
+                    description: 'Number of points to add',
                     required: true
                 }
             ]
@@ -157,7 +157,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         const { commandName } = interaction;
         const member = interaction.member;
         if (!member) {
-            yield interaction.reply('Une erreur est survenue. Impossible de vérifier les rôles de l’utilisateur.');
+            yield interaction.reply('An error has occurred. Unable to verify user roles.');
             return;
         }
         const roles = member.roles;
@@ -171,12 +171,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
             return now - joinedTimestamp >= sevenDaysInMillis;
         };
-        if (!hasRole('Deamon Punk')) {
-            yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+        if (!hasRole('Dæmon Punk')) {
+            yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
             return;
         }
         if (!joinedMoreThan7DaysAgo()) {
-            yield interaction.reply({ content: 'Vous devez être membre du serveur depuis au moins 7 jours pour utiliser cette commande.', ephemeral: true });
+            yield interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
             return;
         }
         switch (commandName) {
@@ -188,7 +188,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handlePlaceYourBets(interaction);
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             case 'points':
@@ -199,7 +199,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleClearBets(interaction);
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             case 'leaderboard':
@@ -213,11 +213,11 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         yield handleWin(interaction, winner === 1 ? 'player1' : 'player2');
                     }
                     else {
-                        yield interaction.reply('Le gagnant doit être 1 ou 2.');
+                        yield interaction.reply('The winner must be 1 or 2.');
                     }
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             case 'betslist':
@@ -225,7 +225,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleBetsList(interaction);
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             case 'deleteuser':
@@ -233,7 +233,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleDeleteUser(interaction);
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             case 'addpoints':
@@ -241,22 +241,22 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleAddPoints(interaction);
                 }
                 else {
-                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
             default:
-                yield interaction.reply({ content: 'Commande inconnue.', ephemeral: true });
+                yield interaction.reply({ content: 'Unknown command.', ephemeral: true });
                 break;
         }
     }
     else if (interaction.isButton()) {
         const userId = interaction.user.id;
         if (!usersPoints[userId]) {
-            yield interaction.reply({ content: 'Inscrivez-vous d\'abord en utilisant /register.', ephemeral: true });
+            yield interaction.reply({ content: 'First register using /register.', ephemeral: true });
             return;
         }
         currentBets[userId] = { amount: 0, betOn: interaction.customId };
-        yield interaction.reply({ content: `Vous avez choisi ${interaction.customId}. Entrez le montant que vous souhaitez parier :`, ephemeral: true });
+        yield interaction.reply({ content: `You have chosen ${interaction.customId}. Enter the amount you wish to bet:`, ephemeral: true });
     }
 }));
 client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
@@ -268,30 +268,30 @@ client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, functi
         return;
     const betAmount = parseInt(message.content);
     if (isNaN(betAmount) || betAmount <= 0) {
-        yield message.reply('Montant du pari invalide. Essayez à nouveau.');
+        yield message.reply('Invalid bet amount. Please try again.');
         return;
     }
     if (usersPoints[userId].points < betAmount) {
-        yield message.reply('Points insuffisants. Essayez un montant inférieur.');
+        yield message.reply(':GearPunk: not enough. Try a lower amount.');
         return;
     }
     usersPoints[userId].points -= betAmount; // Assurez-vous d'accéder à la propriété 'points'
     currentBets[userId].amount = betAmount;
     savePoints();
-    const playerName = currentBet.betOn === 'player1' ? 'Joueur 1' : 'Joueur 2';
-    yield message.reply(`Vous avez parié ${betAmount} points sur ${playerName}.`);
+    const playerName = currentBet.betOn === 'player1' ? 'Player 1' : 'Player 2';
+    yield message.reply(`You bet ${betAmount} :GearPunk: on ${playerName}.`);
 }));
 const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     const member = interaction.member;
     const userName = member.nickname || interaction.user.username;
     if (usersPoints[userId]) {
-        yield interaction.reply({ content: 'Vous êtes déjà enregistré.', ephemeral: true });
+        yield interaction.reply({ content: 'You are already registered.', ephemeral: true });
         return;
     }
     usersPoints[userId] = { points: 100, name: userName };
     savePoints();
-    yield interaction.reply({ content: 'Inscription réussie ! Vous avez reçu 100 points.', ephemeral: true });
+    yield interaction.reply({ content: 'Registration successful! You have received 100 :GearPunk:.', ephemeral: true });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     bettingOpen = true;
@@ -308,10 +308,10 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
         .setCustomId('player2')
         .setLabel(player2Name)
         .setStyle(discord_js_1.ButtonStyle.Primary));
-    yield interaction.reply({ content: `Les paris sont ouverts ! Vous avez 60 secondes pour choisir entre ${player1Name} et ${player2Name}.`, components: [row] });
+    yield interaction.reply({ content: `The bets are on! You have 60 seconds to choose between ${player1Name} and ${player2Name}.`, components: [row] });
     setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
         bettingOpen = false;
-        yield interaction.followUp('Les paris sont fermés !');
+        yield interaction.followUp('Bets are closed !');
     }), 60000);
 });
 const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -321,11 +321,11 @@ const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function
     }
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-        yield interaction.reply('Vous n\'êtes pas encore enregistré. Utilisez /register pour vous inscrire.');
+        yield interaction.reply('You are not registered yet. Use /register to register.');
         return;
     }
     const userInfo = usersPoints[userId];
-    yield interaction.reply({ content: `Vous avez ${userInfo.points} points, ${userInfo.name}.`, ephemeral: true });
+    yield interaction.reply({ content: `You have ${userInfo.points} :GearPunk:, ${userInfo.name}.`, ephemeral: true });
 });
 const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     for (const [userId, bet] of Object.entries(currentBets)) {
@@ -336,25 +336,36 @@ const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, funct
     savePoints();
     currentBets = {};
     bettingOpen = false;
-    yield interaction.reply('Tous les paris ont été annulés et les points ont été restitués.');
+    yield interaction.reply('All bets were void and points were refunded.');
 });
 const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const sortedUsers = Object.entries(usersPoints).sort((a, b) => b[1].points - a[1].points);
     const top10 = sortedUsers.slice(0, 10);
     const leaderboard = top10.map(([userId, userInfo], index) => {
         const user = client.users.cache.get(userId);
-        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.tag) || userInfo.name} - ${userInfo.points} points`;
+        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.tag) || userInfo.name} - ${userInfo.points} :GearPunk: Points`;
     }).join('\n');
-    yield interaction.reply(`Classement des meilleurs parieurs :\n\n${leaderboard}`);
+    yield interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
 });
 const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    let totalPlayer1Bets = 0;
+    let totalPlayer2Bets = 0;
     const player1Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player1')
-        .map(([userId, bet]) => { var _a; return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Utilisateur inconnu'}: ${bet.amount} points`; });
+        .map(([userId, bet]) => {
+        var _a;
+        totalPlayer1Bets += bet.amount;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} points`;
+    });
     const player2Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player2')
-        .map(([userId, bet]) => { var _a; return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Utilisateur inconnu'}: ${bet.amount} points`; });
-    yield interaction.reply(`Liste des paris :\n\n**Joueur 1 :**\n${player1Bets.join('\n') || 'Aucun pari'}\n\n**Joueur 2 :**\n${player2Bets.join('\n') || 'Aucun pari'}`);
+        .map(([userId, bet]) => {
+        var _a;
+        totalPlayer2Bets += bet.amount;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} points`;
+    });
+    const totalBets = totalPlayer1Bets + totalPlayer2Bets;
+    yield interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} points\n**Total points bet on Player 2:** ${totalPlayer2Bets} points\n**Total points bet overall:** ${totalBets} points`);
 });
 const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void 0, function* () {
     let totalBetAmount = 0;
@@ -366,7 +377,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
         }
     }
     if (winnerBetAmount === 0) {
-        yield interaction.reply('Aucun pari n\'a été placé sur le gagnant.');
+        yield interaction.reply('No bets were placed on the winner.');
         return;
     }
     const winningsRatio = totalBetAmount / winnerBetAmount;
@@ -378,7 +389,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
     savePoints();
     currentBets = {};
     bettingOpen = false;
-    yield interaction.reply(`Le joueur ${winningPlayer === 'player1' ? 1 : 2} a gagné ! Les points ont été redistribués.`);
+    yield interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! :GearPunk: Points have been redistributed.`);
 });
 const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -387,10 +398,10 @@ const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, func
         const userNameToDelete = usersPoints[userIdToDelete].name;
         delete usersPoints[userIdToDelete];
         savePoints();
-        yield interaction.reply({ content: `L'utilisateur ${userNameToDelete} (${userIdToDelete}) a été supprimé.`, ephemeral: true });
+        yield interaction.reply({ content: `The user ${userNameToDelete} (${userIdToDelete}) has been deleted.`, ephemeral: true });
     }
     else {
-        yield interaction.reply({ content: 'Utilisateur non trouvé.', ephemeral: true });
+        yield interaction.reply({ content: 'User no found', ephemeral: true });
     }
 });
 const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -399,11 +410,11 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
     const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
     const pointsToAdd = pointsOption === null || pointsOption === void 0 ? void 0 : pointsOption.value;
     if (!usersPoints[userId]) {
-        yield interaction.reply({ content: `L'utilisateur avec l'ID ${userId} n'est pas enregistré.`, ephemeral: true });
+        yield interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
         return;
     }
     usersPoints[userId].points += pointsToAdd;
     savePoints();
-    yield interaction.reply({ content: `${pointsToAdd} points ont été ajoutés à ${usersPoints[userId].name}.`, ephemeral: true });
+    yield interaction.reply({ content: `${pointsToAdd} :GearPunk: Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
