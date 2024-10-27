@@ -260,12 +260,12 @@ const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, functi
     const member = interaction.member;
     const userName = member.nickname || interaction.user.username;
     if (usersPoints[userId]) {
-        yield interaction.reply('Vous êtes déjà enregistré.');
+        yield interaction.reply({ content: 'Vous êtes déjà enregistré.', ephemeral: true });
         return;
     }
     usersPoints[userId] = { points: 100, name: userName };
     savePoints();
-    yield interaction.reply('Inscription réussie ! Vous avez reçu 100 points.');
+    yield interaction.reply({ content: 'Inscription réussie ! Vous avez reçu 100 points.', ephemeral: true });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     bettingOpen = true;
