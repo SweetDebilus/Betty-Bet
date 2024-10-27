@@ -122,6 +122,24 @@ client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
                     required: true
                 }
             ]
+        },
+        {
+            name: 'addpoints',
+            description: 'Ajouter des points à un utilisateur',
+            options: [
+                {
+                    name: 'user',
+                    type: discord_js_1.ApplicationCommandOptionType.User,
+                    description: 'Utilisateur à qui ajouter des points',
+                    required: true
+                },
+                {
+                    name: 'points',
+                    type: discord_js_1.ApplicationCommandOptionType.Integer,
+                    description: 'Nombre de points à ajouter',
+                    required: true
+                }
+            ]
         }
     ];
     const rest = new discord_js_1.REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -213,6 +231,14 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             case 'deleteuser':
                 if (hasRole('BetManager')) {
                     yield handleDeleteUser(interaction);
+                }
+                else {
+                    yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+                }
+                break;
+            case 'addpoints':
+                if (hasRole('BetManager')) {
+                    yield handleAddPoints(interaction);
                 }
                 else {
                     yield interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
@@ -366,5 +392,18 @@ const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, func
     else {
         yield interaction.reply({ content: 'Utilisateur non trouvé.', ephemeral: true });
     }
+});
+const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userOption = interaction.options.get('user');
+    const pointsOption = interaction.options.get('points');
+    const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
+    const pointsToAdd = pointsOption === null || pointsOption === void 0 ? void 0 : pointsOption.value;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: `L'utilisateur avec l'ID ${userId} n'est pas enregistré.`, ephemeral: true });
+        return;
+    }
+    usersPoints[userId].points += pointsToAdd;
+    savePoints();
+    yield interaction.reply({ content: `${pointsToAdd} points ont été ajoutés à ${usersPoints[userId].name}.`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);

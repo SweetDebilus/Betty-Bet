@@ -92,7 +92,25 @@ client.once('ready', async () => {
           required: true
         }
       ]
-    }    
+    },
+    {
+      name: 'addpoints',
+      description: 'Ajouter des points à un utilisateur',
+      options: [
+        {
+          name: 'user',
+          type: ApplicationCommandOptionType.User,
+          description: 'Utilisateur à qui ajouter des points',
+          required: true
+        },
+        {
+          name: 'points',
+          type: ApplicationCommandOptionType.Integer,
+          description: 'Nombre de points à ajouter',
+          required: true
+        }
+      ]
+    }        
   ];
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
@@ -196,7 +214,14 @@ client.on('interactionCreate', async interaction => {
         } else {
           await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
         }
-        break;        
+        break;
+      case 'addpoints':
+        if (hasRole('BetManager')) {
+          await handleAddPoints(interaction);
+        } else {
+          await interaction.reply({ content: 'Vous n\'avez pas la permission d\'utiliser cette commande.', ephemeral: true });
+        }
+        break;                
       default:
         await interaction.reply({ content: 'Commande inconnue.', ephemeral: true });
         break;
@@ -381,6 +406,24 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
   } else {
     await interaction.reply({ content: 'Utilisateur non trouvé.', ephemeral: true });
   }
+};
+
+const handleAddPoints = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const pointsOption = interaction.options.get('points');
+
+  const userId = userOption?.value as string;
+  const pointsToAdd = pointsOption?.value as number;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: `L'utilisateur avec l'ID ${userId} n'est pas enregistré.`, ephemeral: true });
+    return;
+  }
+
+  usersPoints[userId].points += pointsToAdd;
+  savePoints();
+
+  await interaction.reply({ content: `${pointsToAdd} points ont été ajoutés à ${usersPoints[userId].name}.`, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);
