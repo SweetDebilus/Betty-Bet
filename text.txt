@@ -1,0 +1,160 @@
+import { Client, GatewayIntentBits, REST, Routes, TextInputComponent, ActionRowBuilder, ButtonBuilder, ButtonStyle, GuildMember } from 'discord.js';
+import 'dotenv/config';
+import * as fs from 'fs';
+
+const client = new Client({ intents: [GatewayIntentBits.Guilds, GatewayIntentBits.GuildMessages, GatewayIntentBits.MessageContent] });
+const filePath = 'usersPoints.json';
+let usersPoints: { [key: string]: number } = {};
+let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
+let bettingOpen = false;
+
+if (fs.existsSync(filePath)) {
+  usersPoints = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+}
+
+const savePoints = () => {
+  fs.writeFileSync(filePath, JSON.stringify(usersPoints));
+};
+
+client.once('ready', async () => {
+  console.log(`Logged in as ${client.user?.tag}!`);
+
+  const commands = [
+    {
+      name: 'register',
+      description: 'Register to get initial points',
+    },
+    {
+      name: 'placeyourbets',
+      description: 'Start a betting period',
+    },
+    {
+      name: 'points',
+      description: 'Check your points',
+    },
+    {
+      name: 'clearbets',
+      description: 'Clear all bets in case of issues',
+    },
+    {
+      name: 'leaderboard',
+      description: 'Show leaderboard of top betters',
+    }
+  ];
+
+  const rest = new REST({ version: '10' }).setToken(process.env.TOKEN);
+
+  try {
+    console.log('Started refreshing application (/) commands.');
+
+    await rest.put(
+      Routes.applicationCommands(client.user!.id),
+      { body: commands },
+    );
+
+    console.log('Successfully reloaded application (/) commands.');
+  } catch (error) {
+    console.error(error);
+  }
+});
+
+client.on('interactionCreate', async interaction => {
+  if (interaction.isCommand()) {
+    const { commandName } = interaction;
+
+    // Fetch member data explicitly to ensure we have a GuildMember
+    let member = interaction.member instanceof GuildMember ? interaction.member : await interaction.guild?.members.fetch(interaction.user.id);
+
+    if (!member) {
+      await interaction.reply('Une erreur est survenue. Impossible de vérifier les rôles de l’utilisateur.');
+      return;
+    }
+
+    const roles = member.roles as GuildMemberRoleManager;
+
+    // Vérification des conditions
+    const hasRole = (roleName: string) => roles.cache.some(role => role.name === roleName);
+    const joinedMoreThan7DaysAgo = () => {
+      const joinedTimestamp = member.joinedTimestamp;
+      const now = Date.now();
+      const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
+      return now - joinedTimestamp >= sevenDaysInMillis;
+    };
+
+    if (!hasRole('Deamon Punk')) {
+      await interaction.reply('Vous n\'avez pas la permission d\'utiliser cette commande.');
+      return;
+    }
+
+    if (!joinedMoreThan7DaysAgo()) {
+      await interaction.reply('Vous devez être membre du serveur depuis au moins 7 jours pour utiliser cette commande.');
+      return;
+    }
+
+    switch (commandName) {
+      case 'register':
+        await handleRegister(interaction);
+        break;
+      case 'placeyourbets':
+        if (hasRole('BetManager')) {
+          await handlePlaceYourBets(interaction);
+        } else {
+          await interaction.reply('Vous n\'avez pas la permission d\'utiliser cette commande.');
+        }
+        break;
+      case 'points':
+        await handlePoints(interaction);
+        break;
+      case 'clearbets':
+        if (hasRole('BetManager')) {
+          await handleClearBets(interaction);
+        } else {
+          await interaction.reply('Vous n\'avez pas la permission d\'utiliser cette commande.');
+        }
+        break;
+      case 'leaderboard':
+        await handleLeaderboard(interaction);
+        break;
+      default:
+        await interaction.reply('Commande inconnue.');
+        break;
+    }
+  } else if (interaction.isButton()) {
+    const userId = interaction.user.id;
+    if (!usersPoints[userId]) {
+      await interaction.reply('Inscrivez-vous d\'abord en utilisant /register.');
+      return;
+    }
+
+    currentBets[userId] = { amount: 0, betOn: interaction.customId as 'player1' | 'player2' };
+    await interaction.reply({ content: `Vous avez choisi ${interaction.customId}. Entrez le montant que vous souhaitez parier :`, ephemeral: true });
+  }
+});
+
+client.on('messageCreate', async message => {
+  if (!bettingOpen || message.author.bot) return;
+
+  const userId = message.author.id;
+  const currentBet = currentBets[userId];
+  if (!currentBet) return;
+
+  const betAmount = parseInt(message.content);
+  if (isNaN(betAmount) || betAmount <= 0) {
+    await message.reply('Montant du pari invalide. Essayez à nouveau.');
+    return;
+  }
+
+  if (usersPoints[userId] < betAmount) {
+    await message.reply('Points insuffisants. Essayez un montant inférieur.');
+    return;
+  }
+
+  usersPoints[userId] -= betAmount;
+  currentBets[userId].amount = betAmount;
+  savePoints();
+
+  await message.reply(`Vous avez parié ${betAmount} points sur ${currentBet.betOn}.`);
+});
+
+// Fonctions de gestion des commandes
+const handleRegister = async (interaction
