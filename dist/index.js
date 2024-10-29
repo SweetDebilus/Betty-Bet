@@ -38,7 +38,37 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const dotenv_1 = __importDefault(require("dotenv"));
 const fs = __importStar(require("fs"));
+const node_schedule_1 = __importDefault(require("node-schedule"));
 dotenv_1.default.config();
+const crypto_1 = __importDefault(require("crypto"));
+const algorithm = process.env.ALGO;
+const secretKey = Buffer.from(process.env.KEY, 'hex');
+const encrypt = (text) => {
+    const iv = crypto_1.default.randomBytes(16);
+    const cipher = crypto_1.default.createCipheriv(algorithm, secretKey, iv);
+    const encrypted = Buffer.concat([cipher.update(text), cipher.final()]);
+    return {
+        iv: iv.toString('hex'),
+        content: encrypted.toString('hex')
+    };
+};
+const decrypt = (hash) => {
+    if (!hash || !hash.iv || !hash.content) {
+        throw new Error('Invalid data to decrypt');
+    }
+    const iv = Buffer.from(hash.iv, 'hex');
+    const decipher = crypto_1.default.createDecipheriv(algorithm, secretKey, iv);
+    const decrypted = Buffer.concat([decipher.update(Buffer.from(hash.content, 'hex')), decipher.final()]);
+    return decrypted.toString();
+};
+const saveDecryptedBackup = () => {
+    const data = {
+        usersPoints,
+        debilusCloset,
+        lastUpdateTime: lastUpdateTime.toISOString()
+    };
+    fs.writeFileSync('decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+};
 const client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
@@ -49,19 +79,55 @@ const client = new discord_js_1.Client({
 });
 const pointsEmoji = '<a:GearPoint:1300144849688723486>'; // Use your emoji ID here
 const betyEmoji = '<:Bety:1300151295180537978>';
+const debilus = '<:debilus:1300218189703024670>';
 const filePath = 'usersPoints.json';
+let debilusCloset = 0;
 let usersPoints = {};
 let currentBets = {};
 let bettingOpen = false;
-if (fs.existsSync(filePath)) {
-    usersPoints = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-}
-const savePoints = () => {
-    fs.writeFileSync(filePath, JSON.stringify(usersPoints, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+let lastUpdateTime = new Date();
+const loadPoints = () => {
+    if (fs.existsSync(filePath)) {
+        try {
+            const encryptedData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+            const decryptedData = JSON.parse(decrypt(encryptedData));
+            usersPoints = decryptedData.usersPoints || {};
+            debilusCloset = decryptedData.debilusCloset || 0;
+            lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
+        }
+        catch (error) {
+            console.error('Failed to decrypt data:', error);
+        }
+    }
 };
+const savePoints = () => {
+    const data = {
+        usersPoints,
+        debilusCloset,
+        lastUpdateTime: lastUpdateTime.toISOString()
+    };
+    const encryptedData = encrypt(JSON.stringify(data));
+    fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    // Créer un fichier de sauvegarde des données déchiffrées
+    saveDecryptedBackup();
+};
+// Fonction pour ajouter des points à l'inventaire
+const addPointsToInventory = () => {
+    for (const userId in usersPoints) {
+        if (usersPoints[userId].inventory < 15) {
+            usersPoints[userId].inventory += 1;
+        }
+    }
+    savePoints();
+};
+// Planifier la tâche pour qu'elle s'exécute à des heures fixes (par exemple, 12:00 AM et 12:00 PM)
+node_schedule_1.default.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
+node_schedule_1.default.scheduleJob('0 12 * * *', addPointsToInventory);
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     console.log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
+    loadPoints();
+    addPointsToInventory();
     const commands = [
         {
             name: 'register',
@@ -142,6 +208,26 @@ client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
                     required: true
                 }
             ]
+        },
+        {
+            name: 'claim',
+            description: 'Claim your points from inventory'
+        },
+        {
+            name: 'inventory',
+            description: 'Check your inventory'
+        },
+        {
+            name: 'backup',
+            description: 'Encrypt and save data from decrypted backup'
+        },
+        {
+            name: 'sendbackup',
+            description: 'Send the decrypted backup file'
+        },
+        {
+            name: 'presentation',
+            description: 'Present Betty Bet and its functions'
         }
     ];
     const rest = new discord_js_1.REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
@@ -246,6 +332,31 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
+            case 'claim':
+                yield handleClaim(interaction);
+                break;
+            case 'inventory':
+                yield handleInventory(interaction);
+                break;
+            case 'backup':
+                if (hasRole('BetManager')) {
+                    yield handleBackup(interaction);
+                }
+                else {
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                }
+                break;
+            case 'sendbackup':
+                if (hasRole('BetManager')) {
+                    yield handleSendDecryptedBackup(interaction);
+                }
+                else {
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                }
+                break;
+            case 'presentation':
+                yield handlePresentation(interaction);
+                break;
             default:
                 yield interaction.reply({ content: 'Unknown command.', ephemeral: true });
                 break;
@@ -254,11 +365,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
     else if (interaction.isButton()) {
         const userId = interaction.user.id;
         if (!usersPoints[userId]) {
-            yield interaction.reply({ content: 'First register using /register.', ephemeral: true });
+            yield interaction.reply({ content: 'You are not registered yet. Use **/register** to register.', ephemeral: true });
             return;
         }
         currentBets[userId] = { amount: 0, betOn: interaction.customId };
-        yield interaction.reply({ content: `You have chosen ${interaction.customId}. Enter the amount you wish to bet:`, ephemeral: true });
+        const points = usersPoints[userId].points;
+        yield interaction.reply({ content: `You have chosen ${interaction.customId}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`, ephemeral: true });
     }
 }));
 client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
@@ -271,31 +383,31 @@ client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, functi
     const betAmount = parseInt(message.content);
     if (isNaN(betAmount) || betAmount <= 0) {
         const reply = yield message.reply('Invalid bet amount. Please try again.');
-        setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
+        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
         return;
     }
     if (usersPoints[userId].points < betAmount) {
         const reply = yield message.reply(`${pointsEmoji} not enough. Try a lower amount.`);
-        setTimeout(() => reply.delete(), 5000); // Supprimer le message après 5 secondes
+        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
         return;
     }
     usersPoints[userId].points -= betAmount; // Assurez-vous d'accéder à la propriété 'points'
     currentBets[userId].amount = betAmount;
     savePoints();
     // Ajouter une réaction au message de l'utilisateur
-    yield message.react('👍'); // Remplace '👍' par l'emoji que tu préfères
+    yield message.react('✅'); // Remplace '👍' par l'emoji que tu préfères
 }));
 const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     const member = interaction.member;
     const userName = member.nickname || interaction.user.username;
     if (usersPoints[userId]) {
-        yield interaction.reply({ content: 'You are already registered.', ephemeral: true });
+        yield interaction.reply({ content: `You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral: true });
         return;
     }
-    usersPoints[userId] = { points: 100, name: userName };
+    usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0 };
     savePoints();
-    yield interaction.reply({ content: 'Registration successful! You have received 100 ${pointsEmoji}.', ephemeral: true });
+    yield interaction.reply({ content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!`, ephemeral: true });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     bettingOpen = true;
@@ -312,32 +424,30 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
         .setCustomId('player2')
         .setLabel(player2Name)
         .setStyle(discord_js_1.ButtonStyle.Primary));
-    yield interaction.reply({ content: `The bets are on! You have 60 seconds to choose between ${player1Name} and ${player2Name}.`, components: [row] });
+    yield interaction.reply({ content: `**the bets are open !!!\n\n**You have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.`, components: [row] });
     const channel = interaction.channel;
     if (channel) {
         channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
     }
     setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
         bettingOpen = false;
-        yield interaction.followUp('Bets are closed!');
+        yield interaction.followUp('**Bets are closed !**');
         if (channel) {
             channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
-            channel.send('Thanks for the money');
+            channel.send('*Thanks for money !*');
         }
     }), 60000);
 });
 const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    // Recharge les points depuis le fichier
-    if (fs.existsSync(filePath)) {
-        usersPoints = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
-    }
+    loadPoints();
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-        yield interaction.reply('You are not registered yet. Use /register to register.');
+        yield interaction.reply({ content: 'You are not registered yet. Use */register* to register.', ephemeral: true });
         return;
     }
     const userInfo = usersPoints[userId];
-    yield interaction.reply({ content: `You have ${userInfo.points} ${pointsEmoji}, ${userInfo.name}.`, ephemeral: true });
+    const status = userInfo.isDebilus ? `you are a **Debilus** ${debilus}` : 'bettor';
+    yield interaction.reply({ content: `**${userInfo.name}**\n\nYou have **${userInfo.points}** ${pointsEmoji}\n\n| **${userInfo.wins} wins** | **${userInfo.losses} losses** |\n\n**Status:** ${status}`, ephemeral: true });
 });
 const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     for (const [userId, bet] of Object.entries(currentBets)) {
@@ -351,6 +461,7 @@ const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, funct
     yield interaction.reply('All bets were void and points were refunded.');
 });
 const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    loadPoints();
     const sortedUsers = Object.entries(usersPoints).sort((a, b) => b[1].points - a[1].points);
     const top10 = sortedUsers.slice(0, 10);
     const leaderboard = top10.map(([userId, userInfo], index) => {
@@ -383,26 +494,60 @@ const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, functi
 const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void 0, function* () {
     let totalBetAmount = 0;
     let winnerBetAmount = 0;
+    let loserBetAmount = 0;
+    const winningPlayerName = winningPlayer === 'player1' ? 'Player 1' : 'Player 2';
     for (const bet of Object.values(currentBets)) {
         totalBetAmount += bet.amount;
         if (bet.betOn === winningPlayer) {
             winnerBetAmount += bet.amount;
         }
+        else {
+            loserBetAmount += bet.amount;
+        }
     }
     if (winnerBetAmount === 0) {
-        yield interaction.reply('No bets were placed on the winner.');
+        // Ajouter tous les points dans le placard à debilus et compter une défaite pour chaque utilisateur
+        for (const [userId, bet] of Object.entries(currentBets)) {
+            if (bet.betOn !== winningPlayer) {
+                usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
+                if (usersPoints[userId].points === 0) {
+                    usersPoints[userId].isDebilus = true; // Envoyer au placard à debilus
+                }
+            }
+        }
+        debilusCloset += totalBetAmount;
+        savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
+        const file = new discord_js_1.AttachmentBuilder('./images/crashboursier.png');
+        const message2 = `Thanks for the money, Debilus! All points have been added to the debilus closet. Total points ${pointsEmoji} in debilus closet: ${debilusCloset}`;
+        yield interaction.reply({ content: `No bets were placed on the winner. ${message2}`, files: [file] });
         return;
     }
     const winningsRatio = totalBetAmount / winnerBetAmount;
     for (const [userId, bet] of Object.entries(currentBets)) {
-        if (bet.betOn === winningPlayer && usersPoints[userId]) {
-            usersPoints[userId].points += Math.floor(bet.amount * winningsRatio); // Assurez-vous que 'points' est bien un nombre
+        if (bet.betOn === winningPlayer) {
+            usersPoints[userId].points += Math.floor(bet.amount * winningsRatio);
+            usersPoints[userId].wins += 1; // Incrémenter le nombre de victoires
+        }
+        else {
+            usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
+            if (usersPoints[userId].points === 0) {
+                usersPoints[userId].isDebilus = true; // Envoyer au placard à debilus
+            }
         }
     }
     savePoints();
     currentBets = {};
     bettingOpen = false;
-    yield interaction.reply(`Player ${winningPlayer === 'player1' ? 1 : 2} has won! ${pointsEmoji} Points have been redistributed.`);
+    const message = `The winner is ${winningPlayerName}! Points have been redistributed.`;
+    const message2 = `The winner is ${winningPlayerName}! It's the stock market crash!`;
+    const file = new discord_js_1.AttachmentBuilder('./images/petitcrashboursier.png');
+    if (winnerBetAmount < loserBetAmount) {
+        yield interaction.reply({ content: message2, files: [file] });
+    }
+    else {
+        const winFile = new discord_js_1.AttachmentBuilder('./images/victoire.png');
+        yield interaction.reply({ content: message, files: [winFile] });
+    }
 });
 const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
@@ -427,7 +572,79 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
         return;
     }
     usersPoints[userId].points += pointsToAdd;
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     savePoints();
     yield interaction.reply({ content: `${pointsToAdd} ${pointsEmoji} Points have been added to ${usersPoints[userId].name}.`, ephemeral: true });
+});
+const handleClaim = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    loadPoints();
+    const userId = interaction.user.id;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: 'You are not registered yet. Use `/register` to register.', ephemeral: true });
+        return;
+    }
+    const pointsToClaim = usersPoints[userId].inventory;
+    if (pointsToClaim > 0) {
+        usersPoints[userId].points += pointsToClaim;
+        usersPoints[userId].inventory = 0;
+        usersPoints[userId].isDebilus = false; // Mettre à jour le statut debilus
+        savePoints();
+        yield interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, ephemeral: true });
+    }
+    else {
+        yield interaction.reply({ content: 'You have no points to claim.', ephemeral: true });
+    }
+});
+const handleInventory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    loadPoints();
+    const userId = interaction.user.id;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: `You are not registered yet. Use */register* to register.`, ephemeral: true });
+        return;
+    }
+    const inventoryPoints = usersPoints[userId].inventory;
+    yield interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your inventory.`, ephemeral: true });
+});
+const handleBackup = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!fs.existsSync('decrypted_backup.json')) {
+        yield interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
+        return;
+    }
+    const decryptedData = JSON.parse(fs.readFileSync('decrypted_backup.json', 'utf-8'));
+    const encryptedData = encrypt(JSON.stringify(decryptedData));
+    fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    yield interaction.reply({ content: 'Data from decrypted backup has been encrypted and saved successfully.', ephemeral: true });
+});
+const handleSendDecryptedBackup = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!fs.existsSync('decrypted_backup.json')) {
+        yield interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
+        return;
+    }
+    const file = new discord_js_1.AttachmentBuilder('decrypted_backup.json');
+    yield interaction.reply({ content: 'Here is the decrypted backup file.', files: [file], ephemeral: true });
+});
+const handlePresentation = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const presentation = `
+Hi, I'm Betty Bet, your betting bot! Here’s what I can do:
+  - **Register**: Use \`/register\` to sign up and get your initial points.
+- **Place Your Bets**: Start a betting period with \`/placeyourbets\`, and choose between two players. **(BetManager only)**
+  BetManager uses this command to start betting, bettors can choose who they want to bet on and the bet amount
+- **Check Points**: Use \`/points\` to see your current points.
+- **Inventory**: Use \`/inventory\` to check the points you have in your inventory.
+- **Claim Points**: Use \`/claim\` to add points from your inventory to your balance.
+- **Clear Bets**: Use \`/clearbets\` to reset all bets in case of issues. **(BetManager only)**
+- **Leaderboard**: See the top betters with \`/leaderboard\`.
+- **Declare Winner**: Use \`/win\` to declare the winner and redistribute points. **(BetManager only)**
+- **Bets List**: Check the list of bets placed with \`/betslist\`. **(BetManager only)**
+- **Backup**: Use \`/backup\` to encrypt and save data from decrypted backup. **(BetManager only)**
+- **Send Backup**: Get the decrypted backup file with \`/sendbackup\`. **(BetManager only)**
+
+Here are some additional features:
+  - **Automatic Points System**: Points are added to your inventory at fixed times every day (12:00 AM and 12:00 PM), up to a maximum of 15 points. You can claim these points using the \`/claim\` command.
+- **Debilus Closet**: If no bets are placed on the winning player, all points are added to the Debilus Closet. If you have zero points, you will be sent to the Debilus Closet until you get points back, either through your inventory with \`/claim\` or by putting **1M gil** in the FC chest to recover **100** ${pointsEmoji}.
+
+I’m here to make your betting experience fun and exciting! Let’s get started!
+  `;
+    yield interaction.reply({ content: presentation, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
