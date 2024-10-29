@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel, ButtonInteraction } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import schedule from 'node-schedule';
@@ -31,13 +31,34 @@ const decrypt = (hash: { iv: string; content: string }) => {
   return decrypted.toString();
 };
 
+const createDataDebilusDir = () => {
+  if (!fs.existsSync('DataDebilus')) {
+    fs.mkdirSync('DataDebilus');
+  }
+};
+
+
 const saveDecryptedBackup = () => {
+  createDataDebilusDir();
+
   const data = {
     usersPoints,
     debilusCloset,
     lastUpdateTime: lastUpdateTime.toISOString()
   };
-  fs.writeFileSync('decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+  fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+};
+
+const saveTournamentParticipants = () => {
+  const participantsArray = Array.from(tournamentParticipants);
+  fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
+};
+
+const loadTournamentParticipants = () => {
+  if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
+    const participantsArray = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
+    tournamentParticipants = new Set(participantsArray);
+  }
 };
 
 
@@ -56,9 +77,12 @@ const debilus = '<:debilus:1300218189703024670>';
 
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
+let player1Name: string;
+let player2Name: string;
 let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number } } = {};
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
 let bettingOpen = false;
+let tournamentParticipants: Set<string> = new Set();
 let lastUpdateTime = new Date();
 
 const loadPoints = () => {
@@ -91,11 +115,15 @@ const savePoints = () => {
 
 // Fonction pour ajouter des points à l'inventaire
 const addPointsToInventory = () => {
+  const now = new Date();
+  const timeDifference = now.getTime() - lastUpdateTime.getTime();
+  const cyclesPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 12)); // Nombre de cycles de 12 heures écoulés
+
   for (const userId in usersPoints) {
-    if (usersPoints[userId].inventory < 15) {
-      usersPoints[userId].inventory += 1;
-    }
+    usersPoints[userId].inventory = Math.min(usersPoints[userId].inventory + cyclesPassed, 15);
   }
+
+  lastUpdateTime = now; // Mettre à jour `lastUpdateTime`
   savePoints();
 };
 
@@ -134,8 +162,34 @@ client.once('ready', async () => {
       ]
     },
     {
+      name: 'addpoints',
+      description: 'Add points to a user',
+      options: [
+        {
+          name: 'user',
+          type: ApplicationCommandOptionType.User,
+          description: 'User to add points to',
+          required: true
+        },
+        {
+          name: 'points',
+          type: ApplicationCommandOptionType.Integer,
+          description: 'Number of points to add',
+          required: true
+        }
+      ]
+    },
+    {
       name: 'points',
       description: 'Check your points',
+    },
+    {
+      name: 'inventory',
+      description: 'Check your inventory',
+    },
+    {
+      name: 'claim',
+      description: 'Claim your points from inventory',
     },
     {
       name: 'clearbets',
@@ -174,32 +228,6 @@ client.once('ready', async () => {
       ]
     },
     {
-      name: 'addpoints',
-      description: 'Add points to a user',
-      options: [
-        {
-          name: 'user',
-          type: ApplicationCommandOptionType.User,
-          description: 'User to add points to',
-          required: true
-        },
-        {
-          name: 'points',
-          type: ApplicationCommandOptionType.Integer,
-          description: 'Number of points to add',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'claim',
-      description: 'Claim your points from inventory'
-    },
-    {
-      name: 'inventory',
-      description: 'Check your inventory'
-    },
-    {
       name: 'backup',
       description: 'Encrypt and save data from decrypted backup'
     },
@@ -208,10 +236,39 @@ client.once('ready', async () => {
       description: 'Send the decrypted backup file'
     },
     {
+      name: 'addtournamentparticipant',
+      description: 'Add a participant to the tournament',
+      options: [
+        {
+          name: 'user',
+          type: ApplicationCommandOptionType.User,
+          description: 'The user to add to the tournament',
+          required: true
+        }
+      ]
+    },
+    {
+      name: 'removetournamentparticipant',
+      description: 'Remove a participant from the tournament',
+      options: [
+        {
+          name: 'user',
+          type: ApplicationCommandOptionType.User,
+          description: 'The user to remove from the tournament',
+          required: true
+        }
+      ]
+    },
+    {
+      name: 'listtournamentparticipants',
+      description: 'List all participants in the tournament'
+    },
+    {
       name: 'presentation',
       description: 'Present Betty Bet and its functions'
-    }      
+    }  
   ];
+  
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
@@ -266,6 +323,23 @@ client.on('interactionCreate', async interaction => {
     switch (commandName) {
       case 'register':
         await handleRegister(interaction);
+        break;
+      case 'addtournamentparticipant':
+        if (hasRole('BetManager')) {
+        await handleAddTournamentParticipant(interaction);
+        } else {
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+        }
+        break;
+      case 'removetournamentparticipant':
+        if (hasRole('BetManager')) {
+          await handleRemoveTournamentParticipant(interaction);
+        } else {
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+        }
+        break;
+      case 'listtournamentparticipants':
+        await handleListTournamentParticipants(interaction);
         break;
       case 'placeyourbets':
         if (hasRole('BetManager')) {
@@ -352,12 +426,11 @@ client.on('interactionCreate', async interaction => {
   } else if (interaction.isButton()) {
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-      await interaction.reply({ content: 'You are not registered yet. Use **/register** to register.', ephemeral: true });
+      await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
       return;
     }
-    currentBets[userId] = { amount: 0, betOn: interaction.customId as 'player1' | 'player2' };
-    const points = usersPoints[userId].points
-    await interaction.reply({ content: `You have chosen ${interaction.customId}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`, ephemeral: true });
+
+    await handleBetSelection(interaction as ButtonInteraction);
   }
 });
 
@@ -365,6 +438,13 @@ client.on('messageCreate', async message => {
   if (!bettingOpen || message.author.bot) return;
 
   const userId = message.author.id;
+
+  if (tournamentParticipants.has(userId)) {
+    const reply = await message.reply({ content: 'You are participating in the tournament and cannot place bets during the event.' });
+    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
+    return;
+  }
+
   const currentBet = currentBets[userId];
   if (!currentBet) return;
 
@@ -381,14 +461,14 @@ client.on('messageCreate', async message => {
     return;
   }
 
-  usersPoints[userId].points -= betAmount; // Assurez-vous d'accéder à la propriété 'points'
-  currentBets[userId].amount = betAmount;
+  // Ajuster les points et ajouter le pari
+  usersPoints[userId].points -= betAmount;
+  currentBets[userId] = { amount: (currentBet.amount || 0) + betAmount, betOn: currentBet.betOn || "player1" }; // Remplacer "player1" par une valeur par défaut appropriée
   savePoints();
 
   // Ajouter une réaction au message de l'utilisateur
-  await message.react('✅'); // Remplace '👍' par l'emoji que tu préfères
+  await message.react('✅'); // Remplace '✅' par l'emoji que tu préfères
 });
-
 
 const handleRegister = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
@@ -412,8 +492,8 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
   const player1Option = interaction.options.get('player1name');
   const player2Option = interaction.options.get('player2name');
 
-  const player1Name = player1Option ? player1Option.value as string : 'Player 1';
-  const player2Name = player2Option ? player2Option.value as string : 'Player 2';
+  player1Name = player1Option ? player1Option.value as string : 'Player 1';
+  player2Name = player2Option ? player2Option.value as string : 'Player 2';
 
   const row = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -437,12 +517,24 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
   setTimeout(async () => {
     bettingOpen = false;
     await interaction.followUp('**Bets are closed !**');
-
     if (channel) {
       channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
       channel.send('*Thanks for money !*');
     }
   }, 60000);
+};
+
+const handleBetSelection = async (interaction: ButtonInteraction) => {
+  const userId = interaction.user.id;
+  currentBets[userId] = { amount: 0, betOn: interaction.customId as 'player1' | 'player2' };
+
+  const points = usersPoints[userId].points;
+  const chosenPlayerName = interaction.customId === 'player1' ? player1Name : player2Name;
+
+  await interaction.reply({
+    content: `You have chosen ${chosenPlayerName}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`,
+    ephemeral: true
+  });
 };
 
 const handlePoints = async (interaction: CommandInteraction) => {
@@ -517,7 +609,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   let totalBetAmount = 0;
   let winnerBetAmount = 0;
   let loserBetAmount = 0;
-  const winningPlayerName = winningPlayer === 'player1' ? 'Player 1' : 'Player 2';
+  const winningPlayerName = winningPlayer === 'player1' ? player1Name : player2Name;
 
   for (const bet of Object.values(currentBets)) {
     totalBetAmount += bet.amount;
@@ -538,11 +630,11 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
         }
       }
     }
-    debilusCloset += totalBetAmount;
+    debilusCloset += totalBetAmount; // Ajouter tous les points dans le placard à debilus
     savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
     const file = new AttachmentBuilder('./images/crashboursier.png');
-    const message2 = `Thanks for the money, Debilus! All points have been added to the debilus closet. Total points ${pointsEmoji} in debilus closet: ${debilusCloset}`;
-    await interaction.reply({ content: `No bets were placed on the winner. ${message2}`, files: [file] });
+    const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
+    await interaction.reply({ content: `The winner is ${winningPlayerName} ! No bets were placed on the winner. ${message2}`, files: [file] });
     return;
   }
 
@@ -564,8 +656,8 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   currentBets = {};
   bettingOpen = false;
 
-  const message = `The winner is ${winningPlayerName}! Points have been redistributed.`;
-  const message2 = `The winner is ${winningPlayerName}! It's the stock market crash!`;
+  const message = `The winner is **${winningPlayerName}** ! Congratulations to all those who bet on this player, the GearPoints have been redistributed !`;
+  const message2 = `The winner is **${winningPlayerName}** ! It's the stock market crash, you had to believe a little more in this player !`;
   const file = new AttachmentBuilder('./images/petitcrashboursier.png');
 
   if (winnerBetAmount < loserBetAmount) {
@@ -645,34 +737,88 @@ const handleInventory = async (interaction: CommandInteraction) => {
 };
 
 const handleBackup = async (interaction: CommandInteraction) => {
-  if (!fs.existsSync('decrypted_backup.json')) {
+  createDataDebilusDir();
+
+  if (!fs.existsSync('DataDebilus/decrypted_backup.json')) {
     await interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
     return;
   }
 
-  const decryptedData = JSON.parse(fs.readFileSync('decrypted_backup.json', 'utf-8'));
+  const decryptedData = JSON.parse(fs.readFileSync('DataDebilus/decrypted_backup.json', 'utf-8'));
   const encryptedData = encrypt(JSON.stringify(decryptedData));
-  
+
   fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+
+  // Mettre à jour les variables locales après la sauvegarde
+  usersPoints = decryptedData.usersPoints;
+  debilusCloset = decryptedData.debilusCloset;
+  lastUpdateTime = new Date(decryptedData.lastUpdateTime);
+
   await interaction.reply({ content: 'Data from decrypted backup has been encrypted and saved successfully.', ephemeral: true });
 };
 
 const handleSendDecryptedBackup = async (interaction: CommandInteraction) => {
-  if (!fs.existsSync('decrypted_backup.json')) {
+  createDataDebilusDir();
+
+  if (!fs.existsSync('DataDebilus/decrypted_backup.json')) {
     await interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
     return;
   }
 
-  const file = new AttachmentBuilder('decrypted_backup.json');
+  const file = new AttachmentBuilder('DataDebilus/decrypted_backup.json');
   await interaction.reply({ content: 'Here is the decrypted backup file.', files: [file], ephemeral: true });
 };
+
+const handleAddTournamentParticipant = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const user = userOption?.user;
+
+  if (user) {
+    tournamentParticipants.add(user.id);
+    saveTournamentParticipants();
+    await interaction.reply({ content: `${user.username} has been added to the tournament.`, ephemeral: true });
+  } else {
+    await interaction.reply({ content: 'User not found.', ephemeral: true });
+  }
+};
+
+const handleRemoveTournamentParticipant = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const user = userOption?.user;
+
+  if (user) {
+    tournamentParticipants.delete(user.id);
+    saveTournamentParticipants();
+    await interaction.reply({ content: `${user.username} has been removed from the tournament.`, ephemeral: true });
+  } else {
+    await interaction.reply({ content: 'User not found.', ephemeral: true });
+  }
+};
+
+// Appeler loadTournamentParticipants lors du démarrage
+loadTournamentParticipants();
+
+const handleListTournamentParticipants = async (interaction: CommandInteraction) => {
+  if (tournamentParticipants.size === 0) {
+    await interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
+    return;
+  }
+
+  const participantsList = Array.from(tournamentParticipants).map(id => {
+    const user = client.users.cache.get(id);
+    return user ? user.username : 'Unknown User';
+  }).join('\n');
+
+  await interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
+};
+
 
 const handlePresentation = async (interaction: CommandInteraction) => {
   const presentation = `
 Hi, I'm Betty Bet, your betting bot! Here’s what I can do:
   - **Register**: Use \`/register\` to sign up and get your initial points.
 - **Place Your Bets**: Start a betting period with \`/placeyourbets\`, and choose between two players. **(BetManager only)**
-  BetManager uses this command to start betting, bettors can choose who they want to bet on and the bet amount
+  BetManager uses this command to start betting, bettors can choose who they want to bet on and the bet amount. \n **Warning**, placing several amounts during the betting phase will add up the amount of your bet, so place **wisely**
 - **Check Points**: Use \`/points\` to see your current points.
 - **Inventory**: Use \`/inventory\` to check the points you have in your inventory.
 - **Claim Points**: Use \`/claim\` to add points from your inventory to your balance.
