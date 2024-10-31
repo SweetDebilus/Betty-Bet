@@ -1,0 +1,49 @@
+{
+  "usersPoints": {
+    "719726331457437756": {
+      "points": 100,
+      "name": "risa.alisa",
+      "wins": 0,
+      "losses": 0,
+      "isDebilus": false,
+      "inventory": 4,
+      "notificationsEnabled": false,
+      "betHistory": []
+    },
+    "185852644890378241": {
+      "points": 100,
+      "name": "Shima",
+      "wins": 0,
+      "losses": 0,
+      "isDebilus": false,
+      "inventory": 4,
+      "notificationsEnabled": false,
+      "betHistory": []
+    },
+    "356541379960242186": {
+      "points": 104,
+      "name": "sweetdebilus",
+      "wins": 2,
+      "losses": 0,
+      "isDebilus": false,
+      "inventory": 0,
+      "notificationsEnabled": true,
+      "betHistory": [
+        {
+          "betOn": "Lol",
+          "amount": 20,
+          "result": "win",
+          "date": "2024-10-30T01:42:35.882Z"
+        },
+        {
+          "betOn": "Debilus",
+          "amount": 20,
+          "result": "win",
+          "date": "2024-10-30T01:45:34.342Z"
+        }
+      ]
+    }
+  },
+  "debilusCloset": 0,
+  "lastUpdateTime": "2024-10-31T11:00:00.000Z"
+}
