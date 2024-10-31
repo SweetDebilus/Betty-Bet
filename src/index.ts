@@ -784,25 +784,27 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   }  
 
   if (winnerBetAmount === 0) {
-    for (const bet of Object.values(currentBets)) {
-      totalBetAmount += bet.amount;
-      if (bet.betOn === winningPlayer) {
-        winnerBetAmount += bet.amount;
-      } else {
-        loserBetAmount += bet.amount;
-      }
-    }
-    debilusCloset += totalBetAmount; // Ajouter tous les points dans le placard à debilus
+    // Ajouter tous les points dans le placard à debilus
+    debilusCloset += totalBetAmount;
     savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
     const file = new AttachmentBuilder('./images/crashboursier.png');
     const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
     await interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
-    
+
+    // Marquer tous les paris comme des pertes
+    for (const [userId, bet] of Object.entries(currentBets)) {
+      usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
+
+      // Mettre à jour le résultat du pari dans l'historique
+      const betHistory = usersPoints[userId].betHistory;
+      betHistory[betHistory.length - 1].result = 'loss';
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+    }
+
     // Effacer les paris même si le vainqueur n'a pas de paris
     currentBets = {};
     bettingOpen = false;
     savePoints();
-    
     return;
   }
 
@@ -816,12 +818,14 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
       // Mettre à jour le résultat du pari dans l'historique
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'win';
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     } else {
       usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
       
       // Mettre à jour le résultat du pari dans l'historique
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'loss';
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     }
   }
 
@@ -838,8 +842,6 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
     const winFile = new AttachmentBuilder('./images/victoire.png');
     await interaction.reply({ content: message, files: [winFile] });
   }
-
-  
 
   player1Name = 'player 1'
   player2Name = 'player 2'
@@ -1262,7 +1264,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
     return !isNaN(Number(response.content)) && response.author.id === userId;
   };
 
-  const collector = channel.createMessageCollector({ filter, time: 30000 });
+  const collector = channel.createMessageCollector({ filter, time: 40000 });
 
   collector.on('collect', async (response: Message) => {
     const guess = Number(response.content);
@@ -1270,6 +1272,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
     if (guess === numberToGuess) {
       usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
       savePoints();
+      usersPoints[userId].isDebilus = false;
       await response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
       collector.stop('guessed correctly');
       delete activeGuessGames[channelId]; // Terminer le jeu
@@ -1288,6 +1291,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
       debilusCloset += pointsLost; // Ajouter les points perdus au debilus closet
       savePoints();
       interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     }
     delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
   });

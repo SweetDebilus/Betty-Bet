@@ -742,20 +742,20 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
         return;
     }
     if (winnerBetAmount === 0) {
-        for (const bet of Object.values(currentBets)) {
-            totalBetAmount += bet.amount;
-            if (bet.betOn === winningPlayer) {
-                winnerBetAmount += bet.amount;
-            }
-            else {
-                loserBetAmount += bet.amount;
-            }
-        }
-        debilusCloset += totalBetAmount; // Ajouter tous les points dans le placard à debilus
+        // Ajouter tous les points dans le placard à debilus
+        debilusCloset += totalBetAmount;
         savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
         const file = new discord_js_1.AttachmentBuilder('./images/crashboursier.png');
         const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
         yield interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
+        // Marquer tous les paris comme des pertes
+        for (const [userId, bet] of Object.entries(currentBets)) {
+            usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
+            // Mettre à jour le résultat du pari dans l'historique
+            const betHistory = usersPoints[userId].betHistory;
+            betHistory[betHistory.length - 1].result = 'loss';
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+        }
         // Effacer les paris même si le vainqueur n'a pas de paris
         currentBets = {};
         bettingOpen = false;
@@ -770,12 +770,14 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
             // Mettre à jour le résultat du pari dans l'historique
             const betHistory = usersPoints[userId].betHistory;
             betHistory[betHistory.length - 1].result = 'win';
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
         }
         else {
             usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
             // Mettre à jour le résultat du pari dans l'historique
             const betHistory = usersPoints[userId].betHistory;
             betHistory[betHistory.length - 1].result = 'loss';
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
         }
     }
     savePoints();
@@ -1151,12 +1153,13 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
     const filter = (response) => {
         return !isNaN(Number(response.content)) && response.author.id === userId;
     };
-    const collector = channel.createMessageCollector({ filter, time: 30000 });
+    const collector = channel.createMessageCollector({ filter, time: 40000 });
     collector.on('collect', (response) => __awaiter(void 0, void 0, void 0, function* () {
         const guess = Number(response.content);
         if (guess === numberToGuess) {
             usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
             savePoints();
+            usersPoints[userId].isDebilus = false;
             yield response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
             collector.stop('guessed correctly');
             delete activeGuessGames[channelId]; // Terminer le jeu
@@ -1176,6 +1179,7 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
             debilusCloset += pointsLost; // Ajouter les points perdus au debilus closet
             savePoints();
             interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
         }
         delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
     });
