@@ -1052,7 +1052,7 @@ Hello ! I'm **Betty Bet**, your betting bot! Here’s a quick guide to all the c
 11. **/presentation**
     - Present Betty Bet and its features.
 12. **/guess**
-    - Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)\n  **Warning**: use this command in the #betty-bet-game channel
+    - Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)\n  **Warning**: use this command in the #betty-bet-game channel and one person at a time
 
 `;
 const part2 = `
