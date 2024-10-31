@@ -1156,7 +1156,7 @@ const handleBetHistory = async (interaction: CommandInteraction) => {
   let historyMessage = 'Your Betting History:\n';
 
   betHistory.forEach(async (bet, index) => {
-    const betInfo = `\n**Bet ${index + 1}:**\nDate: ${bet.date.toLocaleString()}\nBet On: ${bet.betOn}\nAmount: ${bet.amount}${pointsEmoji}\nResult: ${bet.result}`;
+    const betInfo = `\n**Bet ${index + 1}:**\nDate: ${bet.date.toLocaleString()}\nBet On: ${bet.betOn}\nAmount: ${bet.amount}${pointsEmoji}\nResult: ${bet.result}\n`;
     if ((historyMessage + betInfo).length > 2000) {
       await interaction.reply({ content: historyMessage, ephemeral: true });
       historyMessage = 'Your Betting History (continued):\n';
@@ -1271,8 +1271,8 @@ const handleGuess = async (interaction: CommandInteraction) => {
 
     if (guess === numberToGuess) {
       usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
       savePoints();
-      usersPoints[userId].isDebilus = false;
       await response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
       collector.stop('guessed correctly');
       delete activeGuessGames[channelId]; // Terminer le jeu
@@ -1289,9 +1289,10 @@ const handleGuess = async (interaction: CommandInteraction) => {
       const pointsLost = Math.min(10, usersPoints[userId].points); // Nombre de points à perdre
       usersPoints[userId].points -= pointsLost; // Perdre les points
       debilusCloset += pointsLost; // Ajouter les points perdus au debilus closet
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0
       savePoints();
       interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
-      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+      ;
     }
     delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
   });
