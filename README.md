@@ -77,7 +77,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 ```
 5. Start the bot.
 ```sh
-   npm start
+   node dist/index.js
 ```
 
 ## Usage
