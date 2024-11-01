@@ -1125,13 +1125,12 @@ const handleGlobalStats = (interaction) => __awaiter(void 0, void 0, void 0, fun
     yield interaction.reply({ content: globalStatsMessage });
 });
 const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    const allowedChannelId = '1301494292354826280'; // Remplacez par l'ID de votre canal #Betty-Bet-Game
+    const allowedChannelId = process.env.CHANNEL; // Remplacez par l'ID de votre canal #Betty-Bet-Game
     const channelId = interaction.channelId;
-    /* if (channelId !== allowedChannelId) {
-       await interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.' });
-       return;
-     }
-   */
+    if (channelId !== allowedChannelId) {
+        yield interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.' });
+        return;
+    }
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
         yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.' });

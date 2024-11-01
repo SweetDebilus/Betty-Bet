@@ -1229,14 +1229,14 @@ const handleGlobalStats = async (interaction: CommandInteraction) => {
 };
 
 const handleGuess = async (interaction: CommandInteraction) => {
-  const allowedChannelId = '1301494292354826280'; // Remplacez par l'ID de votre canal #Betty-Bet-Game
+  const allowedChannelId = process.env.CHANNEL!; // Remplacez par l'ID de votre canal #Betty-Bet-Game
   const channelId = interaction.channelId;
 
- /* if (channelId !== allowedChannelId) {
+  if (channelId !== allowedChannelId) {
     await interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.' });
     return;
   }
-*/
+
   const userId = interaction.user.id;
   if (!usersPoints[userId]) {
     await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.' });
