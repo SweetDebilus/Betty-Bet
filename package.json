@@ -11,8 +11,6 @@
   "description": "",
   "dependencies": {
     "@discordjs/rest": "^2.4.0",
-    "canvas": "^2.11.2",
-    "chart.js": "^4.4.6",
     "discord.js": "^14.16.3",
     "dotenv": "^16.4.5",
     "fs": "^0.0.1-security",
