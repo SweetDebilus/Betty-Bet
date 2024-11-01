@@ -70,10 +70,10 @@ const client = new Client({
   ]
 });
 
-const pointsEmoji = '<a:GearPoint:1300144849688723486>'; // Use your emoji ID here
-const betyEmoji = '<:Bety:1300151295180537978>';
-const debilus = '<:debilus:1300218189703024670>';
-const debcoins = '<:debiluscoin:1300978437217058826>'
+const pointsEmoji = process.env.POINTS!;
+const betyEmoji = process.env.BETY!;
+const debilus = process.env.DEBILUS!;
+const debcoins = process.env.DEBCOIN!;
 
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
