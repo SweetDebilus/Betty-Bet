@@ -51,24 +51,39 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 ## Installation
 
-1. Clone this repository to your local machine.
+1. **Install Node.js**:
+   Make sure Node.js is installed on your machine. You can download and install it from [nodejs.org](https://nodejs.org/).
+
+2. **Clone this repository** to your local machine.
 ```sh
    git clone https://github.com/valentinpoupier/betty-bet.git
    cd betty-bet
 ```
-2. Install the dependencies.
+3. Initialize the project and install TypeScript.
 ```sh
-   npm install
+   npm init -y
+npm install -g typescript
+npx tsc --init
 ```
-4. Configure the environment variables by creating a .env file at the root of the project and adding the following values:
+4. Install the required dependencies.
+```sh
+   npm install discord.js@latest @discordjs/rest
+npm install --save-dev @types/node-schedule
+```
+5. Configure the environment variables by creating a .env file at the root of the project and adding the following values:
 ```sh
    DISCORD_TOKEN=your-discord-bot-token
    ALGO=your-encryption-algorithm
    KEY=your-secret-key
+   POINTS=emoji-id
+   BETY=emoji-id
+   DEBILUS=emoji-id
+   DEBCOIN=emoji-id
+   ROLE=your-role-for-users-in-discord
 ```
-5. Start the bot.
+6. Start the bot.
 ```sh
-   npm start
+   node dist/index.js
 ```
 
 ## Usage
