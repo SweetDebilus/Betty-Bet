@@ -385,7 +385,7 @@ client.on('interactionCreate', async interaction => {
       return now - joinedTimestamp >= sevenDaysInMillis;
     };
 
-    if (!hasRole('Dæmon Punk')) {
+    if (!hasRole(process.env.ROLE!)) {
       await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
       return;
     }

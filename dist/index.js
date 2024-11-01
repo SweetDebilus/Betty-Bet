@@ -380,7 +380,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
             return now - joinedTimestamp >= sevenDaysInMillis;
         };
-        if (!hasRole('Dæmon Punk')) {
+        if (!hasRole(process.env.ROLE)) {
             yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
             return;
         }
