@@ -56,7 +56,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 2. **Clone this repository** to your local machine.
 ```sh
-   git clone https://github.com/valentinpoupier/betty-bet.git
+   git clone https://github.com/SweetDebilus/betty-bet.git
    cd betty-bet
 ```
 3. Install the required dependencies.
