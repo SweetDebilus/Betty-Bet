@@ -69,7 +69,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
    ALGO=your-encryption-algorithm
    KEY=your-secret-key
    POINTS=emoji-id
-   BETY=emoji-id
+   BETTY=emoji-id
    DEBILUS=emoji-id
    DEBCOIN=emoji-id
    ROLE=your-role-for-users-in-discord
