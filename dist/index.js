@@ -94,7 +94,7 @@ const client = new discord_js_1.Client({
     ]
 });
 const pointsEmoji = process.env.POINTS;
-const betyEmoji = process.env.BETY;
+const betyEmoji = process.env.BETTY;
 const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
 const filePath = 'usersPoints.json';
