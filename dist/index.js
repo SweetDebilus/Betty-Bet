@@ -67,13 +67,18 @@ const createDataDebilusDir = () => {
     }
 };
 const saveDecryptedBackup = () => {
-    createDataDebilusDir();
-    const data = {
-        usersPoints,
-        debilusCloset,
-        lastUpdateTime: lastUpdateTime.toISOString()
-    };
-    fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    try {
+        createDataDebilusDir();
+        const data = {
+            usersPoints,
+            debilusCloset,
+            lastUpdateTime: lastUpdateTime.toISOString()
+        };
+        fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    }
+    catch (error) {
+        console.error('Error saving points:', error);
+    }
 };
 const saveTournamentParticipants = () => {
     const participantsArray = Array.from(tournamentParticipants);
