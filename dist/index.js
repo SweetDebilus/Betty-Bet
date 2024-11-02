@@ -1185,10 +1185,14 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
             interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
             ;
         }
+        const startTime = performance.now();
         // Supprimer tous les messages collectés après la fin du jeu
         messagesToDelete.forEach(message => {
             message.delete();
         });
+        const endTime = performance.now();
+        const executionTime = endTime - startTime;
+        console.log(`Temps d'exécution : ${executionTime} millisecondes`);
         delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
     });
 });

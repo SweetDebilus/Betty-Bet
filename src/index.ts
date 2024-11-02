@@ -1300,13 +1300,20 @@ const handleGuess = async (interaction: CommandInteraction) => {
       ;
     }
 
+    const startTime = performance.now();
+
     // Supprimer tous les messages collectés après la fin du jeu
     messagesToDelete.forEach(message => {
       message.delete();
     });
 
+    const endTime = performance.now();
+    const executionTime = endTime - startTime;
+
+    console.log(`Temps d'exécution : ${executionTime} millisecondes`);
+
     delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
-    
+
   });
 };
 
