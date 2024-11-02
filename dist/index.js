@@ -1128,16 +1128,19 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
     const allowedChannelId = process.env.CHANNEL; // Remplacez par l'ID de votre canal #Betty-Bet-Game
     const channelId = interaction.channelId;
     if (channelId !== allowedChannelId) {
-        yield interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.' });
+        const reply = yield interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.', ephemeral: true });
+        setTimeout(() => reply.delete(), 3000);
         return;
     }
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-        yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.' });
+        const reply = yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+        setTimeout(() => reply.delete(), 3000);
         return;
     }
     if (activeGuessGames[channelId]) {
-        yield interaction.reply({ content: 'A guessing game is already in progress in this channel. Please wait for it to finish.', ephemeral: true });
+        const reply = yield interaction.reply({ content: 'A guessing game is already in progress in this channel. Please wait for it to finish.', ephemeral: true });
+        setTimeout(() => reply.delete(), 3000);
         return;
     }
     activeGuessGames[channelId] = userId; // Marquer le jeu comme actif
@@ -1145,30 +1148,31 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
     yield interaction.reply({ content: 'Guess a number between 1 and 10000!' });
     const channel = interaction.channel;
     if (!channel || !(channel instanceof discord_js_1.TextChannel)) {
-        yield interaction.followUp({ content: 'Unable to start the guessing game as the channel is not available or is not a text channel.' });
+        yield interaction.followUp({ content: 'Unable to start the guessing game as the channel is not available or is not a text channel.', ephemeral: true });
         delete activeGuessGames[channelId]; // Nettoyer l'état en cas d'erreur
         return;
     }
     const filter = (response) => {
         return !isNaN(Number(response.content)) && response.author.id === userId;
     };
+    const messagesToDelete = [];
     const collector = channel.createMessageCollector({ filter, time: 40000 });
     collector.on('collect', (response) => __awaiter(void 0, void 0, void 0, function* () {
         const guess = Number(response.content);
+        messagesToDelete.push(response);
         if (guess === numberToGuess) {
             usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
-            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
             savePoints();
             yield response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
             collector.stop('guessed correctly');
-            delete activeGuessGames[channelId]; // Terminer le jeu
-            return;
         }
         else if (guess < numberToGuess) {
-            yield response.reply({ content: 'Higher!' });
+            const reply = yield response.reply({ content: 'Higher!' });
+            messagesToDelete.push(reply);
         }
         else {
-            yield response.reply({ content: 'Lower!' });
+            const reply = yield response.reply({ content: 'Lower!' });
+            messagesToDelete.push(reply);
         }
     }));
     collector.on('end', (collected, reason) => {
@@ -1181,6 +1185,10 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
             interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
             ;
         }
+        // Supprimer tous les messages collectés après la fin du jeu
+        messagesToDelete.forEach(message => {
+            message.delete();
+        });
         delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
     });
 });
