@@ -87,7 +87,7 @@ const saveTournamentParticipants = () => {
 const loadTournamentParticipants = () => {
     if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
         const participantsArray = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
-        tournamentParticipants = new Set(participantsArray);
+        tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
     }
 };
 const client = new discord_js_1.Client({
@@ -109,7 +109,7 @@ let player2Name;
 let usersPoints = {};
 let currentBets = {};
 let bettingOpen = false;
-let tournamentParticipants = new Set();
+let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames = {}; // Canal ID -> Utilisateur ID
 const loadPoints = () => {
@@ -608,7 +608,7 @@ client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, functi
 const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     const member = interaction.member;
-    const userName = member.nickname || interaction.user.username;
+    const userName = member.nickname || interaction.user.displayName;
     if (usersPoints[userId]) {
         yield interaction.reply({ content: `You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral: true });
         return;
@@ -702,7 +702,7 @@ const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, fun
     const top10 = sortedUsers.slice(0, 10);
     const leaderboard = top10.map(([userId, userInfo], index) => {
         const user = client.users.cache.get(userId);
-        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.tag) || userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
+        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.displayName) || userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
     }).join('\n');
     yield interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
 });
@@ -885,9 +885,9 @@ const handleAddTournamentParticipant = (interaction) => __awaiter(void 0, void 0
     const userOption = interaction.options.get('user');
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
-        tournamentParticipants.add(user.id);
+        tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
         saveTournamentParticipants();
-        yield interaction.reply({ content: `${user.username} has been added to the tournament.`, ephemeral: true });
+        yield interaction.reply({ content: `${user.displayName} has been added to the tournament.`, ephemeral: true });
     }
     else {
         yield interaction.reply({ content: 'User not found.', ephemeral: true });
@@ -899,7 +899,7 @@ const handleRemoveTournamentParticipant = (interaction) => __awaiter(void 0, voi
     if (user) {
         tournamentParticipants.delete(user.id);
         saveTournamentParticipants();
-        yield interaction.reply({ content: `${user.username} has been removed from the tournament.`, ephemeral: true });
+        yield interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
     }
     else {
         yield interaction.reply({ content: 'User not found.', ephemeral: true });
@@ -912,9 +912,8 @@ const handleListTournamentParticipants = (interaction) => __awaiter(void 0, void
         yield interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
         return;
     }
-    const participantsList = Array.from(tournamentParticipants).map(id => {
-        const user = client.users.cache.get(id);
-        return user ? user.username : 'Unknown User';
+    const participantsList = Array.from(tournamentParticipants.entries()).map(([id, username]) => {
+        return `ID: ${id}, Pseudo: ${username}`;
     }).join('\n');
     yield interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
 });

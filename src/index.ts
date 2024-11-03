@@ -53,6 +53,11 @@ const saveDecryptedBackup = () => {
   }
 };
 
+interface TournamentParticipant {
+  userId: string;
+  userName: string;
+}
+
 const saveTournamentParticipants = () => {
   const participantsArray = Array.from(tournamentParticipants);
   fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
@@ -60,10 +65,11 @@ const saveTournamentParticipants = () => {
 
 const loadTournamentParticipants = () => {
   if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
-    const participantsArray = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
-    tournamentParticipants = new Set(participantsArray);
+    const participantsArray: TournamentParticipant[] = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
+    tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
   }
 };
+
 
 const client = new Client({
   intents: [
@@ -86,7 +92,7 @@ let player2Name: string;
 let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[] }} = {};
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
 let bettingOpen = false;
-let tournamentParticipants: Set<string> = new Set();
+let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
 
@@ -610,7 +616,7 @@ client.on('messageCreate', async message => {
 const handleRegister = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
   const member = interaction.member as GuildMember;
-  const userName = member.nickname || interaction.user.username;
+  const userName = member.nickname || interaction.user.displayName;
 
   if (usersPoints[userId]) {
     await interaction.reply({content:`You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral:true});
@@ -736,7 +742,7 @@ const handleLeaderboard = async (interaction: CommandInteraction) => {
   const top10 = sortedUsers.slice(0, 10);
   const leaderboard = top10.map(([userId, userInfo], index) => {
     const user = client.users.cache.get(userId);
-    return `${index + 1}. ${user?.tag || userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
+    return `${index + 1}. ${user?.displayName || userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
   }).join('\n');
 
   await interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
@@ -957,9 +963,9 @@ const handleAddTournamentParticipant = async (interaction: CommandInteraction) =
   const user = userOption?.user;
 
   if (user) {
-    tournamentParticipants.add(user.id);
+    tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
     saveTournamentParticipants();
-    await interaction.reply({ content: `${user.username} has been added to the tournament.`, ephemeral: true });
+    await interaction.reply({ content: `${user.displayName} has been added to the tournament.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User not found.', ephemeral: true });
   }
@@ -972,7 +978,7 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
   if (user) {
     tournamentParticipants.delete(user.id);
     saveTournamentParticipants();
-    await interaction.reply({ content: `${user.username} has been removed from the tournament.`, ephemeral: true });
+    await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User not found.', ephemeral: true });
   }
@@ -987,9 +993,8 @@ const handleListTournamentParticipants = async (interaction: CommandInteraction)
     return;
   }
 
-  const participantsList = Array.from(tournamentParticipants).map(id => {
-    const user = client.users.cache.get(id);
-    return user ? user.username : 'Unknown User';
+  const participantsList = Array.from(tournamentParticipants.entries()).map(([id, username]) => {
+    return `ID: ${id}, Pseudo: ${username}`;
   }).join('\n');
 
   await interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
