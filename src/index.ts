@@ -626,7 +626,7 @@ const handleRegister = async (interaction: CommandInteraction) => {
 
   usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [] };
   savePoints();
-  await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\``, ephemeral:true});
+  await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral:true});
 
 };
 
