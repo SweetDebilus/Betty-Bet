@@ -151,7 +151,9 @@ const addPointsToInventory = async () => {
 
 const sendNotification = async (userId: string, points: number) => {
   const user = await client.users.fetch(userId);
-  if (user) {
+  
+  // Assumons que `notificationsEnabled` est une propriété de `usersPoints`
+  if (user && usersPoints[userId].notificationsEnabled) {
     const row = new ActionRowBuilder<ButtonBuilder>()
       .addComponents(
         new ButtonBuilder()

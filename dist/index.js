@@ -163,7 +163,8 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
 });
 const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield client.users.fetch(userId);
-    if (user) {
+    // Assumons que `notificationsEnabled` est une propriété de `usersPoints`
+    if (user && usersPoints[userId].notificationsEnabled) {
         const row = new discord_js_1.ActionRowBuilder()
             .addComponents(new discord_js_1.ButtonBuilder()
             .setCustomId('claim_yes')
