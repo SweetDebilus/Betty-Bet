@@ -173,7 +173,6 @@ const sendNotification = async (userId: string, points: number) => {
   }
 };
 
-
 // Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
 schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
