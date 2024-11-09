@@ -38,11 +38,48 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const dotenv_1 = __importDefault(require("dotenv"));
 const fs = __importStar(require("fs"));
+const path = __importStar(require("path"));
 const node_schedule_1 = __importDefault(require("node-schedule"));
 dotenv_1.default.config();
 const crypto_1 = __importDefault(require("crypto"));
 const algorithm = process.env.ALGO;
 const secretKey = Buffer.from(process.env.KEY, 'hex');
+const client = new discord_js_1.Client({
+    intents: [
+        discord_js_1.GatewayIntentBits.Guilds,
+        discord_js_1.GatewayIntentBits.GuildMessages,
+        discord_js_1.GatewayIntentBits.MessageContent,
+        discord_js_1.GatewayIntentBits.GuildMembers
+    ]
+});
+const pointsEmoji = process.env.POINTS;
+const betyEmoji = process.env.BETTY;
+const debilus = process.env.DEBILUS;
+const debcoins = process.env.DEBCOIN;
+const filePath = 'usersPoints.json';
+let debilusCloset = 0;
+let player1Name;
+let player2Name;
+let usersPoints = {};
+let currentBets = {};
+let bettingOpen = false;
+let tournamentParticipants = new Map();
+let lastUpdateTime = new Date();
+let activeGuessGames = {}; // Canal ID -> Utilisateur ID
+const fs1 = require('fs');
+const logFile = process.env.PATHLOG;
+// Fonction pour créer le dossier si nécessaire 
+const ensureLogDirectoryExists = (filePath) => {
+    const logDir = path.dirname(filePath);
+    if (!fs1.existsSync(logDir)) {
+        fs1.mkdirSync(logDir, { recursive: true });
+    }
+};
+// Appeler la fonction pour s'assurer que le dossier existe 
+ensureLogDirectoryExists(logFile);
+const log = (message) => {
+    fs1.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`);
+};
 const encrypt = (text) => {
     const iv = crypto_1.default.randomBytes(16);
     const cipher = crypto_1.default.createCipheriv(algorithm, secretKey, iv);
@@ -77,7 +114,7 @@ const saveDecryptedBackup = () => {
         fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
     }
     catch (error) {
-        console.error('Error saving points:', error);
+        log(`Error saving points: ${error}`);
     }
 };
 const saveTournamentParticipants = () => {
@@ -90,28 +127,6 @@ const loadTournamentParticipants = () => {
         tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
     }
 };
-const client = new discord_js_1.Client({
-    intents: [
-        discord_js_1.GatewayIntentBits.Guilds,
-        discord_js_1.GatewayIntentBits.GuildMessages,
-        discord_js_1.GatewayIntentBits.MessageContent,
-        discord_js_1.GatewayIntentBits.GuildMembers
-    ]
-});
-const pointsEmoji = process.env.POINTS;
-const betyEmoji = process.env.BETTY;
-const debilus = process.env.DEBILUS;
-const debcoins = process.env.DEBCOIN;
-const filePath = 'usersPoints.json';
-let debilusCloset = 0;
-let player1Name;
-let player2Name;
-let usersPoints = {};
-let currentBets = {};
-let bettingOpen = false;
-let tournamentParticipants = new Map();
-let lastUpdateTime = new Date();
-let activeGuessGames = {}; // Canal ID -> Utilisateur ID
 const loadPoints = () => {
     if (fs.existsSync(filePath)) {
         try {
@@ -122,7 +137,7 @@ const loadPoints = () => {
             lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
         }
         catch (error) {
-            console.error('Failed to decrypt data:', error);
+            log(`Failed to decrypt data: ${error}`);
         }
     }
 };
@@ -184,7 +199,7 @@ node_schedule_1.default.scheduleJob('0 0 * * *', addPointsToInventory); // Exéc
 node_schedule_1.default.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
-    console.log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
+    log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
     loadPoints();
     yield addPointsToInventory();
     const commands = [
@@ -359,12 +374,12 @@ client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
     ];
     const rest = new discord_js_1.REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     try {
-        console.log('Started refreshing application (/) commands.');
+        log('Started refreshing application (/) commands.');
         yield rest.put(discord_js_1.Routes.applicationCommands(client.user.id), { body: commands });
-        console.log('Successfully reloaded application (/) commands.');
+        log('Successfully reloaded application (/) commands.');
     }
     catch (error) {
-        console.error(error);
+        log(`${error}`);
     }
 }));
 client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1052,7 +1067,7 @@ const handleClearMessages = (interaction) => __awaiter(void 0, void 0, void 0, f
         yield interaction.reply({ content: 'All private messages sent by the bot have been cleared.', ephemeral: true });
     }
     catch (error) {
-        console.error(`Failed to clear messages for user ${userId}:`, error);
+        log(`Failed to clear messages for user ${userId}: ${error}`);
         yield interaction.reply({ content: 'Failed to clear messages.', ephemeral: true });
     }
 });
@@ -1197,7 +1212,7 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
         });
         const endTime = performance.now();
         const executionTime = endTime - startTime;
-        console.log(`Temps d'exécution : ${executionTime} millisecondes`);
+        log(`Temps d'exécution : ${executionTime} millisecondes`);
         delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
     });
 });

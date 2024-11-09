@@ -1,12 +1,55 @@
 import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel, ButtonInteraction, Message } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
+import * as path from 'path';
 import schedule from 'node-schedule';
 dotenv.config();
 import crypto from 'crypto';
 
 const algorithm = process.env.ALGO!;
 const secretKey = Buffer.from(process.env.KEY!, 'hex');
+
+const client = new Client({
+  intents: [
+    GatewayIntentBits.Guilds,
+    GatewayIntentBits.GuildMessages,
+    GatewayIntentBits.MessageContent,
+    GatewayIntentBits.GuildMembers
+  ]
+});
+
+const pointsEmoji = process.env.POINTS!;
+const betyEmoji = process.env.BETTY!;
+const debilus = process.env.DEBILUS!;
+const debcoins = process.env.DEBCOIN!;
+
+const filePath = 'usersPoints.json';
+let debilusCloset = 0;
+let player1Name: string;
+let player2Name: string;
+let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[] }} = {};
+let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
+let bettingOpen = false;
+let tournamentParticipants: Map<string, string> = new Map();
+let lastUpdateTime = new Date();
+let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
+
+const fs1 = require('fs');
+const logFile = process.env.PATHLOG!;
+
+// Fonction pour créer le dossier si nécessaire 
+const ensureLogDirectoryExists = (filePath: string): void => { 
+  const logDir = path.dirname(filePath); 
+  if (!fs1.existsSync(logDir)) { 
+    fs1.mkdirSync(logDir, { recursive: true }); 
+  } 
+}; 
+
+// Appeler la fonction pour s'assurer que le dossier existe 
+ensureLogDirectoryExists(logFile); 
+const log = (message: string): void => { 
+  fs1.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`); 
+};
 
 const encrypt = (text: string) => {
   const iv = crypto.randomBytes(16);
@@ -37,7 +80,6 @@ const createDataDebilusDir = () => {
   }
 };
 
-
 const saveDecryptedBackup = () => {
   try{
     createDataDebilusDir();
@@ -49,7 +91,7 @@ const saveDecryptedBackup = () => {
     };
     fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
   } catch (error) {
-    console.error('Error saving points:', error)
+    log(`Error saving points: ${error}`)
   }
 };
 
@@ -70,32 +112,6 @@ const loadTournamentParticipants = () => {
   }
 };
 
-
-const client = new Client({
-  intents: [
-    GatewayIntentBits.Guilds,
-    GatewayIntentBits.GuildMessages,
-    GatewayIntentBits.MessageContent,
-    GatewayIntentBits.GuildMembers
-  ]
-});
-
-const pointsEmoji = process.env.POINTS!;
-const betyEmoji = process.env.BETTY!;
-const debilus = process.env.DEBILUS!;
-const debcoins = process.env.DEBCOIN!;
-
-const filePath = 'usersPoints.json';
-let debilusCloset = 0;
-let player1Name: string;
-let player2Name: string;
-let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[] }} = {};
-let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
-let bettingOpen = false;
-let tournamentParticipants: Map<string, string> = new Map();
-let lastUpdateTime = new Date();
-let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
-
 const loadPoints = () => {
   if (fs.existsSync(filePath)) {
     try {
@@ -105,7 +121,7 @@ const loadPoints = () => {
       debilusCloset = decryptedData.debilusCloset || 0;
       lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
     } catch (error) {
-      console.error('Failed to decrypt data:', error);
+      log(`Failed to decrypt data: ${error}`);
     }
   }
 };
@@ -178,7 +194,7 @@ schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jo
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 
 client.once('ready', async () => {
-  console.log(`Logged in as ${client.user?.tag}!`);
+  log(`Logged in as ${client.user?.tag}!`);
 
   loadPoints();
 
@@ -359,16 +375,16 @@ client.once('ready', async () => {
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
   try {
-    console.log('Started refreshing application (/) commands.');
+    log('Started refreshing application (/) commands.');
 
     await rest.put(
       Routes.applicationCommands(client.user!.id),
       { body: commands },
     );
 
-    console.log('Successfully reloaded application (/) commands.');
+    log('Successfully reloaded application (/) commands.');
   } catch (error) {
-    console.error(error);
+    log(`${error}`);
   }
 
 });
@@ -1143,7 +1159,7 @@ const handleClearMessages = async (interaction: CommandInteraction) => {
 
     await interaction.reply({ content: 'All private messages sent by the bot have been cleared.', ephemeral: true });
   } catch (error) {
-    console.error(`Failed to clear messages for user ${userId}:`, error);
+    log(`Failed to clear messages for user ${userId}: ${error}`);
     await interaction.reply({ content: 'Failed to clear messages.', ephemeral: true });
   }
 };
@@ -1320,7 +1336,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
     const endTime = performance.now();
     const executionTime = endTime - startTime;
 
-    console.log(`Temps d'exécution : ${executionTime} millisecondes`);
+    log(`Temps d'exécution : ${executionTime} millisecondes`);
 
     delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
 
