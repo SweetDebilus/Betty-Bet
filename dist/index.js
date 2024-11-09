@@ -127,6 +127,8 @@ const loadTournamentParticipants = () => {
         tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
     }
 };
+// Appeler loadTournamentParticipants lors du démarrage
+loadTournamentParticipants();
 const loadPoints = () => {
     if (fs.existsSync(filePath)) {
         try {
@@ -178,7 +180,6 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
 });
 const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield client.users.fetch(userId);
-    // Assumons que `notificationsEnabled` est une propriété de `usersPoints`
     if (user && usersPoints[userId].notificationsEnabled) {
         const row = new discord_js_1.ActionRowBuilder()
             .addComponents(new discord_js_1.ButtonBuilder()
@@ -921,8 +922,6 @@ const handleRemoveTournamentParticipant = (interaction) => __awaiter(void 0, voi
         yield interaction.reply({ content: 'User not found.', ephemeral: true });
     }
 });
-// Appeler loadTournamentParticipants lors du démarrage
-loadTournamentParticipants();
 const handleListTournamentParticipants = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     if (tournamentParticipants.size === 0) {
         yield interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });

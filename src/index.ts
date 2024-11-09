@@ -112,6 +112,9 @@ const loadTournamentParticipants = () => {
   }
 };
 
+// Appeler loadTournamentParticipants lors du démarrage
+loadTournamentParticipants();
+
 const loadPoints = () => {
   if (fs.existsSync(filePath)) {
     try {
@@ -926,7 +929,6 @@ const handleClaim = async (interaction: CommandInteraction) => {
   }
 };
 
-
 const handleInventory = async (interaction: CommandInteraction) => {
 
   loadPoints();
@@ -999,9 +1001,6 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
     await interaction.reply({ content: 'User not found.', ephemeral: true });
   }
 };
-
-// Appeler loadTournamentParticipants lors du démarrage
-loadTournamentParticipants();
 
 const handleListTournamentParticipants = async (interaction: CommandInteraction) => {
   if (tournamentParticipants.size === 0) {
