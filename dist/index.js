@@ -1279,9 +1279,11 @@ const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, functio
     const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
     if (userInventory) {
         userInventory.quantity += quantity;
+        debilusCloset += totalPrice;
     }
     else {
         usersPoints[userId].inventoryShop.push({ name: itemName, quantity: quantity });
+        debilusCloset += totalPrice;
     }
     // Déduire les items du stock
     item.quantity -= quantity;

@@ -1428,8 +1428,10 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
 
   if (userInventory) {
     userInventory.quantity += quantity;
+    debilusCloset += totalPrice;
   } else {
     usersPoints[userId].inventoryShop.push({ name: itemName, quantity: quantity });
+    debilusCloset += totalPrice;
   }
 
   // Déduire les items du stock
