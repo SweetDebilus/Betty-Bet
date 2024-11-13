@@ -16,6 +16,11 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 - **/clearmessages**: Clear all private messages sent by the bot.
 - **/presentation**: Present Betty Bet and its features.
 - **/guess**: Play a guessing game! Guess a number between 1 and 10000. Win 5 GearPoints if you guess correctly, lose 10 GearPoints if you guess wrong.
+- **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
+  - **Options**:
+    - `itemname`: Name of item
+    - `quantity`: The number of items you want to buy
+- **/listitems**: view items for sale in the store.
 
 ### Commands reserved for **BetManager** roles:
 
@@ -48,7 +53,12 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 - **/transferdebilus**: Transfer all GearPoints from the debilus closet to a specific user and empty the closet.
   - **Options**:
     - `user`: User to transfer the GearPoints to
-
+- **/additem**
+  - **Option**:
+    - `itemname`: Name of item
+    - `quantity`: The number of items you want to add
+    - `unitprice`: enter the price of the item per unit
+      
 ## Installation
 
 1. **Install Node.js**:
