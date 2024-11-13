@@ -274,23 +274,32 @@ const commands = [
     new discord_js_1.SlashCommandBuilder()
         .setName('cleartournamentparticipants')
         .setDescription('Clear the list of tournament participants'),
-    new discord_js_1.SlashCommandBuilder().setName('presentation')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('presentation')
         .setDescription('Present Betty Bet and its functions'),
-    new discord_js_1.SlashCommandBuilder().setName('togglenotifications')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('togglenotifications')
         .setDescription('Toggle notifications for inventory points'),
-    new discord_js_1.SlashCommandBuilder().setName('clearmessages')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('clearmessages')
         .setDescription('Clear all private messages sent by the bot'),
-    new discord_js_1.SlashCommandBuilder().setName('bethistory')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('bethistory')
         .setDescription('View your betting history'),
-    new discord_js_1.SlashCommandBuilder().setName('stats')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('stats')
         .setDescription('View your detailed statistics'),
-    new discord_js_1.SlashCommandBuilder().setName('globalstats')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('globalstats')
         .setDescription('View global betting statistics'),
-    new discord_js_1.SlashCommandBuilder().setName('guess')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('guess')
         .setDescription('Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'),
-    new discord_js_1.SlashCommandBuilder().setName('transferdebilus')
+    new discord_js_1.SlashCommandBuilder()
+        .setName('transferdebilus')
         .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.')
-        .addUserOption(option => option.setName('user').setDescription('User to transfer the GearPoints to')
+        .addUserOption(option => option.setName('user')
+        .setDescription('User to transfer the GearPoints to')
         .setRequired(true))
 ];
 const commandData = commands.map(command => command.toJSON());
