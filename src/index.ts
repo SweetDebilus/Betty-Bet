@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel, ButtonInteraction, Message } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel, ButtonInteraction, Message, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -100,12 +100,12 @@ interface TournamentParticipant {
   userName: string;
 }
 
-const saveTournamentParticipants = () => {
+const saveTournamentParticipants = async () => {
   const participantsArray = Array.from(tournamentParticipants);
   fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
 };
 
-const loadTournamentParticipants = () => {
+const loadTournamentParticipants = async () => {
   if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
     const participantsArray: TournamentParticipant[] = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
     tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
@@ -115,7 +115,7 @@ const loadTournamentParticipants = () => {
 // Appeler loadTournamentParticipants lors du démarrage
 loadTournamentParticipants();
 
-const loadPoints = () => {
+const loadPoints = async () => {
   if (fs.existsSync(filePath)) {
     try {
       const encryptedData = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
@@ -129,7 +129,7 @@ const loadPoints = () => {
   }
 };
 
-const savePoints = () => {
+const savePoints = async () => {
   const data = {
     usersPoints,
     debilusCloset,
@@ -195,184 +195,118 @@ const sendNotification = async (userId: string, points: number) => {
 schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 
+const commands = [ 
+  new SlashCommandBuilder() 
+    .setName('register') 
+    .setDescription('Register to get initial points'), 
+  new SlashCommandBuilder() 
+    .setName('placeyourbets') 
+    .setDescription('Start a betting period') 
+    .addStringOption(option => option.setName('player1name') 
+    .setDescription('Name of player 1') 
+    .setRequired(true)) 
+    .addStringOption(option => option.setName('player2name') 
+    .setDescription('Name of player 2') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('addpoints') 
+    .setDescription('Add points to a user') 
+    .addUserOption(option => option.setName('user') 
+    .setDescription('User to add points to') 
+    .setRequired(true)) 
+    .addIntegerOption(option => option.setName('points') 
+    .setDescription('Number of points to add') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('points') 
+    .setDescription('Check your points'), 
+  new SlashCommandBuilder() 
+    .setName('inventory') 
+    .setDescription('Check your inventory'), 
+  new SlashCommandBuilder() 
+    .setName('claim') 
+    .setDescription('Claim your points from inventory'),
+  new SlashCommandBuilder() 
+    .setName('clearbets') 
+    .setDescription('Clear all bets in case of issues'), 
+  new SlashCommandBuilder() 
+    .setName('leaderboard') 
+    .setDescription('Show leaderboard of top betters'),
+  new SlashCommandBuilder() 
+    .setName('win') 
+    .setDescription('Declare the winner and redistribute points') 
+    .addIntegerOption(option => option.setName('winner') 
+    .setDescription('The winning player (1 or 2)') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('betslist') 
+    .setDescription('See the list of players who bet on player 1 and player 2'), 
+  new SlashCommandBuilder() 
+    .setName('deleteuser') 
+    .setDescription('Delete a registered user') 
+    .addStringOption(option => option.setName('userid') 
+    .setDescription('ID of the user to delete') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('backup') 
+    .setDescription('Encrypt and save data from decrypted backup'), 
+  new SlashCommandBuilder() 
+    .setName('sendbackup') 
+    .setDescription('Send the decrypted backup file'), 
+  new SlashCommandBuilder() 
+    .setName('addtournamentparticipant') 
+    .setDescription('Add a participant to the tournament') 
+    .addUserOption(option => option.setName('user') 
+    .setDescription('The user to add to the tournament') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('removetournamentparticipant') 
+    .setDescription('Remove a participant from the tournament') 
+    .addUserOption(option => option.setName('user') 
+    .setDescription('The user to remove from the tournament') 
+    .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('listtournamentparticipants') 
+    .setDescription('List all participants in the tournament'),
+  new SlashCommandBuilder() 
+    .setName('cleartournamentparticipants') 
+    .setDescription('Clear the list of tournament participants'), 
+  new SlashCommandBuilder() 
+    .setName('presentation') 
+    .setDescription('Present Betty Bet and its functions'), 
+  new SlashCommandBuilder() 
+    .setName('togglenotifications') 
+    .setDescription('Toggle notifications for inventory points'), 
+  new SlashCommandBuilder() 
+    .setName('clearmessages') 
+    .setDescription('Clear all private messages sent by the bot'), 
+  new SlashCommandBuilder() 
+    .setName('bethistory') 
+    .setDescription('View your betting history'), 
+  new SlashCommandBuilder() 
+    .setName('stats') 
+    .setDescription('View your detailed statistics'), 
+  new SlashCommandBuilder() 
+    .setName('globalstats') 
+    .setDescription('View global betting statistics'), 
+  new SlashCommandBuilder() 
+    .setName('guess') 
+    .setDescription('Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'), 
+  new SlashCommandBuilder() 
+    .setName('transferdebilus') 
+    .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.') 
+    .addUserOption(option => option.setName('user') .setDescription('User to transfer the GearPoints to') 
+    .setRequired(true)) 
+  ]; 
+  
+const commandData = commands.map(command => command.toJSON()); 
+
 client.once('ready', async () => {
   log(`Logged in as ${client.user?.tag}!`);
 
   loadPoints();
 
   await addPointsToInventory();
-
-  const commands = [
-    {
-      name: 'register',
-      description: 'Register to get initial points',
-    },
-    {
-      name: 'placeyourbets',
-      description: 'Start a betting period',
-      options: [
-        {
-          name: 'player1name',
-          type: ApplicationCommandOptionType.String,
-          description: 'Name of player 1',
-          required: true
-        },
-        {
-          name: 'player2name',
-          type: ApplicationCommandOptionType.String,
-          description: 'Name of player 2',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'addpoints',
-      description: 'Add points to a user',
-      options: [
-        {
-          name: 'user',
-          type: ApplicationCommandOptionType.User,
-          description: 'User to add points to',
-          required: true
-        },
-        {
-          name: 'points',
-          type: ApplicationCommandOptionType.Integer,
-          description: 'Number of points to add',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'points',
-      description: 'Check your points',
-    },
-    {
-      name: 'inventory',
-      description: 'Check your inventory',
-    },
-    {
-      name: 'claim',
-      description: 'Claim your points from inventory',
-    },
-    {
-      name: 'clearbets',
-      description: 'Clear all bets in case of issues',
-    },
-    {
-      name: 'leaderboard',
-      description: 'Show leaderboard of top betters',
-    },
-    {
-      name: 'win',
-      description: 'Declare the winner and redistribute points',
-      options: [
-        {
-          name: 'winner',
-          type: ApplicationCommandOptionType.Integer,
-          description: 'The winning player (1 or 2)',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'betslist',
-      description: 'See the list of players who bet on player 1 and player 2'
-    },
-    {
-      name: 'deleteuser',
-      description: 'Delete a registered user',
-      options: [
-        {
-          name: 'userid',
-          type: ApplicationCommandOptionType.String,
-          description: 'ID of the user to delete',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'backup',
-      description: 'Encrypt and save data from decrypted backup'
-    },
-    {
-      name: 'sendbackup',
-      description: 'Send the decrypted backup file'
-    },
-    {
-      name: 'addtournamentparticipant',
-      description: 'Add a participant to the tournament',
-      options: [
-        {
-          name: 'user',
-          type: ApplicationCommandOptionType.User,
-          description: 'The user to add to the tournament',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'removetournamentparticipant',
-      description: 'Remove a participant from the tournament',
-      options: [
-        {
-          name: 'user',
-          type: ApplicationCommandOptionType.User,
-          description: 'The user to remove from the tournament',
-          required: true
-        }
-      ]
-    },
-    {
-      name: 'listtournamentparticipants',
-      description: 'List all participants in the tournament'
-    },
-    {
-      name: 'cleartournamentparticipants',
-      description: 'Clear the list of tournament participants'
-    },
-    {
-      name: 'presentation',
-      description: 'Present Betty Bet and its functions'
-    },
-    {
-      name: 'togglenotifications',
-      description: 'Toggle notifications for inventory points'
-    },
-    {
-      name: 'clearmessages',
-      description: 'Clear all private messages sent by the bot'
-    },
-    {
-      name: 'bethistory',
-      description: 'View your betting history'
-    },
-    {
-      name: 'stats',
-      description: 'View your detailed statistics'
-    },
-    {
-      name: 'globalstats',
-      description: 'View global betting statistics'
-    },
-    {
-      name: 'guess',
-      description: 'Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'
-    },
-    {
-      name: 'transferdebilus',
-      description: 'Transfer all GearPoints from the debilus closet to a specific user and empty the closet.',
-      options: [
-        {
-          name: 'user',
-          type: ApplicationCommandOptionType.User,
-          description: 'User to transfer the GearPoints to',
-          required: true
-        }
-      ]
-    }  
-  ];
-  
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
@@ -381,7 +315,7 @@ client.once('ready', async () => {
 
     await rest.put(
       Routes.applicationCommands(client.user!.id),
-      { body: commands },
+      { body: commandData },
     );
 
     log('Successfully reloaded application (/) commands.');
