@@ -404,179 +404,186 @@ client.on('interactionCreate', async interaction => {
       await interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
       return;
     }
-
-    switch (commandName) {
-      case 'register':
-        await handleRegister(interaction);
-        break;
-      case 'addtournamentparticipant':
-        if (hasRole('BetManager')) {
-        await handleAddTournamentParticipant(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'removetournamentparticipant':
-        if (hasRole('BetManager')) {
-          await handleRemoveTournamentParticipant(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'listtournamentparticipants':
-        if (hasRole('BetManager')) {
-          await handleListTournamentParticipants(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'cleartournamentparticipants':
-        if (hasRole('BetManager')) {
-          await handleClearTournamentParticipants(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;        
-      case 'placeyourbets':
-        if (hasRole('BetManager')) {
-          await handlePlaceYourBets(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'points':
-        await handlePoints(interaction);
-        break;
-      case 'clearbets':
-        if (hasRole('BetManager')) {
-          await handleClearBets(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'leaderboard':
-        await handleLeaderboard(interaction);
-        break;
-      case 'win':
-        if (hasRole('BetManager')) {
-          const winnerOption = interaction.options.get('winner');
-          const winner = winnerOption ? winnerOption.value : null;
-    
-          if (winner === 1 || winner === 2) {
-            await handleWin(interaction, winner === 1 ? 'player1' : 'player2');
-            } else {
-            await interaction.reply('The winner must be 1 or 2.');
+    try {
+      switch (commandName) {
+        case 'register':
+          await handleRegister(interaction);
+          break;
+        case 'addtournamentparticipant':
+          if (hasRole('BetManager')) {
+          await handleAddTournamentParticipant(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
           }
-        } else {
-          await interaction.reply({content:'You do not have permission to use this command.', ephemeral:true});
-        }
-        break;
-      case 'betslist':
-        if (hasRole('BetManager')) {
-          await handleBetsList(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'deleteuser':
-        if (hasRole('BetManager')) {
-          await handleDeleteUser(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'addpoints':
-        if (hasRole('BetManager')) {
-          await handleAddPoints(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'claim':
-        await handleClaim(interaction);
-        break;
-      case 'inventory':
-        await handleInventory(interaction);
-        break;   
-      case 'backup':
-        if (hasRole('BetManager')) {
-          await handleBackup(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;  
-      case 'sendbackup':
-        if (hasRole('BetManager')) {
-          await handleSendDecryptedBackup(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'togglenotifications':
-        await handleToggleNotifications(interaction);
-        break
-      case 'presentation':
-        await handlePresentation(interaction);
-        break;
-      case 'clearmessages':
-        await handleClearMessages(interaction);
-        break;   
-      case 'bethistory':
-        await handleBetHistory(interaction);
-        break;
-      case 'stats':
-        await handleStats(interaction);
-        break;
-      case 'globalstats':
-        await handleGlobalStats(interaction);
-        break;
-      case 'guess':
-        await handleGuess(interaction);
-        break
-      case 'transferdebilus':
-        if (hasRole('BetManager')) {
-          await handleTransferDebilus(interaction);
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'buyitem': 
-        try { 
-          await handleBuyItem(interaction); 
-        } catch (error) { 
-          log(`Error handling buyitem command: ${error}`); 
-          await interaction.reply('There was an error processing your purchase.'); 
-        } 
-        break; 
-      case 'additem': 
-        if (hasRole('BetManager')){
+          break;
+        case 'removetournamentparticipant':
+          if (hasRole('BetManager')) {
+            await handleRemoveTournamentParticipant(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'listtournamentparticipants':
+          if (hasRole('BetManager')) {
+            await handleListTournamentParticipants(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'cleartournamentparticipants':
+          if (hasRole('BetManager')) {
+            await handleClearTournamentParticipants(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;        
+        case 'placeyourbets':
+          if (hasRole('BetManager')) {
+            await handlePlaceYourBets(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'points':
+          await handlePoints(interaction);
+          break;
+        case 'clearbets':
+          if (hasRole('BetManager')) {
+            await handleClearBets(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'leaderboard':
+          await handleLeaderboard(interaction);
+          break;
+        case 'win':
+          if (hasRole('BetManager')) {
+            const winnerOption = interaction.options.get('winner');
+            const winner = winnerOption ? winnerOption.value : null;
+      
+            if (winner === 1 || winner === 2) {
+              await handleWin(interaction, winner === 1 ? 'player1' : 'player2');
+              } else {
+              await interaction.reply('The winner must be 1 or 2.');
+            }
+          } else {
+            await interaction.reply({content:'You do not have permission to use this command.', ephemeral:true});
+          }
+          break;
+        case 'betslist':
+          if (hasRole('BetManager')) {
+            await handleBetsList(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'deleteuser':
+          if (hasRole('BetManager')) {
+            await handleDeleteUser(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'addpoints':
+          if (hasRole('BetManager')) {
+            await handleAddPoints(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'claim':
+          await handleClaim(interaction);
+          break;
+        case 'inventory':
+          await handleInventory(interaction);
+          break;   
+        case 'backup':
+          if (hasRole('BetManager')) {
+            await handleBackup(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;  
+        case 'sendbackup':
+          if (hasRole('BetManager')) {
+            await handleSendDecryptedBackup(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'togglenotifications':
+          await handleToggleNotifications(interaction);
+          break
+        case 'presentation':
+          await handlePresentation(interaction);
+          break;
+        case 'clearmessages':
+          await handleClearMessages(interaction);
+          break;   
+        case 'bethistory':
+          await handleBetHistory(interaction);
+          break;
+        case 'stats':
+          await handleStats(interaction);
+          break;
+        case 'globalstats':
+          await handleGlobalStats(interaction);
+          break;
+        case 'guess':
+          await handleGuess(interaction);
+          break
+        case 'transferdebilus':
+          if (hasRole('BetManager')) {
+            await handleTransferDebilus(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'buyitem': 
           try { 
-            await handleAddItemToStore(interaction); 
+            await handleBuyItem(interaction); 
           } catch (error) { 
-            log(`Error handling additem command: ${error}`); 
-            await interaction.reply('There was an error adding the item to the store.'); 
+            log(`Error handling buyitem command: ${error}`); 
+            await interaction.reply('There was an error processing your purchase.'); 
           } 
-        } else {
-          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-        }
-        break;
-      case 'listitems':
-        try{
-          await handleListItems(interaction);
-        } catch (error) {
-          log(`Error handling listitems command: ${error}`);
-          await interaction.reply('There was an error retrieving the items list.');
-        }
-        break;
-      default:
-        try { 
-          await interaction.reply('Unknown command'); 
-        } catch (error) { 
-          log(`Error handling default command: ${error}`); 
-          await interaction.reply('There was an error processing your request.'); 
-        }
-        break;
+          break; 
+        case 'additem': 
+          if (hasRole('BetManager')){
+            try { 
+              await handleAddItemToStore(interaction); 
+            } catch (error) { 
+              log(`Error handling additem command: ${error}`); 
+              await interaction.reply('There was an error adding the item to the store.'); 
+            } 
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'listitems':
+          try{
+            await handleListItems(interaction);
+          } catch (error) {
+            log(`Error handling listitems command: ${error}`);
+            await interaction.reply('There was an error retrieving the items list.');
+          }
+          break;
+        default:
+          try { 
+            await interaction.reply('Unknown command'); 
+          } catch (error) { 
+            log(`Error handling default command: ${error}`); 
+            await interaction.reply('There was an error processing your request.'); 
+          }
+          break;
+      }
+    } catch (error){
+      log(`Error handling ${commandName} command: ${error}`)
+      if (!interaction.replied && !interaction.deferred) {
+        await interaction.reply('There was an error processing your request.')
+      }
     }
+    
   } else if (interaction.isButton()) {
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {

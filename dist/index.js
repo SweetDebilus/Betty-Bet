@@ -376,195 +376,203 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             yield interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
             return;
         }
-        switch (commandName) {
-            case 'register':
-                yield handleRegister(interaction);
-                break;
-            case 'addtournamentparticipant':
-                if (hasRole('BetManager')) {
-                    yield handleAddTournamentParticipant(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'removetournamentparticipant':
-                if (hasRole('BetManager')) {
-                    yield handleRemoveTournamentParticipant(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'listtournamentparticipants':
-                if (hasRole('BetManager')) {
-                    yield handleListTournamentParticipants(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'cleartournamentparticipants':
-                if (hasRole('BetManager')) {
-                    yield handleClearTournamentParticipants(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'placeyourbets':
-                if (hasRole('BetManager')) {
-                    yield handlePlaceYourBets(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'points':
-                yield handlePoints(interaction);
-                break;
-            case 'clearbets':
-                if (hasRole('BetManager')) {
-                    yield handleClearBets(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'leaderboard':
-                yield handleLeaderboard(interaction);
-                break;
-            case 'win':
-                if (hasRole('BetManager')) {
-                    const winnerOption = interaction.options.get('winner');
-                    const winner = winnerOption ? winnerOption.value : null;
-                    if (winner === 1 || winner === 2) {
-                        yield handleWin(interaction, winner === 1 ? 'player1' : 'player2');
+        try {
+            switch (commandName) {
+                case 'register':
+                    yield handleRegister(interaction);
+                    break;
+                case 'addtournamentparticipant':
+                    if (hasRole('BetManager')) {
+                        yield handleAddTournamentParticipant(interaction);
                     }
                     else {
-                        yield interaction.reply('The winner must be 1 or 2.');
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                     }
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'betslist':
-                if (hasRole('BetManager')) {
-                    yield handleBetsList(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'deleteuser':
-                if (hasRole('BetManager')) {
-                    yield handleDeleteUser(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'addpoints':
-                if (hasRole('BetManager')) {
-                    yield handleAddPoints(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'claim':
-                yield handleClaim(interaction);
-                break;
-            case 'inventory':
-                yield handleInventory(interaction);
-                break;
-            case 'backup':
-                if (hasRole('BetManager')) {
-                    yield handleBackup(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'sendbackup':
-                if (hasRole('BetManager')) {
-                    yield handleSendDecryptedBackup(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'togglenotifications':
-                yield handleToggleNotifications(interaction);
-                break;
-            case 'presentation':
-                yield handlePresentation(interaction);
-                break;
-            case 'clearmessages':
-                yield handleClearMessages(interaction);
-                break;
-            case 'bethistory':
-                yield handleBetHistory(interaction);
-                break;
-            case 'stats':
-                yield handleStats(interaction);
-                break;
-            case 'globalstats':
-                yield handleGlobalStats(interaction);
-                break;
-            case 'guess':
-                yield handleGuess(interaction);
-                break;
-            case 'transferdebilus':
-                if (hasRole('BetManager')) {
-                    yield handleTransferDebilus(interaction);
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'buyitem':
-                try {
-                    yield handleBuyItem(interaction);
-                }
-                catch (error) {
-                    log(`Error handling buyitem command: ${error}`);
-                    yield interaction.reply('There was an error processing your purchase.');
-                }
-                break;
-            case 'additem':
-                if (hasRole('BetManager')) {
+                    break;
+                case 'removetournamentparticipant':
+                    if (hasRole('BetManager')) {
+                        yield handleRemoveTournamentParticipant(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'listtournamentparticipants':
+                    if (hasRole('BetManager')) {
+                        yield handleListTournamentParticipants(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'cleartournamentparticipants':
+                    if (hasRole('BetManager')) {
+                        yield handleClearTournamentParticipants(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'placeyourbets':
+                    if (hasRole('BetManager')) {
+                        yield handlePlaceYourBets(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'points':
+                    yield handlePoints(interaction);
+                    break;
+                case 'clearbets':
+                    if (hasRole('BetManager')) {
+                        yield handleClearBets(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'leaderboard':
+                    yield handleLeaderboard(interaction);
+                    break;
+                case 'win':
+                    if (hasRole('BetManager')) {
+                        const winnerOption = interaction.options.get('winner');
+                        const winner = winnerOption ? winnerOption.value : null;
+                        if (winner === 1 || winner === 2) {
+                            yield handleWin(interaction, winner === 1 ? 'player1' : 'player2');
+                        }
+                        else {
+                            yield interaction.reply('The winner must be 1 or 2.');
+                        }
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'betslist':
+                    if (hasRole('BetManager')) {
+                        yield handleBetsList(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'deleteuser':
+                    if (hasRole('BetManager')) {
+                        yield handleDeleteUser(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'addpoints':
+                    if (hasRole('BetManager')) {
+                        yield handleAddPoints(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'claim':
+                    yield handleClaim(interaction);
+                    break;
+                case 'inventory':
+                    yield handleInventory(interaction);
+                    break;
+                case 'backup':
+                    if (hasRole('BetManager')) {
+                        yield handleBackup(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'sendbackup':
+                    if (hasRole('BetManager')) {
+                        yield handleSendDecryptedBackup(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'togglenotifications':
+                    yield handleToggleNotifications(interaction);
+                    break;
+                case 'presentation':
+                    yield handlePresentation(interaction);
+                    break;
+                case 'clearmessages':
+                    yield handleClearMessages(interaction);
+                    break;
+                case 'bethistory':
+                    yield handleBetHistory(interaction);
+                    break;
+                case 'stats':
+                    yield handleStats(interaction);
+                    break;
+                case 'globalstats':
+                    yield handleGlobalStats(interaction);
+                    break;
+                case 'guess':
+                    yield handleGuess(interaction);
+                    break;
+                case 'transferdebilus':
+                    if (hasRole('BetManager')) {
+                        yield handleTransferDebilus(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'buyitem':
                     try {
-                        yield handleAddItemToStore(interaction);
+                        yield handleBuyItem(interaction);
                     }
                     catch (error) {
-                        log(`Error handling additem command: ${error}`);
-                        yield interaction.reply('There was an error adding the item to the store.');
+                        log(`Error handling buyitem command: ${error}`);
+                        yield interaction.reply('There was an error processing your purchase.');
                     }
-                }
-                else {
-                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
-                }
-                break;
-            case 'listitems':
-                try {
-                    yield handleListItems(interaction);
-                }
-                catch (error) {
-                    log(`Error handling listitems command: ${error}`);
-                    yield interaction.reply('There was an error retrieving the items list.');
-                }
-                break;
-            default:
-                try {
-                    yield interaction.reply('Unknown command');
-                }
-                catch (error) {
-                    log(`Error handling default command: ${error}`);
-                    yield interaction.reply('There was an error processing your request.');
-                }
-                break;
+                    break;
+                case 'additem':
+                    if (hasRole('BetManager')) {
+                        try {
+                            yield handleAddItemToStore(interaction);
+                        }
+                        catch (error) {
+                            log(`Error handling additem command: ${error}`);
+                            yield interaction.reply('There was an error adding the item to the store.');
+                        }
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'listitems':
+                    try {
+                        yield handleListItems(interaction);
+                    }
+                    catch (error) {
+                        log(`Error handling listitems command: ${error}`);
+                        yield interaction.reply('There was an error retrieving the items list.');
+                    }
+                    break;
+                default:
+                    try {
+                        yield interaction.reply('Unknown command');
+                    }
+                    catch (error) {
+                        log(`Error handling default command: ${error}`);
+                        yield interaction.reply('There was an error processing your request.');
+                    }
+                    break;
+            }
+        }
+        catch (error) {
+            log(`Error handling ${commandName} command: ${error}`);
+            if (!interaction.replied && !interaction.deferred) {
+                yield interaction.reply('There was an error processing your request.');
+            }
         }
     }
     else if (interaction.isButton()) {
