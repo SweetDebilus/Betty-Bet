@@ -295,7 +295,8 @@ const commands = [
   new SlashCommandBuilder() 
     .setName('transferdebilus') 
     .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.') 
-    .addUserOption(option => option.setName('user') .setDescription('User to transfer the GearPoints to') 
+    .addUserOption(option => option.setName('user') 
+    .setDescription('User to transfer the GearPoints to') 
     .setRequired(true)) 
   ]; 
   
