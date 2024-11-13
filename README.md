@@ -53,7 +53,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 - **/transferdebilus**: Transfer all GearPoints from the debilus closet to a specific user and empty the closet.
   - **Options**:
     - `user`: User to transfer the GearPoints to
-- **/additem**
+- **/additem**: Add an item to Betty Bet's shop
   - **Option**:
     - `itemname`: Name of item
     - `quantity`: The number of items you want to add
