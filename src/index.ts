@@ -519,7 +519,7 @@ client.on('interactionCreate', async interaction => {
 });
 
 client.on('rateLimit', (info) => {
-  console.warn(`Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
+  log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
 });
 
 client.on('messageCreate', async message => {

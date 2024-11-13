@@ -519,7 +519,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
     }
 }));
 client.on('rateLimit', (info) => {
-    console.warn(`Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
+    log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
 });
 client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
     if (!bettingOpen || message.author.bot)
