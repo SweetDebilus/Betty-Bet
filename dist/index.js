@@ -494,7 +494,13 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 }
                 break;
             default:
-                yield interaction.reply({ content: 'Unknown command.', ephemeral: true });
+                try {
+                    yield interaction.reply('Unknown command');
+                }
+                catch (error) {
+                    log(`Error handling default command: ${error}`);
+                    yield interaction.reply('There was an error processing your request.');
+                }
                 break;
         }
     }
@@ -512,6 +518,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
     }
 }));
+client.on('rateLimit', (info) => {
+    console.warn(`Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
+});
 client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
     if (!bettingOpen || message.author.bot)
         return;

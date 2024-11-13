@@ -495,7 +495,12 @@ client.on('interactionCreate', async interaction => {
         }
         break;
       default:
-        await interaction.reply({ content: 'Unknown command.', ephemeral: true });
+        try { 
+          await interaction.reply('Unknown command'); 
+        } catch (error) { 
+          log(`Error handling default command: ${error}`); 
+          await interaction.reply('There was an error processing your request.'); 
+        }
         break;
     }
   } else if (interaction.isButton()) {
@@ -511,6 +516,10 @@ client.on('interactionCreate', async interaction => {
       await handleBetSelection(interaction as ButtonInteraction);
     }
   }
+});
+
+client.on('rateLimit', (info) => {
+  console.warn(`Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
 });
 
 client.on('messageCreate', async message => {
