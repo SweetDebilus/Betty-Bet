@@ -62,6 +62,7 @@ let player1Name;
 let player2Name;
 let usersPoints = {};
 let currentBets = {};
+let store = {};
 let bettingOpen = false;
 let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
@@ -109,6 +110,7 @@ const saveDecryptedBackup = () => {
         const data = {
             usersPoints,
             debilusCloset,
+            store,
             lastUpdateTime: lastUpdateTime.toISOString()
         };
         fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
@@ -136,6 +138,7 @@ const loadPoints = () => __awaiter(void 0, void 0, void 0, function* () {
             const decryptedData = JSON.parse(decrypt(encryptedData));
             usersPoints = decryptedData.usersPoints || {};
             debilusCloset = decryptedData.debilusCloset || 0;
+            store = decryptedData.store || {};
             lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
         }
         catch (error) {
@@ -147,6 +150,7 @@ const savePoints = () => __awaiter(void 0, void 0, void 0, function* () {
     const data = {
         usersPoints,
         debilusCloset,
+        store,
         lastUpdateTime: lastUpdateTime.toISOString()
     };
     const encryptedData = encrypt(JSON.stringify(data));
@@ -303,7 +307,31 @@ const commands = [
         .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.')
         .addUserOption(option => option.setName('user')
         .setDescription('User to transfer the GearPoints to')
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('buyitem')
+        .setDescription('Buy an item from the store')
+        .addStringOption(option => option.setName('itemname')
+        .setDescription('Name of the item')
         .setRequired(true))
+        .addIntegerOption(option => option.setName('quantity')
+        .setDescription('Quantity of the item')
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('additem')
+        .setDescription('Add an item to the store')
+        .addStringOption(option => option.setName('itemname')
+        .setDescription('Name of the item')
+        .setRequired(true))
+        .addIntegerOption(option => option.setName('quantity')
+        .setDescription('Quantity of the item')
+        .setRequired(true))
+        .addIntegerOption(option => option.setName('unitprice')
+        .setDescription('Unit price of the item')
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('listitems')
+        .setDescription('List all items available in the store')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -496,6 +524,38 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                 }
                 break;
+            case 'buyitem':
+                try {
+                    yield handleBuyItem(interaction);
+                }
+                catch (error) {
+                    log(`Error handling buyitem command: ${error}`);
+                    yield interaction.reply('There was an error processing your purchase.');
+                }
+                break;
+            case 'additem':
+                if (hasRole('BetManager')) {
+                    try {
+                        yield handleAddItemToStore(interaction);
+                    }
+                    catch (error) {
+                        log(`Error handling additem command: ${error}`);
+                        yield interaction.reply('There was an error adding the item to the store.');
+                    }
+                }
+                else {
+                    yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                }
+                break;
+            case 'listitems':
+                try {
+                    yield handleListItems(interaction);
+                }
+                catch (error) {
+                    log(`Error handling listitems command: ${error}`);
+                    yield interaction.reply('There was an error retrieving the items list.');
+                }
+                break;
             default:
                 try {
                     yield interaction.reply('Unknown command');
@@ -574,7 +634,7 @@ const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, functi
         yield interaction.reply({ content: `You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral: true });
         return;
     }
-    usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0, notificationsEnabled: false, betHistory: [] };
+    usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0, notificationsEnabled: false, betHistory: [], inventoryShop: [] };
     savePoints();
     yield interaction.reply({ content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral: true });
 });
@@ -1181,5 +1241,70 @@ const handleTransferDebilus = (interaction) => __awaiter(void 0, void 0, void 0,
     debilusCloset = 0;
     savePoints();
     yield interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, ephemeral: true });
+});
+const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b;
+    yield loadPoints(); // Charger les points depuis le fichier
+    const userId = interaction.user.id;
+    const itemName = (_a = interaction.options.get('itemname', true)) === null || _a === void 0 ? void 0 : _a.value;
+    const quantity = (_b = interaction.options.get('quantity', true)) === null || _b === void 0 ? void 0 : _b.value;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: 'User not found', ephemeral: true });
+        return;
+    }
+    if (!store[itemName]) {
+        yield interaction.reply({ content: 'Item not found', ephemeral: true });
+        return;
+    }
+    const item = store[itemName];
+    const totalPrice = item.unitPrice * quantity;
+    if (usersPoints[userId].points < totalPrice) {
+        yield interaction.reply({ content: 'Not enough points', ephemeral: true });
+        return;
+    }
+    if (item.quantity < quantity) {
+        yield interaction.reply({ content: 'Not enough items in stock', ephemeral: true });
+        return;
+    }
+    // Déduire les points de l'utilisateur et mettre à jour l'inventaire
+    usersPoints[userId].points -= totalPrice;
+    const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
+    if (userInventory) {
+        userInventory.quantity += quantity;
+    }
+    else {
+        usersPoints[userId].inventoryShop.push({ name: itemName, quantity: quantity });
+    }
+    // Déduire les items du stock
+    item.quantity -= quantity;
+    yield savePoints(); // Sauvegarder les points dans le fichier
+    yield interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, ephemeral: true });
+});
+const handleAddItemToStore = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    var _a, _b, _c;
+    yield loadPoints();
+    const itemName = (_a = interaction.options.get('itemname', true)) === null || _a === void 0 ? void 0 : _a.value;
+    const quantity = (_b = interaction.options.get('quantity', true)) === null || _b === void 0 ? void 0 : _b.value;
+    const unitPrice = (_c = interaction.options.get('unitprice', true)) === null || _c === void 0 ? void 0 : _c.value;
+    if (store[itemName]) {
+        store[itemName].quantity += quantity;
+    }
+    else {
+        store[itemName] = {
+            name: itemName,
+            quantity: quantity,
+            unitPrice: unitPrice
+        };
+    }
+    yield savePoints();
+    yield interaction.reply({ content: `Added ${quantity} ${itemName}(s) to the store`, ephemeral: true });
+});
+const handleListItems = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    let storeItems = 'Available items in the store:\n\n';
+    for (const itemName in store) {
+        const item = store[itemName];
+        storeItems += `${item.name} - *Quantity*: **${item.quantity}** | *Unit Price*: **${item.unitPrice}** ${pointsEmoji}\n`;
+    }
+    yield interaction.reply({ content: storeItems, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);

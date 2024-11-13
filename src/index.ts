@@ -27,8 +27,9 @@ const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name: string;
 let player2Name: string;
-let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[] }} = {};
+let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[], inventoryShop: { name: string, quantity: number }[]}} = {};
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
+let store: {[key: string]: {name: string, quantity: number, unitPrice: number}} = {};
 let bettingOpen = false;
 let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime = new Date();
@@ -87,6 +88,7 @@ const saveDecryptedBackup = () => {
     const data = {
       usersPoints,
       debilusCloset,
+      store,
       lastUpdateTime: lastUpdateTime.toISOString()
     };
     fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
@@ -122,6 +124,7 @@ const loadPoints = async () => {
       const decryptedData = JSON.parse(decrypt(encryptedData));
       usersPoints = decryptedData.usersPoints || {};
       debilusCloset = decryptedData.debilusCloset || 0;
+      store = decryptedData.store || {};
       lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
     } catch (error) {
       log(`Failed to decrypt data: ${error}`);
@@ -133,6 +136,7 @@ const savePoints = async () => {
   const data = {
     usersPoints,
     debilusCloset,
+    store,
     lastUpdateTime: lastUpdateTime.toISOString()
   };
 
@@ -206,21 +210,25 @@ const commands = [
   new SlashCommandBuilder() 
     .setName('placeyourbets') 
     .setDescription('Start a betting period') 
-    .addStringOption(option => option.setName('player1name') 
-    .setDescription('Name of player 1') 
-    .setRequired(true)) 
-    .addStringOption(option => option.setName('player2name') 
-    .setDescription('Name of player 2') 
-    .setRequired(true)), 
+    .addStringOption(option => 
+      option.setName('player1name') 
+        .setDescription('Name of player 1') 
+        .setRequired(true)) 
+    .addStringOption(option => 
+      option.setName('player2name') 
+        .setDescription('Name of player 2') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('addpoints') 
     .setDescription('Add points to a user') 
-    .addUserOption(option => option.setName('user') 
-    .setDescription('User to add points to') 
-    .setRequired(true)) 
-    .addIntegerOption(option => option.setName('points') 
-    .setDescription('Number of points to add') 
-    .setRequired(true)), 
+    .addUserOption(option => 
+      option.setName('user') 
+        .setDescription('User to add points to') 
+        .setRequired(true)) 
+    .addIntegerOption(option => 
+      option.setName('points') 
+        .setDescription('Number of points to add') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('points') 
     .setDescription('Check your points'), 
@@ -239,18 +247,20 @@ const commands = [
   new SlashCommandBuilder() 
     .setName('win') 
     .setDescription('Declare the winner and redistribute points') 
-    .addIntegerOption(option => option.setName('winner') 
-    .setDescription('The winning player (1 or 2)') 
-    .setRequired(true)), 
+    .addIntegerOption(option => 
+      option.setName('winner') 
+        .setDescription('The winning player (1 or 2)') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('betslist') 
     .setDescription('See the list of players who bet on player 1 and player 2'), 
   new SlashCommandBuilder() 
     .setName('deleteuser') 
     .setDescription('Delete a registered user') 
-    .addStringOption(option => option.setName('userid') 
-    .setDescription('ID of the user to delete') 
-    .setRequired(true)), 
+    .addStringOption(option => 
+      option.setName('userid') 
+        .setDescription('ID of the user to delete') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('backup') 
     .setDescription('Encrypt and save data from decrypted backup'), 
@@ -260,15 +270,17 @@ const commands = [
   new SlashCommandBuilder() 
     .setName('addtournamentparticipant') 
     .setDescription('Add a participant to the tournament') 
-    .addUserOption(option => option.setName('user') 
-    .setDescription('The user to add to the tournament') 
-    .setRequired(true)), 
+    .addUserOption(option => 
+      option.setName('user') 
+        .setDescription('The user to add to the tournament') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('removetournamentparticipant') 
     .setDescription('Remove a participant from the tournament') 
-    .addUserOption(option => option.setName('user') 
-    .setDescription('The user to remove from the tournament') 
-    .setRequired(true)), 
+    .addUserOption(option => 
+      option.setName('user') 
+        .setDescription('The user to remove from the tournament') 
+        .setRequired(true)), 
   new SlashCommandBuilder() 
     .setName('listtournamentparticipants') 
     .setDescription('List all participants in the tournament'),
@@ -299,9 +311,39 @@ const commands = [
   new SlashCommandBuilder() 
     .setName('transferdebilus') 
     .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.') 
-    .addUserOption(option => option.setName('user') 
-    .setDescription('User to transfer the GearPoints to') 
-    .setRequired(true)) 
+    .addUserOption(option => 
+      option.setName('user') 
+        .setDescription('User to transfer the GearPoints to') 
+        .setRequired(true)),
+  new SlashCommandBuilder() 
+    .setName('buyitem') 
+    .setDescription('Buy an item from the store') 
+    .addStringOption(option => 
+      option.setName('itemname') 
+        .setDescription('Name of the item') 
+        .setRequired(true)) 
+    .addIntegerOption(option => 
+      option.setName('quantity') 
+        .setDescription('Quantity of the item') 
+        .setRequired(true)), 
+  new SlashCommandBuilder() 
+    .setName('additem') 
+    .setDescription('Add an item to the store') 
+    .addStringOption(option => 
+      option.setName('itemname') 
+        .setDescription('Name of the item') 
+        .setRequired(true)) 
+    .addIntegerOption(option => 
+      option.setName('quantity') 
+        .setDescription('Quantity of the item') 
+        .setRequired(true)) 
+    .addIntegerOption(option => 
+      option.setName('unitprice') 
+        .setDescription('Unit price of the item') 
+        .setRequired(true)),
+  new SlashCommandBuilder()
+    .setName('listitems')
+    .setDescription('List all items available in the store')
   ]; 
   
 const commandData = commands.map(command => command.toJSON()); 
@@ -498,6 +540,34 @@ client.on('interactionCreate', async interaction => {
           await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
         }
         break;
+      case 'buyitem': 
+        try { 
+          await handleBuyItem(interaction); 
+        } catch (error) { 
+          log(`Error handling buyitem command: ${error}`); 
+          await interaction.reply('There was an error processing your purchase.'); 
+        } 
+        break; 
+      case 'additem': 
+        if (hasRole('BetManager')){
+          try { 
+            await handleAddItemToStore(interaction); 
+          } catch (error) { 
+            log(`Error handling additem command: ${error}`); 
+            await interaction.reply('There was an error adding the item to the store.'); 
+          } 
+        } else {
+          await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+        }
+        break;
+      case 'listitems':
+        try{
+          await handleListItems(interaction);
+        } catch (error) {
+          log(`Error handling listitems command: ${error}`);
+          await interaction.reply('There was an error retrieving the items list.');
+        }
+        break;
       default:
         try { 
           await interaction.reply('Unknown command'); 
@@ -586,7 +656,7 @@ const handleRegister = async (interaction: CommandInteraction) => {
     return;
   }
 
-  usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [] };
+  usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [], inventoryShop: [] };
   savePoints();
   await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral:true});
 
@@ -1313,6 +1383,87 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
 
   savePoints();
   await interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, ephemeral: true });
+};
+
+const handleBuyItem = async (interaction: CommandInteraction) => {
+  await loadPoints();  // Charger les points depuis le fichier
+
+  const userId = interaction.user.id;
+  const itemName = interaction.options.get('itemname', true)?.value as string;
+  const quantity = interaction.options.get('quantity', true)?.value as number;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: 'User not found', ephemeral: true });
+    return;
+  }
+
+  if (!store[itemName]) {
+    await interaction.reply({ content: 'Item not found', ephemeral: true });
+    return;
+  }
+
+  const item = store[itemName];
+  const totalPrice = item.unitPrice * quantity;
+
+  if (usersPoints[userId].points < totalPrice) {
+    await interaction.reply({ content: 'Not enough points', ephemeral: true });
+    return;
+  }
+
+  if (item.quantity < quantity) {
+    await interaction.reply({ content: 'Not enough items in stock', ephemeral: true });
+    return;
+  }
+
+  // Déduire les points de l'utilisateur et mettre à jour l'inventaire
+  usersPoints[userId].points -= totalPrice;
+  const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
+
+  if (userInventory) {
+    userInventory.quantity += quantity;
+  } else {
+    usersPoints[userId].inventoryShop.push({ name: itemName, quantity: quantity });
+  }
+
+  // Déduire les items du stock
+  item.quantity -= quantity;
+
+  await savePoints();  // Sauvegarder les points dans le fichier
+
+  await interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, ephemeral: true });
+};
+
+const handleAddItemToStore = async (interaction: CommandInteraction) => {
+  await loadPoints();
+
+  const itemName = interaction.options.get('itemname', true)?.value as string;
+  const quantity = interaction.options.get('quantity', true)?.value as number;
+  const unitPrice = interaction.options.get('unitprice', true)?.value as number;
+
+  if (store[itemName]) {
+    store[itemName].quantity += quantity;
+  } else {
+    store[itemName] = {
+      name: itemName,
+      quantity: quantity,
+      unitPrice: unitPrice
+    };
+  }
+
+  await savePoints()
+
+  await interaction.reply({ content: `Added ${quantity} ${itemName}(s) to the store`, ephemeral: true });
+};
+
+const handleListItems = async (interaction: CommandInteraction) => {
+  let storeItems = 'Available items in the store:\n\n';
+  
+  for (const itemName in store) {
+    const item = store[itemName];
+    storeItems += `${item.name} - *Quantity*: **${item.quantity}** | *Unit Price*: **${item.unitPrice}** ${pointsEmoji}\n`;
+  }
+
+  await interaction.reply({ content: storeItems, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);
