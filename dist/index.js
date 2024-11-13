@@ -198,6 +198,9 @@ const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, f
 // Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
 node_schedule_1.default.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 node_schedule_1.default.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
+client.on('rateLimit', (info) => {
+    log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
+});
 const commands = [
     new discord_js_1.SlashCommandBuilder()
         .setName('register')
@@ -518,9 +521,6 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
     }
 }));
-client.on('rateLimit', (info) => {
-    log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
-});
 client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
     if (!bettingOpen || message.author.bot)
         return;

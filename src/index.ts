@@ -195,6 +195,10 @@ const sendNotification = async (userId: string, points: number) => {
 schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 
+client.on('rateLimit', (info) => {
+  log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
+});
+
 const commands = [ 
   new SlashCommandBuilder() 
     .setName('register') 
@@ -516,10 +520,6 @@ client.on('interactionCreate', async interaction => {
       await handleBetSelection(interaction as ButtonInteraction);
     }
   }
-});
-
-client.on('rateLimit', (info) => {
-  log(`WARNING: Rate limit hit: ${info.timeDifference ? info.timeDifference : info.timeout ? info.timeout : 'Unknown timeout '}`);
 });
 
 client.on('messageCreate', async message => {
