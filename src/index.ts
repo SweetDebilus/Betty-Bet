@@ -1399,11 +1399,13 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   const itemName = interaction.options.get('itemname', true)?.value as string;
   const quantity = interaction.options.get('quantity', true)?.value as number;
 
+  // Vérifier si l'utilisateur existe
   if (!usersPoints[userId]) {
     await interaction.reply({ content: 'User not found', ephemeral: true });
     return;
   }
 
+  // Vérifier si l'article existe dans la boutique
   if (!store[itemName]) {
     await interaction.reply({ content: 'Item not found', ephemeral: true });
     return;
@@ -1412,11 +1414,13 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   const item = store[itemName];
   const totalPrice = item.unitPrice * quantity;
 
+  // Vérifier si l'utilisateur a suffisamment de points
   if (usersPoints[userId].points < totalPrice) {
     await interaction.reply({ content: 'Not enough points', ephemeral: true });
     return;
   }
 
+  // Vérifier si la boutique a suffisamment d'articles en stock
   if (item.quantity < quantity) {
     await interaction.reply({ content: 'Not enough items in stock', ephemeral: true });
     return;
@@ -1426,6 +1430,7 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   usersPoints[userId].points -= totalPrice;
   const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
 
+  // Mettre à jour la quantité de l'article dans l'inventaire de l'utilisateur
   if (userInventory) {
     userInventory.quantity += quantity;
     debilusCloset += totalPrice;
@@ -1439,6 +1444,7 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
 
   await savePoints();  // Sauvegarder les points dans le fichier
 
+  // Répondre à l'interaction pour confirmer l'achat
   await interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, ephemeral: true });
 };
 
