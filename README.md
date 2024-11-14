@@ -86,6 +86,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
    ROLE=your-role-for-users-in-discord
    CHANNEL=your-channel-id-for-the-game
    PATHLOG=path/to/your/log/file.log
+   BETTYID=Betty-Bet-Id
 ```
 5. Start the bot.
 ```sh
