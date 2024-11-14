@@ -23,6 +23,14 @@ const betyEmoji = process.env.BETTY!;
 const debilus = process.env.DEBILUS!;
 const debcoins = process.env.DEBCOIN!;
 
+interface PurchaseRecord {
+  userId: string;
+  itemName: string;
+  quantity: number;
+  totalPrice: number;
+  timestamp: Date;
+}
+
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name: string;
@@ -30,6 +38,7 @@ let player2Name: string;
 let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[], inventoryShop: { name: string, quantity: number }[]}} = {};
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
 let store: {[key: string]: {name: string, quantity: number, unitPrice: number}} = {};
+let purchaseHistory: {[key: string]: {userId: string, userName: string, itemName: string, quantity: number, totalPrice: number, timestamp: Date}} = {};
 let bettingOpen = false;
 let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime = new Date();
@@ -89,6 +98,7 @@ const saveDecryptedBackup = () => {
       usersPoints,
       debilusCloset,
       store,
+      purchaseHistory,
       lastUpdateTime: lastUpdateTime.toISOString()
     };
     fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
@@ -125,6 +135,7 @@ const loadPoints = async () => {
       usersPoints = decryptedData.usersPoints || {};
       debilusCloset = decryptedData.debilusCloset || 0;
       store = decryptedData.store || {};
+      purchaseHistory = decryptedData.purchaseHistory || {}
       lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
     } catch (error) {
       log(`Failed to decrypt data: ${error}`);
@@ -137,6 +148,7 @@ const savePoints = async () => {
     usersPoints,
     debilusCloset,
     store,
+    purchaseHistory,
     lastUpdateTime: lastUpdateTime.toISOString()
   };
 
@@ -343,7 +355,10 @@ const commands = [
         .setRequired(true)),
   new SlashCommandBuilder()
     .setName('listitems')
-    .setDescription('List all items available in the store')
+    .setDescription('List all items available in the store'),
+  new SlashCommandBuilder()
+      .setName('purchasehistory')
+      .setDescription('view purchase history in the store')
   ]; 
   
 const commandData = commands.map(command => command.toJSON()); 
@@ -567,6 +582,9 @@ client.on('interactionCreate', async interaction => {
             log(`Error handling listitems command: ${error}`);
             await interaction.reply('There was an error retrieving the items list.');
           }
+          break;
+        case 'purchasehistory':
+          await handleViewPurchaseHistory(interaction);
           break;
         default:
           try { 
@@ -980,6 +998,8 @@ const handleBackup = async (interaction: CommandInteraction) => {
   // Mettre à jour les variables locales après la sauvegarde
   usersPoints = decryptedData.usersPoints;
   debilusCloset = decryptedData.debilusCloset;
+  store = decryptedData.store;
+  purchaseHistory = decryptedData.purchaseHistory;
   lastUpdateTime = new Date(decryptedData.lastUpdateTime);
 
   await interaction.reply({ content: 'Data from decrypted backup has been encrypted and **saved successfully** !', ephemeral: true });
@@ -1442,6 +1462,17 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   // Déduire les items du stock
   item.quantity -= quantity;
 
+  // Enregistrer l'achat dans l'historique
+  const transactionId = `txn_${Date.now()}`;
+  purchaseHistory[transactionId] = {
+    userId: userId,
+    userName: usersPoints[userId].name,
+    itemName: itemName,
+    quantity: quantity,
+    totalPrice: totalPrice,
+    timestamp: new Date()
+  };
+
   await savePoints();  // Sauvegarder les points dans le fichier
 
   // Répondre à l'interaction pour confirmer l'achat
@@ -1479,6 +1510,24 @@ const handleListItems = async (interaction: CommandInteraction) => {
   }
 
   await interaction.reply({ content: storeItems, ephemeral: true });
+};
+
+const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
+  const allPurchaseRecords = Object.values(purchaseHistory);
+
+  if (allPurchaseRecords.length === 0) {
+    await interaction.reply({ content: 'No purchase history found.', ephemeral: true });
+    return;
+  }
+
+  // Trier les enregistrements d'achat par nom d'utilisateur
+  allPurchaseRecords.sort((a, b) => a.userName.localeCompare(b.userName));
+
+  const historyMessage = allPurchaseRecords.map(record => {
+    return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${record.timestamp.toLocaleString()}`;
+  }).join('\n');
+
+  await interaction.reply({ content: `Global purchase history:\n${historyMessage}`, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);

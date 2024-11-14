@@ -63,6 +63,7 @@ let player2Name;
 let usersPoints = {};
 let currentBets = {};
 let store = {};
+let purchaseHistory = {};
 let bettingOpen = false;
 let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
@@ -111,6 +112,7 @@ const saveDecryptedBackup = () => {
             usersPoints,
             debilusCloset,
             store,
+            purchaseHistory,
             lastUpdateTime: lastUpdateTime.toISOString()
         };
         fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
@@ -139,6 +141,7 @@ const loadPoints = () => __awaiter(void 0, void 0, void 0, function* () {
             usersPoints = decryptedData.usersPoints || {};
             debilusCloset = decryptedData.debilusCloset || 0;
             store = decryptedData.store || {};
+            purchaseHistory = decryptedData.purchaseHistory || {};
             lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
         }
         catch (error) {
@@ -151,6 +154,7 @@ const savePoints = () => __awaiter(void 0, void 0, void 0, function* () {
         usersPoints,
         debilusCloset,
         store,
+        purchaseHistory,
         lastUpdateTime: lastUpdateTime.toISOString()
     };
     const encryptedData = encrypt(JSON.stringify(data));
@@ -331,7 +335,10 @@ const commands = [
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('listitems')
-        .setDescription('List all items available in the store')
+        .setDescription('List all items available in the store'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('purchasehistory')
+        .setDescription('view purchase history in the store')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -556,6 +563,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         log(`Error handling listitems command: ${error}`);
                         yield interaction.reply('There was an error retrieving the items list.');
                     }
+                    break;
+                case 'purchasehistory':
+                    yield handleViewPurchaseHistory(interaction);
                     break;
                 default:
                     try {
@@ -898,6 +908,8 @@ const handleBackup = (interaction) => __awaiter(void 0, void 0, void 0, function
     // Mettre à jour les variables locales après la sauvegarde
     usersPoints = decryptedData.usersPoints;
     debilusCloset = decryptedData.debilusCloset;
+    store = decryptedData.store;
+    purchaseHistory = decryptedData.purchaseHistory;
     lastUpdateTime = new Date(decryptedData.lastUpdateTime);
     yield interaction.reply({ content: 'Data from decrypted backup has been encrypted and **saved successfully** !', ephemeral: true });
 });
@@ -1256,20 +1268,24 @@ const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, functio
     const userId = interaction.user.id;
     const itemName = (_a = interaction.options.get('itemname', true)) === null || _a === void 0 ? void 0 : _a.value;
     const quantity = (_b = interaction.options.get('quantity', true)) === null || _b === void 0 ? void 0 : _b.value;
+    // Vérifier si l'utilisateur existe
     if (!usersPoints[userId]) {
         yield interaction.reply({ content: 'User not found', ephemeral: true });
         return;
     }
+    // Vérifier si l'article existe dans la boutique
     if (!store[itemName]) {
         yield interaction.reply({ content: 'Item not found', ephemeral: true });
         return;
     }
     const item = store[itemName];
     const totalPrice = item.unitPrice * quantity;
+    // Vérifier si l'utilisateur a suffisamment de points
     if (usersPoints[userId].points < totalPrice) {
         yield interaction.reply({ content: 'Not enough points', ephemeral: true });
         return;
     }
+    // Vérifier si la boutique a suffisamment d'articles en stock
     if (item.quantity < quantity) {
         yield interaction.reply({ content: 'Not enough items in stock', ephemeral: true });
         return;
@@ -1277,6 +1293,7 @@ const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, functio
     // Déduire les points de l'utilisateur et mettre à jour l'inventaire
     usersPoints[userId].points -= totalPrice;
     const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
+    // Mettre à jour la quantité de l'article dans l'inventaire de l'utilisateur
     if (userInventory) {
         userInventory.quantity += quantity;
         debilusCloset += totalPrice;
@@ -1287,7 +1304,18 @@ const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, functio
     }
     // Déduire les items du stock
     item.quantity -= quantity;
+    // Enregistrer l'achat dans l'historique
+    const transactionId = `txn_${Date.now()}`;
+    purchaseHistory[transactionId] = {
+        userId: userId,
+        userName: usersPoints[userId].name,
+        itemName: itemName,
+        quantity: quantity,
+        totalPrice: totalPrice,
+        timestamp: new Date()
+    };
     yield savePoints(); // Sauvegarder les points dans le fichier
+    // Répondre à l'interaction pour confirmer l'achat
     yield interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, ephemeral: true });
 });
 const handleAddItemToStore = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1316,5 +1344,18 @@ const handleListItems = (interaction) => __awaiter(void 0, void 0, void 0, funct
         storeItems += `${item.name} - *Quantity*: **${item.quantity}** | *Unit Price*: **${item.unitPrice}** ${pointsEmoji}\n`;
     }
     yield interaction.reply({ content: storeItems, ephemeral: true });
+});
+const handleViewPurchaseHistory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const allPurchaseRecords = Object.values(purchaseHistory);
+    if (allPurchaseRecords.length === 0) {
+        yield interaction.reply({ content: 'No purchase history found.', ephemeral: true });
+        return;
+    }
+    // Trier les enregistrements d'achat par nom d'utilisateur
+    allPurchaseRecords.sort((a, b) => a.userName.localeCompare(b.userName));
+    const historyMessage = allPurchaseRecords.map(record => {
+        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${record.timestamp.toLocaleString()}`;
+    }).join('\n');
+    yield interaction.reply({ content: `Global purchase history:\n${historyMessage}`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
