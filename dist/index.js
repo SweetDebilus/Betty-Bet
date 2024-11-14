@@ -71,6 +71,15 @@ let lastUpdateTime = new Date();
 let activeGuessGames = {}; // Canal ID -> Utilisateur ID
 const fs1 = require('fs');
 const logFile = process.env.PATHLOG;
+const formatDate = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, '0');
+    const day = String(date.getDate()).padStart(2, '0');
+    const hours = String(date.getHours()).padStart(2, '0');
+    const minutes = String(date.getMinutes()).padStart(2, '0');
+    const seconds = String(date.getSeconds()).padStart(2, '0');
+    return `${year}/${month}/${day} - ${hours}:${minutes}:${seconds}`;
+};
 // Fonction pour créer le dossier si nécessaire 
 const ensureLogDirectoryExists = (filePath) => {
     const logDir = path.dirname(filePath);
@@ -1370,9 +1379,11 @@ const handleViewPurchaseHistory = (interaction) => __awaiter(void 0, void 0, voi
     // Trier les enregistrements d'achat par nom d'utilisateur
     allPurchaseRecords.sort((a, b) => a.userName.localeCompare(b.userName));
     const historyMessage = allPurchaseRecords.map(record => {
-        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${record.timestamp.toLocaleString()}`;
+        const date = new Date(record.timestamp);
+        const formattedDate = formatDate(date);
+        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${formattedDate}\n`;
     }).join('\n');
-    yield interaction.reply({ content: `Global purchase history:\n${historyMessage}`, ephemeral: true });
+    yield interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, ephemeral: true });
 });
 const handleItemsInventory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -1387,7 +1398,7 @@ const handleItemsInventory = (interaction) => __awaiter(void 0, void 0, void 0, 
         return;
     }
     items.forEach((item, index) => __awaiter(void 0, void 0, void 0, function* () {
-        const itemInfo = `\n**Item ${index + 1}**:\n- **Name**: ${item.name}\n- **Quantity**: ${item.quantity}\n`;
+        const itemInfo = `\n**Item ${index + 1}**:\n- *Name*: **${item.name}**\n- *Quantity*: **${item.quantity}**\n`;
         inventoryItemsMessage += itemInfo;
     }));
     yield interaction.reply({ content: inventoryItemsMessage, ephemeral: true });
