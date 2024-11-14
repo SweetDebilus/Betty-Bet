@@ -22,6 +22,7 @@ const pointsEmoji = process.env.POINTS!;
 const betyEmoji = process.env.BETTY!;
 const debilus = process.env.DEBILUS!;
 const debcoins = process.env.DEBCOIN!;
+const bettyBettId = process.env.BETTYID!;
 
 interface PurchaseRecord {
   userId: string;
@@ -584,7 +585,11 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'purchasehistory':
-          await handleViewPurchaseHistory(interaction);
+          if (hasRole('BetManager')) {
+            await handleViewPurchaseHistory(interaction);
+          } else {
+            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+          }
           break;
         default:
           try { 
@@ -934,6 +939,13 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
 
   const userId = userOption?.value as string;
   const pointsToAdd = pointsOption?.value as number;
+
+  if (userId == bettyBettId) {
+    debilusCloset += pointsToAdd;
+    await interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, ephemeral: true });
+    savePoints();
+    return;
+  }
 
   if (!usersPoints[userId]) {
     await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });

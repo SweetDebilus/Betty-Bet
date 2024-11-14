@@ -56,6 +56,7 @@ const pointsEmoji = process.env.POINTS;
 const betyEmoji = process.env.BETTY;
 const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
+const bettyBettId = process.env.BETTYID;
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name;
@@ -565,7 +566,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'purchasehistory':
-                    yield handleViewPurchaseHistory(interaction);
+                    if (hasRole('BetManager')) {
+                        yield handleViewPurchaseHistory(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
                     break;
                 default:
                     try {
@@ -858,6 +864,12 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
     const pointsOption = interaction.options.get('points');
     const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
     const pointsToAdd = pointsOption === null || pointsOption === void 0 ? void 0 : pointsOption.value;
+    if (userId == bettyBettId) {
+        debilusCloset += pointsToAdd;
+        yield interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, ephemeral: true });
+        savePoints();
+        return;
+    }
     if (!usersPoints[userId]) {
         yield interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
         return;
