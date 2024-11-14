@@ -6,8 +6,8 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 - **/register**: Register to get initial GearPoints and start betting.
 - **/points**: Check your current GearPoints and status.
-- **/inventory**: Check the GearPoints in your inventory.
-- **/claim**: Claim GearPoints from your inventory to add them to your balance.
+- **/pointvault**: Check the GearPoints in your Point Vault.
+- **/claim**: Claim GearPoints from your Point Vault to add them to your balance.
 - **/leaderboard**: Show the leaderboard of top betters.
 - **/bethistory**: View your betting history.
 - **/stats**: View your detailed statistics.
@@ -21,6 +21,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
     - `itemname`: Name of item
     - `quantity`: The number of items you want to buy
 - **/listitems**: view items for sale in the store.
+- **/myitems**: view items in your inventory.
 
 ### Commands reserved for **BetManager** roles:
 
