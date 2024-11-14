@@ -236,11 +236,11 @@ const commands = [
         .setName('points')
         .setDescription('Check your points'),
     new discord_js_1.SlashCommandBuilder()
-        .setName('inventory')
-        .setDescription('Check your inventory'),
+        .setName('pointvault')
+        .setDescription('Check your Point Vault'),
     new discord_js_1.SlashCommandBuilder()
         .setName('claim')
-        .setDescription('Claim your points from inventory'),
+        .setDescription('Claim your points from Point Vault'),
     new discord_js_1.SlashCommandBuilder()
         .setName('clearbets')
         .setDescription('Clear all bets in case of issues'),
@@ -291,7 +291,7 @@ const commands = [
         .setDescription('Present Betty Bet and its functions'),
     new discord_js_1.SlashCommandBuilder()
         .setName('togglenotifications')
-        .setDescription('Toggle notifications for inventory points'),
+        .setDescription('Toggle notifications for Point Vault GearPoints'),
     new discord_js_1.SlashCommandBuilder()
         .setName('clearmessages')
         .setDescription('Clear all private messages sent by the bot'),
@@ -339,7 +339,10 @@ const commands = [
         .setDescription('List all items available in the store'),
     new discord_js_1.SlashCommandBuilder()
         .setName('purchasehistory')
-        .setDescription('view purchase history in the store')
+        .setDescription('view purchase history in the store'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('myitems')
+        .setDescription('view the items you own')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -485,7 +488,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 case 'claim':
                     yield handleClaim(interaction);
                     break;
-                case 'inventory':
+                case 'pointvault':
                     yield handleInventory(interaction);
                     break;
                 case 'backup':
@@ -572,6 +575,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     else {
                         yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                     }
+                    break;
+                case 'myitems':
+                    yield handleItemsInventory(interaction);
                     break;
                 default:
                     try {
@@ -906,7 +912,7 @@ const handleInventory = (interaction) => __awaiter(void 0, void 0, void 0, funct
         return;
     }
     const inventoryPoints = usersPoints[userId].inventory;
-    yield interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your inventory.`, ephemeral: true });
+    yield interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`, ephemeral: true });
 });
 const handleBackup = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     createDataDebilusDir();
@@ -1126,9 +1132,7 @@ const handleBetHistory = (interaction) => __awaiter(void 0, void 0, void 0, func
         }
         historyMessage += betInfo;
     }));
-    if (historyMessage.length > 0) {
-        yield interaction.reply({ content: historyMessage, ephemeral: true });
-    }
+    yield interaction.reply({ content: historyMessage, ephemeral: true });
 });
 const handleStats = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -1369,5 +1373,23 @@ const handleViewPurchaseHistory = (interaction) => __awaiter(void 0, void 0, voi
         return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${record.timestamp.toLocaleString()}`;
     }).join('\n');
     yield interaction.reply({ content: `Global purchase history:\n${historyMessage}`, ephemeral: true });
+});
+const handleItemsInventory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = interaction.user.id;
+    let inventoryItemsMessage = `**Item Inventory**:\n`;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+        return;
+    }
+    const items = usersPoints[userId].inventoryShop;
+    if (items.length === 0) {
+        yield interaction.reply({ content: 'you have no items in your inventory', ephemeral: true });
+        return;
+    }
+    items.forEach((item, index) => __awaiter(void 0, void 0, void 0, function* () {
+        const itemInfo = `\n**Item ${index + 1}**:\n- **Name**: ${item.name}\n- **Quantity**: ${item.quantity}\n`;
+        inventoryItemsMessage += itemInfo;
+    }));
+    yield interaction.reply({ content: inventoryItemsMessage, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);

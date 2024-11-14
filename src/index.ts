@@ -50,6 +50,7 @@ const ensureLogDirectoryExists = (filePath: string): void => {
 
 // Appeler la fonction pour s'assurer que le dossier existe 
 ensureLogDirectoryExists(logFile); 
+
 const log = (message: string): void => { 
   fs1.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`); 
 };
@@ -238,11 +239,11 @@ const commands = [
     .setName('points') 
     .setDescription('Check your points'), 
   new SlashCommandBuilder() 
-    .setName('inventory') 
-    .setDescription('Check your inventory'), 
+    .setName('pointvault') 
+    .setDescription('Check your Point Vault'), 
   new SlashCommandBuilder() 
     .setName('claim') 
-    .setDescription('Claim your points from inventory'),
+    .setDescription('Claim your points from Point Vault'),
   new SlashCommandBuilder() 
     .setName('clearbets') 
     .setDescription('Clear all bets in case of issues'), 
@@ -297,7 +298,7 @@ const commands = [
     .setDescription('Present Betty Bet and its functions'), 
   new SlashCommandBuilder() 
     .setName('togglenotifications') 
-    .setDescription('Toggle notifications for inventory points'), 
+    .setDescription('Toggle notifications for Point Vault GearPoints'), 
   new SlashCommandBuilder() 
     .setName('clearmessages') 
     .setDescription('Clear all private messages sent by the bot'), 
@@ -351,7 +352,10 @@ const commands = [
     .setDescription('List all items available in the store'),
   new SlashCommandBuilder()
       .setName('purchasehistory')
-      .setDescription('view purchase history in the store')
+      .setDescription('view purchase history in the store'),
+  new SlashCommandBuilder()
+      .setName('myitems')
+      .setDescription('view the items you own')
   ]; 
   
 const commandData = commands.map(command => command.toJSON()); 
@@ -503,7 +507,7 @@ client.on('interactionCreate', async interaction => {
         case 'claim':
           await handleClaim(interaction);
           break;
-        case 'inventory':
+        case 'pointvault':
           await handleInventory(interaction);
           break;   
         case 'backup':
@@ -582,6 +586,9 @@ client.on('interactionCreate', async interaction => {
           } else {
             await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
           }
+          break;
+        case 'myitems':
+          await handleItemsInventory(interaction);
           break;
         default:
           try { 
@@ -983,7 +990,7 @@ const handleInventory = async (interaction: CommandInteraction) => {
     return;
   }
   const inventoryPoints = usersPoints[userId].inventory;
-  await interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your inventory.`, ephemeral: true })
+  await interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`, ephemeral: true })
 };
 
 const handleBackup = async (interaction: CommandInteraction) => {
@@ -1233,9 +1240,7 @@ const handleBetHistory = async (interaction: CommandInteraction) => {
     historyMessage += betInfo;
   });
 
-  if (historyMessage.length > 0) {
-    await interaction.reply({ content: historyMessage, ephemeral: true });
-  }
+  await interaction.reply({ content: historyMessage, ephemeral: true });
 };
 
 const handleStats = async (interaction: CommandInteraction) => {
@@ -1533,5 +1538,29 @@ const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
 
   await interaction.reply({ content: `Global purchase history:\n${historyMessage}`, ephemeral: true });
 };
+
+const handleItemsInventory = async (interaction: CommandInteraction) => {
+  const userId = interaction.user.id;
+  let inventoryItemsMessage = `**Item Inventory**:\n`;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+    return;
+  }
+
+  const items = usersPoints[userId].inventoryShop;
+
+  if (items.length === 0) {
+    await interaction.reply({content:'you have no items in your inventory', ephemeral: true});
+    return;
+  }
+
+  items.forEach(async (item, index) => {
+    const itemInfo = `\n**Item ${index + 1}**:\n- **Name**: ${item.name}\n- **Quantity**: ${item.quantity}\n`;
+    inventoryItemsMessage += itemInfo;
+  });
+
+  await interaction.reply({content: inventoryItemsMessage, ephemeral: true});
+}
 
 client.login(process.env.DISCORD_TOKEN!);
