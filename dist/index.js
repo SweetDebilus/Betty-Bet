@@ -1381,7 +1381,7 @@ const handleViewPurchaseHistory = (interaction) => __awaiter(void 0, void 0, voi
     const historyMessage = allPurchaseRecords.map(record => {
         const date = new Date(record.timestamp);
         const formattedDate = formatDate(date);
-        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${formattedDate}\n`;
+        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: **${formattedDate}**\n`;
     }).join('\n');
     yield interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, ephemeral: true });
 });

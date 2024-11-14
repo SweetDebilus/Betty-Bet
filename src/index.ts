@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, ApplicationCommandOptionType, TextChannel, ButtonInteraction, Message, SlashCommandBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -1544,7 +1544,7 @@ const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
   const historyMessage = allPurchaseRecords.map(record => {
     const date = new Date(record.timestamp);
     const formattedDate = formatDate(date);
-    return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: ${formattedDate}\n`;
+    return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: **${formattedDate}**\n`;
   }).join('\n');
 
   await interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, ephemeral: true });
