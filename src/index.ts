@@ -24,14 +24,6 @@ const debilus = process.env.DEBILUS!;
 const debcoins = process.env.DEBCOIN!;
 const bettyBettId = process.env.BETTYID!;
 
-interface PurchaseRecord {
-  userId: string;
-  itemName: string;
-  quantity: number;
-  totalPrice: number;
-  timestamp: Date;
-}
-
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name: string;
