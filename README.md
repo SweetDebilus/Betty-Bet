@@ -58,6 +58,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
     - `itemname`: Name of item
     - `quantity`: The number of items you want to add
     - `unitprice`: enter the price of the item per unit
+- **/purchasehistory**: View purchase history in the store
       
 ## Installation
 
