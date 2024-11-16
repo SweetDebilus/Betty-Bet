@@ -179,12 +179,23 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
     const cyclesPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 12)); // Nombre de cycles de 12 heures écoulés
     for (const userId in usersPoints) {
         if (usersPoints[userId].inventory < 15) {
-            usersPoints[userId].inventory = Math.min(usersPoints[userId].inventory + cyclesPassed, 15);
+            const potentialNewInventory = usersPoints[userId].inventory + cyclesPassed;
+            if (potentialNewInventory > 15) {
+                const excessPoints = potentialNewInventory - 15;
+                usersPoints[userId].inventory = 15;
+                debilusCloset += excessPoints; // Ajouter les points excédentaires au debilusCloset 
+            }
+            else {
+                usersPoints[userId].inventory = potentialNewInventory;
+            }
             if (usersPoints[userId].inventory === 10) {
                 yield sendNotification(userId, 10); // Notification à 10 points
             }
             else if (usersPoints[userId].inventory === 15) {
                 yield sendNotification(userId, 15); // Notification à 15 points
+            }
+            else {
+                debilusCloset += cyclesPassed;
             }
         }
     }

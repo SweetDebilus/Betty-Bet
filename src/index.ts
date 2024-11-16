@@ -23,7 +23,8 @@ const betyEmoji = process.env.BETTY!;
 const debilus = process.env.DEBILUS!;
 const debcoins = process.env.DEBCOIN!;
 const bettyBettId = process.env.BETTYID!;
-
+const logFile = process.env.PATHLOG!;
+const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name: string;
@@ -36,9 +37,6 @@ let bettingOpen = false;
 let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
-
-const fs1 = require('fs');
-const logFile = process.env.PATHLOG!;
 
 const formatDate = (date: Date) => {
   const year = date.getFullYear();
@@ -171,12 +169,21 @@ const addPointsToInventory = async () => {
 
   for (const userId in usersPoints) {
     if (usersPoints[userId].inventory < 15) {
-      usersPoints[userId].inventory = Math.min(usersPoints[userId].inventory + cyclesPassed, 15);
+      const potentialNewInventory = usersPoints[userId].inventory + cyclesPassed;
+      if (potentialNewInventory > 15) { 
+        const excessPoints = potentialNewInventory - 15; 
+        usersPoints[userId].inventory = 15; 
+        debilusCloset += excessPoints; // Ajouter les points excédentaires au debilusCloset 
+      } else { 
+        usersPoints[userId].inventory = potentialNewInventory; 
+      }
 
       if (usersPoints[userId].inventory === 10) {
         await sendNotification(userId, 10); // Notification à 10 points
       } else if (usersPoints[userId].inventory === 15) {
         await sendNotification(userId, 15); // Notification à 15 points
+      } else {
+        debilusCloset += cyclesPassed;
       }
     }
   }
