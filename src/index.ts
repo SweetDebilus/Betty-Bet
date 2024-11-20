@@ -38,6 +38,52 @@ let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
 
+const blackjackGames: { [key: string]: { playerHand: string[], dealerHand: string[], bet: number } } = {};
+const cardValues: { [key: string]: number } = {
+  '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+  'J': 10, 'Q': 10, 'K': 10, 'A': 11
+};
+
+const suits = ['♠', '♥', '♦', '♣'];
+const cards = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+
+const drawCard = () => {
+  const suit = suits[Math.floor(Math.random() * suits.length)];
+  const card = cards[Math.floor(Math.random() * cards.length)];
+  return `${card}${suit}`;
+};
+
+const calculateHandValue = (hand: string[]) => {
+  let value = 0;
+  let aces = 0;
+
+  hand.forEach(card => {
+    const cardValue = card.slice(0, -1); // Extrait la valeur de la carte (2, 3, ..., A)
+    value += cardValues[cardValue];
+    if (cardValue === 'A') aces++;
+  });
+
+  while (value > 21 && aces) {
+    value -= 10;
+    aces--;
+  }
+
+  return value;
+};
+
+const startBlackjackGame = (userId: string, bet: number) => {
+  const playerHand = [drawCard(), drawCard()];
+  const dealerHand = [drawCard(), drawCard()];
+
+  blackjackGames[userId] = { playerHand, dealerHand, bet };
+
+  return {
+    playerHand,
+    dealerHand
+  };
+};
+
+
 const formatDate = (date: Date) => {
   const year = date.getFullYear();
   const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -372,7 +418,10 @@ const commands = [
       .setDescription('view purchase history in the store'),
   new SlashCommandBuilder()
       .setName('myitems')
-      .setDescription('view the items you own')
+      .setDescription('view the items you own'),
+  new SlashCommandBuilder()
+      .setName('blackjack')
+      .setDescription('Play a game of blackjack')
   ]; 
   
 const commandData = commands.map(command => command.toJSON()); 
@@ -401,6 +450,20 @@ client.once('ready', async () => {
 
 });
 
+const createBlackjackActionRow = () => {
+  return new ActionRowBuilder<ButtonBuilder>()
+    .addComponents(
+      new ButtonBuilder()
+        .setCustomId('blackjack_hit')
+        .setLabel('Hit')
+        .setStyle(ButtonStyle.Primary),
+      new ButtonBuilder()
+        .setCustomId('blackjack_stand')
+        .setLabel('Stand')
+        .setStyle(ButtonStyle.Secondary),
+    );
+};
+
 client.on('interactionCreate', async interaction => {
   if (interaction.isCommand()) {
     const { commandName } = interaction;
@@ -412,7 +475,6 @@ client.on('interactionCreate', async interaction => {
     }
 
     const roles = member.roles as GuildMemberRoleManager;
-
     const hasRole = (roleName: string) => roles.cache.some(role => role.name === roleName);
     const joinedMoreThan7DaysAgo = () => {
       const joinedTimestamp = member.joinedTimestamp;
@@ -607,6 +669,20 @@ client.on('interactionCreate', async interaction => {
         case 'myitems':
           await handleItemsInventory(interaction);
           break;
+        case 'blackjack': 
+          const userId = interaction.user.id; 
+
+          if (usersPoints[userId].points < 10) { 
+            await interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
+            return; 
+          } 
+
+          const { playerHand, dealerHand } = startBlackjackGame(userId, 10); 
+
+          usersPoints[userId].points -= 10;  
+
+          await interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] }); 
+          break;
         default:
           try { 
             await interaction.reply('Unknown command'); 
@@ -622,21 +698,71 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply('There was an error processing your request.')
       }
     }
+      } else if (interaction.isButton()) {
+        const userId = interaction.user.id;
+        if (!usersPoints[userId]) {
+          await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
+          return;
+        }
     
-  } else if (interaction.isButton()) {
-    const userId = interaction.user.id;
-    if (!usersPoints[userId]) {
-      await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
-      return;
-    }
-
-    if (interaction.customId.startsWith('claim_')) {
-      await handleClaimYesNo(interaction as ButtonInteraction);
-    } else {
-      await handleBetSelection(interaction as ButtonInteraction);
-    }
-  }
-});
+        if (interaction.customId.startsWith('claim_')) {
+          await handleClaimYesNo(interaction as ButtonInteraction);
+        } else if (interaction.customId === 'blackjack_hit' || interaction.customId === 'blackjack_stand') {
+          const game = blackjackGames[userId];
+    
+          if (!game) {
+            await interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', ephemeral: true });
+            return;
+          }
+    
+          if (interaction.customId === 'blackjack_hit') {
+            game.playerHand.push(drawCard());
+            const playerValue = calculateHandValue(game.playerHand);
+    
+            if (playerValue > 21) {
+              delete blackjackGames[userId];
+              await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Dealer wins.*`, components: [] });
+              return;
+            }
+    
+            await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+    
+          } else if (interaction.customId === 'blackjack_stand') {
+            let dealerValue = calculateHandValue(game.dealerHand);
+    
+            while (dealerValue < 17) {
+              game.dealerHand.push(drawCard());
+              dealerValue = calculateHandValue(game.dealerHand);
+            }
+    
+            const playerValue = calculateHandValue(game.playerHand);
+            let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+    
+            if (dealerValue > 21 || playerValue > dealerValue) {
+              usersPoints[userId].points += game.bet * 2;
+              resultMessage += '**You win!**';
+              delete blackjackGames[userId];
+              savePoints();
+            } else if (playerValue < dealerValue) {
+              resultMessage += '**Dealer wins!**';
+              delete blackjackGames[userId];
+              savePoints();
+            } else {
+              usersPoints[userId].points += game.bet;
+              resultMessage += '**It\'s a tie!**';
+              delete blackjackGames[userId];
+              savePoints();
+            }
+    
+    
+            await interaction.update({ content: resultMessage, components: [] });
+          }
+        } else {
+          await handleBetSelection(interaction as ButtonInteraction);
+        }
+      }
+    });
+    
 
 client.on('messageCreate', async message => {
   if (!bettingOpen || message.author.bot) return;

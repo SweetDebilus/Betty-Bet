@@ -57,6 +57,8 @@ const betyEmoji = process.env.BETTY;
 const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
 const bettyBettId = process.env.BETTYID;
+const logFile = process.env.PATHLOG;
+const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name;
@@ -69,8 +71,42 @@ let bettingOpen = false;
 let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames = {}; // Canal ID -> Utilisateur ID
-const fs1 = require('fs');
-const logFile = process.env.PATHLOG;
+const blackjackGames = {};
+const cardValues = {
+    '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
+    'J': 10, 'Q': 10, 'K': 10, 'A': 11
+};
+const suits = ['♠', '♥', '♦', '♣'];
+const cards = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
+const drawCard = () => {
+    const suit = suits[Math.floor(Math.random() * suits.length)];
+    const card = cards[Math.floor(Math.random() * cards.length)];
+    return `${card}${suit}`;
+};
+const calculateHandValue = (hand) => {
+    let value = 0;
+    let aces = 0;
+    hand.forEach(card => {
+        const cardValue = card.slice(0, -1); // Extrait la valeur de la carte (2, 3, ..., A)
+        value += cardValues[cardValue];
+        if (cardValue === 'A')
+            aces++;
+    });
+    while (value > 21 && aces) {
+        value -= 10;
+        aces--;
+    }
+    return value;
+};
+const startBlackjackGame = (userId, bet) => {
+    const playerHand = [drawCard(), drawCard()];
+    const dealerHand = [drawCard(), drawCard()];
+    blackjackGames[userId] = { playerHand, dealerHand, bet };
+    return {
+        playerHand,
+        dealerHand
+    };
+};
 const formatDate = (date) => {
     const year = date.getFullYear();
     const month = String(date.getMonth() + 1).padStart(2, '0');
@@ -362,7 +398,10 @@ const commands = [
         .setDescription('view purchase history in the store'),
     new discord_js_1.SlashCommandBuilder()
         .setName('myitems')
-        .setDescription('view the items you own')
+        .setDescription('view the items you own'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('blackjack')
+        .setDescription('Play a game of blackjack')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -380,6 +419,16 @@ client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
         log(`${error}`);
     }
 }));
+const createBlackjackActionRow = () => {
+    return new discord_js_1.ActionRowBuilder()
+        .addComponents(new discord_js_1.ButtonBuilder()
+        .setCustomId('blackjack_hit')
+        .setLabel('Hit')
+        .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
+        .setCustomId('blackjack_stand')
+        .setLabel('Stand')
+        .setStyle(discord_js_1.ButtonStyle.Secondary));
+};
 client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     if (interaction.isCommand()) {
         const { commandName } = interaction;
@@ -599,6 +648,16 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 case 'myitems':
                     yield handleItemsInventory(interaction);
                     break;
+                case 'blackjack':
+                    const userId = interaction.user.id;
+                    if (usersPoints[userId].points < 10) {
+                        yield interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
+                        return;
+                    }
+                    const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
+                    usersPoints[userId].points -= 10;
+                    yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+                    break;
                 default:
                     try {
                         yield interaction.reply('Unknown command');
@@ -625,6 +684,50 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
         if (interaction.customId.startsWith('claim_')) {
             yield handleClaimYesNo(interaction);
+        }
+        else if (interaction.customId === 'blackjack_hit' || interaction.customId === 'blackjack_stand') {
+            const game = blackjackGames[userId];
+            if (!game) {
+                yield interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', ephemeral: true });
+                return;
+            }
+            if (interaction.customId === 'blackjack_hit') {
+                game.playerHand.push(drawCard());
+                const playerValue = calculateHandValue(game.playerHand);
+                if (playerValue > 21) {
+                    delete blackjackGames[userId];
+                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Dealer wins.*`, components: [] });
+                    return;
+                }
+                yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+            }
+            else if (interaction.customId === 'blackjack_stand') {
+                let dealerValue = calculateHandValue(game.dealerHand);
+                while (dealerValue < 17) {
+                    game.dealerHand.push(drawCard());
+                    dealerValue = calculateHandValue(game.dealerHand);
+                }
+                const playerValue = calculateHandValue(game.playerHand);
+                let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+                if (dealerValue > 21 || playerValue > dealerValue) {
+                    usersPoints[userId].points += game.bet * 2;
+                    resultMessage += '**You win!**';
+                    delete blackjackGames[userId];
+                    savePoints();
+                }
+                else if (playerValue < dealerValue) {
+                    resultMessage += '**Dealer wins!**';
+                    delete blackjackGames[userId];
+                    savePoints();
+                }
+                else {
+                    usersPoints[userId].points += game.bet;
+                    resultMessage += '**It\'s a tie!**';
+                    delete blackjackGames[userId];
+                    savePoints();
+                }
+                yield interaction.update({ content: resultMessage, components: [] });
+            }
         }
         else {
             yield handleBetSelection(interaction);
