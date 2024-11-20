@@ -677,6 +677,11 @@ client.on('interactionCreate', async interaction => {
             return;
           }
 
+          if (blackjackGames[userId]) {
+            await interaction.reply({content:'You already have an active blackjack game. Please finish it before starting a new one.', ephemeral: true});
+            return;
+          }
+
           if (usersPoints[userId].points < 10) { 
             await interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
             return; 

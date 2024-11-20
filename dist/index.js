@@ -654,6 +654,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
                         return;
                     }
+                    if (blackjackGames[userId]) {
+                        yield interaction.reply({ content: 'You already have an active blackjack game. Please finish it before starting a new one.', ephemeral: true });
+                        return;
+                    }
                     if (usersPoints[userId].points < 10) {
                         yield interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
                         return;
