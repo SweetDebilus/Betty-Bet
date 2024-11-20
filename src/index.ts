@@ -1238,7 +1238,10 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
 
   if (user) {
     tournamentParticipants.delete(user.id);
+    usersPoints[user.id].winMatch = 0;
+    usersPoints[user.id].loseMatch = 0;
     await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+    await savePoints();
     await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User not found.', ephemeral: true });
@@ -1259,8 +1262,15 @@ const handleListTournamentParticipants = async (interaction: CommandInteraction)
 };
 
 const handleClearTournamentParticipants = async (interaction: CommandInteraction) => {
+  tournamentParticipants.forEach((_, userId) => {
+    if (usersPoints[userId]) {
+      usersPoints[userId].winMatch = 0;
+      usersPoints[userId].loseMatch = 0;
+    }
+  })
   tournamentParticipants.clear(); // Effacer tous les participants
   await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+  await savePoints();
   await interaction.reply({ content: 'All tournament participants have been cleared.', ephemeral: true });
 };
 

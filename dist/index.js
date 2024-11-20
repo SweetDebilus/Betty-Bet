@@ -1132,7 +1132,10 @@ const handleRemoveTournamentParticipant = (interaction) => __awaiter(void 0, voi
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
         tournamentParticipants.delete(user.id);
+        usersPoints[user.id].winMatch = 0;
+        usersPoints[user.id].loseMatch = 0;
         yield saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+        yield savePoints();
         yield interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
     }
     else {
@@ -1150,8 +1153,15 @@ const handleListTournamentParticipants = (interaction) => __awaiter(void 0, void
     yield interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
 });
 const handleClearTournamentParticipants = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    tournamentParticipants.forEach((_, userId) => {
+        if (usersPoints[userId]) {
+            usersPoints[userId].winMatch = 0;
+            usersPoints[userId].loseMatch = 0;
+        }
+    });
     tournamentParticipants.clear(); // Effacer tous les participants
     yield saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+    yield savePoints();
     yield interaction.reply({ content: 'All tournament participants have been cleared.', ephemeral: true });
 });
 const handleClaimYesNo = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
