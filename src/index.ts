@@ -422,8 +422,8 @@ const commands = [
   new SlashCommandBuilder()
       .setName('blackjack')
       .setDescription('Play a game of blackjack')
-  ]; 
-  
+]; 
+
 const commandData = commands.map(command => command.toJSON()); 
 
 client.once('ready', async () => {
@@ -711,74 +711,73 @@ client.on('interactionCreate', async interaction => {
         await interaction.reply('There was an error processing your request.')
       }
     }
-      } else if (interaction.isButton()) {
-        const userId = interaction.user.id;
-        if (!usersPoints[userId]) {
-          await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
+  } else if (interaction.isButton()) {
+    const userId = interaction.user.id;
+    if (!usersPoints[userId]) {
+      await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
+      return;
+    }
+    
+    if (interaction.customId.startsWith('claim_')) {
+      await handleClaimYesNo(interaction as ButtonInteraction);
+    } else if (interaction.customId === 'blackjack_hit' || interaction.customId === 'blackjack_stand') {
+      const game = blackjackGames[userId];
+
+      if (!game) {
+        await interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', ephemeral: true });
+        return;
+      }
+
+      if (interaction.customId === 'blackjack_hit') {
+        game.playerHand.push(drawCard());
+        const playerValue = calculateHandValue(game.playerHand);
+
+        if (playerValue > 21) {
+          delete blackjackGames[userId];
+          await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
+          debilusCloset += 10;
+          savePoints();
           return;
         }
-    
-        if (interaction.customId.startsWith('claim_')) {
-          await handleClaimYesNo(interaction as ButtonInteraction);
-        } else if (interaction.customId === 'blackjack_hit' || interaction.customId === 'blackjack_stand') {
-          const game = blackjackGames[userId];
-    
-          if (!game) {
-            await interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', ephemeral: true });
-            return;
-          }
-    
-          if (interaction.customId === 'blackjack_hit') {
-            game.playerHand.push(drawCard());
-            const playerValue = calculateHandValue(game.playerHand);
-    
-            if (playerValue > 21) {
-              delete blackjackGames[userId];
-              await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
-              debilusCloset += 10;
-              savePoints();
-              return;
-            }
-    
-            await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
-    
-          } else if (interaction.customId === 'blackjack_stand') {
-            let dealerValue = calculateHandValue(game.dealerHand);
-    
-            while (dealerValue < 17) {
-              game.dealerHand.push(drawCard());
-              dealerValue = calculateHandValue(game.dealerHand);
-            }
-    
-            const playerValue = calculateHandValue(game.playerHand);
-            let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
-    
-            if (dealerValue > 21 || playerValue > dealerValue) {
-              usersPoints[userId].points += game.bet * 2;
-              resultMessage += '**You win!**';
-              delete blackjackGames[userId];
-              savePoints();
-            } else if (playerValue < dealerValue) {
-              resultMessage += '**Betty Bet wins!**';
-              debilusCloset += 10;
-              delete blackjackGames[userId];
-              savePoints();
-            } else {
-              usersPoints[userId].points += game.bet;
-              resultMessage += '**It\'s a tie!**';
-              delete blackjackGames[userId];
-              savePoints();
-            }
-    
-    
-            await interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
-          }
-        } else {
-          await handleBetSelection(interaction as ButtonInteraction);
+
+        await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+
+      } else if (interaction.customId === 'blackjack_stand') {
+        let dealerValue = calculateHandValue(game.dealerHand);
+
+        while (dealerValue < 17) {
+          game.dealerHand.push(drawCard());
+          dealerValue = calculateHandValue(game.dealerHand);
         }
+
+        const playerValue = calculateHandValue(game.playerHand);
+        let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+
+        if (dealerValue > 21 || playerValue > dealerValue) {
+          usersPoints[userId].points += game.bet * 2;
+          resultMessage += '**You win!**';
+          delete blackjackGames[userId];
+          savePoints();
+        } else if (playerValue < dealerValue) {
+          resultMessage += '**Betty Bet wins!**';
+          debilusCloset += 10;
+          delete blackjackGames[userId];
+          savePoints();
+        } else {
+          usersPoints[userId].points += game.bet;
+          resultMessage += '**It\'s a tie!**';
+          delete blackjackGames[userId];
+          savePoints();
+        }
+
+        await interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
       }
-    });
-    
+    } else {
+      await handleBetSelection(interaction as ButtonInteraction);
+    }
+  }
+});
+
 client.on('messageCreate', async message => {
   if (!bettingOpen || message.author.bot) return;
 
