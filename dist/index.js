@@ -241,7 +241,7 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
     else {
         lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
     }
-    savePoints();
+    yield savePoints();
 });
 const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, function* () {
     const user = yield client.users.fetch(userId);
@@ -681,7 +681,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
                     usersPoints[userId].points -= 10;
                     yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
-                    savePoints();
+                    yield savePoints();
                     break;
                 case 'addwinmatch':
                     if (hasRole('BetManager')) {
@@ -747,7 +747,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     delete blackjackGames[userId];
                     yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
                     debilusCloset += 10;
-                    savePoints();
+                    yield savePoints();
                     return;
                 }
                 yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
@@ -764,19 +764,19 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     usersPoints[userId].points += game.bet * 2;
                     resultMessage += '**You win!**';
                     delete blackjackGames[userId];
-                    savePoints();
+                    yield savePoints();
                 }
                 else if (playerValue < dealerValue) {
                     resultMessage += '**Betty Bet wins!**';
                     debilusCloset += 10;
                     delete blackjackGames[userId];
-                    savePoints();
+                    yield savePoints();
                 }
                 else {
                     usersPoints[userId].points += game.bet;
                     resultMessage += '**It\'s a tie!**';
                     delete blackjackGames[userId];
-                    savePoints();
+                    yield savePoints();
                 }
                 yield interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
             }
@@ -827,7 +827,7 @@ client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, functi
             date: new Date()
         });
     }
-    savePoints();
+    yield savePoints();
     // Ajouter une réaction au message de l'utilisateur
     yield message.react('✅'); // Remplace '✅' par l'emoji que tu préfères
 }));
@@ -840,7 +840,7 @@ const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, functi
         return;
     }
     usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0, notificationsEnabled: false, betHistory: [], inventoryShop: [], winMatch: 0, loseMatch: 0 };
-    savePoints();
+    yield savePoints();
     yield interaction.reply({ content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral: true });
 });
 const handleToggleNotifications = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -850,7 +850,7 @@ const handleToggleNotifications = (interaction) => __awaiter(void 0, void 0, voi
         return;
     }
     usersPoints[userId].notificationsEnabled = !usersPoints[userId].notificationsEnabled;
-    savePoints();
+    yield savePoints();
     yield interaction.reply({ content: `Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, ephemeral: true });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -917,7 +917,7 @@ const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, funct
             usersPoints[userId].points += bet.amount; // Assurez-vous que 'points' est bien un nombre
         }
     }
-    savePoints();
+    yield savePoints();
     currentBets = {};
     bettingOpen = false;
     yield interaction.reply('All bets were void and Gearpoints were refunded.');
@@ -975,7 +975,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
     if (winnerBetAmount === 0) {
         // Ajouter tous les points dans le placard à debilus
         debilusCloset += totalBetAmount;
-        savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
+        yield savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
         const file = new discord_js_1.AttachmentBuilder('./images/crashboursier.png');
         const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
         yield interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
@@ -990,7 +990,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
         // Effacer les paris même si le vainqueur n'a pas de paris
         currentBets = {};
         bettingOpen = false;
-        savePoints();
+        yield savePoints();
         return;
     }
     const winningsRatio = totalBetAmount / winnerBetAmount;
@@ -1011,7 +1011,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
         }
     }
-    savePoints();
+    yield savePoints();
     currentBets = {};
     bettingOpen = false;
     const message = `The winner is **${winningPlayerName}** ! Congratulations to all those who bet on this player, the GearPoints have been redistributed !`;
@@ -1033,7 +1033,7 @@ const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, func
     if (userIdToDelete && usersPoints[userIdToDelete]) {
         const userNameToDelete = usersPoints[userIdToDelete].name;
         delete usersPoints[userIdToDelete];
-        savePoints();
+        yield savePoints();
         yield interaction.reply({ content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`, ephemeral: true });
     }
     else {
@@ -1048,7 +1048,7 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
     if (userId == bettyBettId) {
         debilusCloset += pointsToAdd;
         yield interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, ephemeral: true });
-        savePoints();
+        yield savePoints();
         return;
     }
     if (!usersPoints[userId]) {
@@ -1057,7 +1057,7 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
     }
     usersPoints[userId].points += pointsToAdd;
     usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
-    savePoints();
+    yield savePoints();
     yield interaction.reply({ content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${usersPoints[userId].name}**.`, ephemeral: true });
 });
 const handleClaim = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1072,7 +1072,7 @@ const handleClaim = (interaction) => __awaiter(void 0, void 0, void 0, function*
         usersPoints[userId].points += pointsToClaim;
         usersPoints[userId].inventory = 0;
         usersPoints[userId].isDebilus = false; // Mettre à jour le statut debilus
-        savePoints();
+        yield savePoints();
         yield interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, ephemeral: true });
     }
     else {
@@ -1147,8 +1147,8 @@ const handleListTournamentParticipants = (interaction) => __awaiter(void 0, void
         yield interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
         return;
     }
-    const participantsList = Array.from(tournamentParticipants.entries()).map(([id, username]) => {
-        return `ID: ${id}, Pseudo: ${username}`;
+    const participantsList = Array.from(tournamentParticipants.entries()).map(([_, username]) => {
+        return `Pseudo: ${username}`;
     }).join('\n');
     yield interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
 });
@@ -1176,7 +1176,7 @@ const handleClaimYesNo = (interaction) => __awaiter(void 0, void 0, void 0, func
         const pointsToClaim = usersPoints[userId].inventory;
         usersPoints[userId].points += pointsToClaim;
         usersPoints[userId].inventory = 0;
-        savePoints();
+        yield savePoints();
         if (!interaction.replied) {
             yield interaction.update({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
         }
@@ -1406,7 +1406,7 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
         messagesToDelete.push(response);
         if (guess === numberToGuess) {
             usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
-            savePoints();
+            yield savePoints();
             yield response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
             collector.stop('guessed correctly');
         }
@@ -1419,7 +1419,7 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
             messagesToDelete.push(reply);
         }
     }));
-    collector.on('end', (collected, reason) => {
+    collector.on('end', (_, reason) => {
         if (reason !== 'guessed correctly') {
             const pointsLost = Math.min(10, usersPoints[userId].points); // Nombre de points à perdre
             usersPoints[userId].points -= pointsLost; // Perdre les points
@@ -1460,7 +1460,7 @@ const handleTransferDebilus = (interaction) => __awaiter(void 0, void 0, void 0,
     usersPoints[userId].points += debilusCloset;
     const transferredPoints = debilusCloset;
     debilusCloset = 0;
-    savePoints();
+    yield savePoints();
     yield interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, ephemeral: true });
 });
 const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1591,7 +1591,7 @@ const handleAddWinMatch = (interaction) => __awaiter(void 0, void 0, void 0, fun
         return;
     }
     usersPoints[userId].winMatch += 1;
-    savePoints();
+    yield savePoints();
     yield interaction.reply({ content: `${usersPoints[userId].name} win !`, ephemeral: true });
 });
 const handleAddLoseMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1606,7 +1606,12 @@ const handleAddLoseMatch = (interaction) => __awaiter(void 0, void 0, void 0, fu
         return;
     }
     usersPoints[userId].loseMatch += 1;
-    savePoints();
+    if (usersPoints[userId].loseMatch === 2) {
+        yield interaction.reply({ content: `${usersPoints[userId].name} loses and is eliminated !` });
+        yield savePoints();
+        return;
+    }
+    yield savePoints();
     yield interaction.reply({ content: `${usersPoints[userId].name} loses !`, ephemeral: true });
 });
 const handleListTournamentParticipantsByRanking = (interaction) => __awaiter(void 0, void 0, void 0, function* () {

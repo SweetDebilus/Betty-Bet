@@ -233,7 +233,7 @@ const addPointsToInventory = async () => {
   } else {
     lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
   }
-  savePoints();
+  await savePoints();
 };
 
 const sendNotification = async (userId: string, points: number) => {
@@ -706,7 +706,7 @@ client.on('interactionCreate', async interaction => {
 
           await interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
 
-          savePoints();
+          await savePoints();
 
           break;
         case 'addwinmatch':
@@ -770,7 +770,7 @@ client.on('interactionCreate', async interaction => {
           delete blackjackGames[userId];
           await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
           debilusCloset += 10;
-          savePoints();
+          await savePoints();
           return;
         }
 
@@ -791,17 +791,17 @@ client.on('interactionCreate', async interaction => {
           usersPoints[userId].points += game.bet * 2;
           resultMessage += '**You win!**';
           delete blackjackGames[userId];
-          savePoints();
+          await savePoints();
         } else if (playerValue < dealerValue) {
           resultMessage += '**Betty Bet wins!**';
           debilusCloset += 10;
           delete blackjackGames[userId];
-          savePoints();
+          await savePoints();
         } else {
           usersPoints[userId].points += game.bet;
           resultMessage += '**It\'s a tie!**';
           delete blackjackGames[userId];
-          savePoints();
+          await savePoints();
         }
 
         await interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
@@ -860,7 +860,7 @@ client.on('messageCreate', async message => {
     });
   }
 
-  savePoints();
+  await savePoints();
 
   // Ajouter une réaction au message de l'utilisateur
   await message.react('✅'); // Remplace '✅' par l'emoji que tu préfères
@@ -877,7 +877,7 @@ const handleRegister = async (interaction: CommandInteraction) => {
   }
 
   usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [], inventoryShop: [], winMatch:0, loseMatch:0 };
-  savePoints();
+  await savePoints();
   await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral:true});
 
 };
@@ -891,7 +891,7 @@ const handleToggleNotifications = async (interaction: CommandInteraction) => {
   }
 
   usersPoints[userId].notificationsEnabled = !usersPoints[userId].notificationsEnabled;
-  savePoints();
+  await savePoints();
   await interaction.reply({content:`Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, ephemeral: true});
 };
 
@@ -980,7 +980,7 @@ const handleClearBets = async (interaction: CommandInteraction) => {
     }
   }
 
-  savePoints();
+  await savePoints();
   currentBets = {};
   bettingOpen = false;
 
@@ -1049,7 +1049,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   if (winnerBetAmount === 0) {
     // Ajouter tous les points dans le placard à debilus
     debilusCloset += totalBetAmount;
-    savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
+    await savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
     const file = new AttachmentBuilder('./images/crashboursier.png');
     const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
     await interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
@@ -1067,7 +1067,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
     // Effacer les paris même si le vainqueur n'a pas de paris
     currentBets = {};
     bettingOpen = false;
-    savePoints();
+    await savePoints();
     return;
   }
 
@@ -1092,7 +1092,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
     }
   }
 
-  savePoints();
+  await savePoints();
   currentBets = {};
   bettingOpen = false;
 
@@ -1116,7 +1116,7 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
   if (userIdToDelete && usersPoints[userIdToDelete]) {
     const userNameToDelete = usersPoints[userIdToDelete].name;
     delete usersPoints[userIdToDelete];
-    savePoints();
+    await savePoints();
     await interaction.reply({ content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User no found', ephemeral: true });
@@ -1133,7 +1133,7 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
   if (userId == bettyBettId) {
     debilusCloset += pointsToAdd;
     await interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, ephemeral: true });
-    savePoints();
+    await savePoints();
     return;
   }
 
@@ -1144,7 +1144,7 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
 
   usersPoints[userId].points += pointsToAdd;
   usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
-  savePoints();
+  await savePoints();
   await interaction.reply({ content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${usersPoints[userId].name}**.`, ephemeral: true });
 };
 
@@ -1162,7 +1162,7 @@ const handleClaim = async (interaction: CommandInteraction) => {
     usersPoints[userId].points += pointsToClaim;
     usersPoints[userId].inventory = 0;
     usersPoints[userId].isDebilus = false; // Mettre à jour le statut debilus
-    savePoints();
+    await savePoints();
 
     await interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, ephemeral: true });
   } else {
@@ -1254,8 +1254,8 @@ const handleListTournamentParticipants = async (interaction: CommandInteraction)
     return;
   }
 
-  const participantsList = Array.from(tournamentParticipants.entries()).map(([id, username]) => {
-    return `ID: ${id}, Pseudo: ${username}`;
+  const participantsList = Array.from(tournamentParticipants.entries()).map(([_, username]) => {
+    return `Pseudo: ${username}`;
   }).join('\n');
 
   await interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
@@ -1288,7 +1288,7 @@ const handleClaimYesNo = async (interaction: ButtonInteraction) => {
     const pointsToClaim = usersPoints[userId].inventory;
     usersPoints[userId].points += pointsToClaim;
     usersPoints[userId].inventory = 0;
-    savePoints();
+    await savePoints();
 
     if (!interaction.replied) {
       await interaction.update({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
@@ -1552,7 +1552,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
 
     if (guess === numberToGuess) {
       usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
-      savePoints();
+      await savePoints();
       await response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
       collector.stop('guessed correctly');
     } else if (guess < numberToGuess) {
@@ -1564,7 +1564,7 @@ const handleGuess = async (interaction: CommandInteraction) => {
     }
   });
 
-  collector.on('end', (collected, reason) => {
+  collector.on('end', (_, reason) => {
     if (reason !== 'guessed correctly') {
       const pointsLost = Math.min(10, usersPoints[userId].points); // Nombre de points à perdre
       usersPoints[userId].points -= pointsLost; // Perdre les points
@@ -1618,7 +1618,7 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
   const transferredPoints = debilusCloset;
   debilusCloset = 0;
 
-  savePoints();
+  await savePoints();
   await interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, ephemeral: true });
 };
 
@@ -1780,7 +1780,7 @@ const handleAddWinMatch = async (interaction: CommandInteraction) => {
   }
 
   usersPoints[userId].winMatch += 1;
-  savePoints();
+  await savePoints();
   await interaction.reply({content:`${usersPoints[userId].name} win !`, ephemeral: true});
 }
 
@@ -1799,7 +1799,12 @@ const handleAddLoseMatch = async (interaction: CommandInteraction) => {
   }
 
   usersPoints[userId].loseMatch += 1;
-  savePoints();
+  if (usersPoints[userId].loseMatch === 2) {
+    await interaction.reply({content: `${usersPoints[userId].name} loses and is eliminated !`});
+    await savePoints();
+    return
+  }
+  await savePoints();
   await interaction.reply({content:`${usersPoints[userId].name} loses !`, ephemeral: true})
 }
 
