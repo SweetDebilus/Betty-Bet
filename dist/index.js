@@ -650,6 +650,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     break;
                 case 'blackjack':
                     const userId = interaction.user.id;
+                    if (!usersPoints[userId]) {
+                        yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+                        return;
+                    }
                     if (usersPoints[userId].points < 10) {
                         yield interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
                         return;
@@ -730,7 +734,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     delete blackjackGames[userId];
                     savePoints();
                 }
-                yield interaction.update({ content: resultMessage, components: [] });
+                yield interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
             }
         }
         else {

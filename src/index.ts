@@ -672,6 +672,11 @@ client.on('interactionCreate', async interaction => {
         case 'blackjack': 
           const userId = interaction.user.id; 
 
+          if (!usersPoints[userId]) {
+            await interaction.reply({content:'You are not registered yet. Use `/register` to sign up.', ephemeral: true});
+            return;
+          }
+
           if (usersPoints[userId].points < 10) { 
             await interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
             return; 
@@ -761,7 +766,7 @@ client.on('interactionCreate', async interaction => {
             }
     
     
-            await interaction.update({ content: resultMessage, components: [] });
+            await interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
           }
         } else {
           await handleBetSelection(interaction as ButtonInteraction);
