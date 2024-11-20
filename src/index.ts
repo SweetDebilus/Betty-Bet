@@ -681,7 +681,10 @@ client.on('interactionCreate', async interaction => {
 
           usersPoints[userId].points -= 10;  
 
-          await interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] }); 
+          await interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
+
+          savePoints();
+
           break;
         default:
           try { 
@@ -721,11 +724,13 @@ client.on('interactionCreate', async interaction => {
     
             if (playerValue > 21) {
               delete blackjackGames[userId];
-              await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Dealer wins.*`, components: [] });
+              await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
+              debilusCloset += 10;
+              savePoints();
               return;
             }
     
-            await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+            await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
     
           } else if (interaction.customId === 'blackjack_stand') {
             let dealerValue = calculateHandValue(game.dealerHand);
@@ -736,7 +741,7 @@ client.on('interactionCreate', async interaction => {
             }
     
             const playerValue = calculateHandValue(game.playerHand);
-            let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+            let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
     
             if (dealerValue > 21 || playerValue > dealerValue) {
               usersPoints[userId].points += game.bet * 2;
@@ -744,7 +749,8 @@ client.on('interactionCreate', async interaction => {
               delete blackjackGames[userId];
               savePoints();
             } else if (playerValue < dealerValue) {
-              resultMessage += '**Dealer wins!**';
+              resultMessage += '**Betty Bet wins!**';
+              debilusCloset += 10;
               delete blackjackGames[userId];
               savePoints();
             } else {
@@ -763,7 +769,6 @@ client.on('interactionCreate', async interaction => {
       }
     });
     
-
 client.on('messageCreate', async message => {
   if (!bettingOpen || message.author.bot) return;
 

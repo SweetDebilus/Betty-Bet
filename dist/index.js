@@ -656,7 +656,8 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
                     usersPoints[userId].points -= 10;
-                    yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+                    yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
+                    savePoints();
                     break;
                 default:
                     try {
@@ -696,10 +697,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 const playerValue = calculateHandValue(game.playerHand);
                 if (playerValue > 21) {
                     delete blackjackGames[userId];
-                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Dealer wins.*`, components: [] });
+                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
+                    debilusCloset += 10;
+                    savePoints();
                     return;
                 }
-                yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+                yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
             }
             else if (interaction.customId === 'blackjack_stand') {
                 let dealerValue = calculateHandValue(game.dealerHand);
@@ -708,7 +711,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     dealerValue = calculateHandValue(game.dealerHand);
                 }
                 const playerValue = calculateHandValue(game.playerHand);
-                let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Dealer's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+                let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
                 if (dealerValue > 21 || playerValue > dealerValue) {
                     usersPoints[userId].points += game.bet * 2;
                     resultMessage += '**You win!**';
@@ -716,7 +719,8 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     savePoints();
                 }
                 else if (playerValue < dealerValue) {
-                    resultMessage += '**Dealer wins!**';
+                    resultMessage += '**Betty Bet wins!**';
+                    debilusCloset += 10;
                     delete blackjackGames[userId];
                     savePoints();
                 }
