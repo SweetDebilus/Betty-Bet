@@ -16,11 +16,11 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 - **/clearmessages**: Clear all private messages sent by the bot.
 - **/presentation**: Present Betty Bet and its features.
 - **/guess**: Play a guessing game! Guess a number between 1 and 10000. Win 5 GearPoints if you guess correctly, lose 10 GearPoints if you guess wrong.
-- **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet
+- **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
 - **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
   - **Options**:
-    - `itemname`: Name of item
-    - `quantity`: The number of items you want to buy
+    - `itemname`: Name of item.
+    - `quantity`: The number of items you want to buy.
 - **/listitems**: view items for sale in the store.
 - **/myitems**: view items in your inventory.
 
@@ -28,44 +28,45 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 - **/placeyourbets**: Start a betting period between two players.
   - **Options**:
-    - `player1name`: Name of player 1
-    - `player2name`: Name of player 2
+    - `player1name`: Name of player 1.
+    - `player2name`: Name of player 2.
 - **/addpoints**: Add GearPoints to a specific user.
   - **Options**:
-    - `user`: User to add GearPoints to
-    - `points`: Number of GearPoints to add
+    - `user`: User to add GearPoints to.
+    - `points`: Number of GearPoints to add.
 - **/clearbets**: Clear all bets in case of issues and refund GearPoints.
 - **/win**: Declare the winner and redistribute GearPoints.
   - **Option**:
-    - `winner`: The winning player (1 or 2)
+    - `winner`: The winning player. (1 or 2)
 - **/betslist**: See the list of bets placed on each player.
 - **/deleteuser**: Delete a registered user.
   - **Option**:
-    - `userid`: ID of the user to delete
+    - `userid`: ID of the user to delete.
 - **/backup**: Encrypt and save data from decrypted backup.
 - **/sendbackup**: Send the decrypted backup file.
 - **/addtournamentparticipant**: Add a user to the tournament participant list.
   - **Option**:
-    - `user`: User to add
+    - `user`: User to add.
 - **/removetournamentparticipant**: Remove a user from the tournament participant list.
   - **Option**:
-    - `user`: User to remove
+    - `user`: User to remove.
 - **/listtournamentparticipants**: List all tournament participants.
 - **/addwinmatch**: adds 1 winning point to a user. (the user must be registered and be in the list of participants in the tournament)
   - **Option**:
     - `user`: Winning user
 - **/addlosematch**: adds 1 lossing point to a user. (the user must be registered and be in the list of participants in the tournament)
   - **Option**:
-    - `user`: Losing user
+    - `user`: Losing user.
 - **/cleartournamentparticipants**: Clear the list of tournament participants.
 - **/transferdebilus**: Transfer all GearPoints from the debilus closet to a specific user and empty the closet.
   - **Options**:
-    - `user`: User to transfer the GearPoints to
-- **/additem**: Add an item to Betty Bet's shop
+    - `user`: User to transfer the GearPoints to.
+- **/additem**: Add an item to Betty Bet's shop.
   - **Option**:
-    - `itemname`: Name of item
-    - `quantity`: The number of items you want to add
-    - `unitprice`: Enter the price of the item per unit
+    - `itemname`: Name of item.
+    - `quantity`: The number of items you want to add.
+    - `unitprice`: Enter the price of the item per unit.
+- **/tournamentranking**: view the ranking of the tournament participants.
 - **/purchasehistory**: View purchase history in the store
       
 ## Installation
