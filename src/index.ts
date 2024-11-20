@@ -1,10 +1,11 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 import schedule from 'node-schedule';
 dotenv.config();
 import crypto from 'crypto';
+import { userInfo } from 'os';
 
 const algorithm = process.env.ALGO!;
 const secretKey = Buffer.from(process.env.KEY!, 'hex');
@@ -29,7 +30,7 @@ const filePath = 'usersPoints.json';
 let debilusCloset = 0;
 let player1Name: string;
 let player2Name: string;
-let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[], inventoryShop: { name: string, quantity: number }[]}} = {};
+let usersPoints: { [key: string]: { points: number, name: string, wins: number, losses: number, isDebilus: boolean, inventory: number, notificationsEnabled: boolean, betHistory: { betOn: string, amount: number, result: string, date: Date  }[], inventoryShop: { name: string, quantity: number }[], winMatch: number, loseMatch: number}} = {};
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
 let store: {[key: string]: {name: string, quantity: number, unitPrice: number}} = {};
 let purchaseHistory: {[key: string]: {userId: string, userName: string, itemName: string, quantity: number, totalPrice: number, timestamp: Date}} = {};
@@ -155,25 +156,19 @@ const saveDecryptedBackup = () => {
   }
 };
 
-interface TournamentParticipant {
-  userId: string;
-  userName: string;
-}
-
 const saveTournamentParticipants = async () => {
   const participantsArray = Array.from(tournamentParticipants);
   fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
+  log("Tournament participants data saved.");
 };
 
 const loadTournamentParticipants = async () => {
   if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
-    const participantsArray: TournamentParticipant[] = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
-    tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
+    const participantsArray: [string, string][] = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
+    tournamentParticipants = new Map(participantsArray);
+    log("Tournament participants data loaded.");
   }
 };
-
-// Appeler loadTournamentParticipants lors du démarrage
-loadTournamentParticipants();
 
 const loadPoints = async () => {
   if (fs.existsSync(filePath)) {
@@ -421,7 +416,24 @@ const commands = [
       .setDescription('view the items you own'),
   new SlashCommandBuilder()
       .setName('blackjack')
-      .setDescription('Play a game of blackjack')
+      .setDescription('Play a game of blackjack'),
+  new SlashCommandBuilder()
+      .setName('addwinmatch')
+      .setDescription('adds 1 winning point to a user')
+      .addUserOption(option =>
+        option.setName('user')
+        .setDescription('The user to add winning point')
+        .setRequired(true)),
+  new SlashCommandBuilder()
+        .setName('addlosematch')
+        .setDescription('adds 1 lossing point to a user')
+        .addUserOption(option =>
+          option.setName('user')
+          .setDescription('The user to add lossing point')
+          .setRequired(true)),
+  new SlashCommandBuilder()
+        .setName('tournamentranking')
+        .setDescription('view the ranking of the tournament participants')
 ]; 
 
 const commandData = commands.map(command => command.toJSON()); 
@@ -430,7 +442,8 @@ client.once('ready', async () => {
   log(`Logged in as ${client.user?.tag}!`);
 
   loadPoints();
-
+  
+  await loadTournamentParticipants()
   await addPointsToInventory();
 
   const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
@@ -696,6 +709,27 @@ client.on('interactionCreate', async interaction => {
           savePoints();
 
           break;
+        case 'addwinmatch':
+          if (hasRole('BetManager')) {
+            await handleAddWinMatch(interaction);
+          } else {
+            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'addlosematch':
+          if (hasRole('BetManager')) {
+            await handleAddLoseMatch(interaction);
+          } else {
+            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
+        case 'tournamentranking':
+          if (hasRole('BetManager')) {
+            await handleListTournamentParticipantsByRanking(interaction)
+          } else {
+            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+          }
+          break;
         default:
           try { 
             await interaction.reply('Unknown command'); 
@@ -842,7 +876,7 @@ const handleRegister = async (interaction: CommandInteraction) => {
     return;
   }
 
-  usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [], inventoryShop: [] };
+  usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [], inventoryShop: [], winMatch:0, loseMatch:0 };
   savePoints();
   await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral:true});
 
@@ -1191,7 +1225,7 @@ const handleAddTournamentParticipant = async (interaction: CommandInteraction) =
 
   if (user) {
     tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
-    saveTournamentParticipants();
+    await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
     await interaction.reply({ content: `${user.displayName} has been added to the tournament.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User not found.', ephemeral: true });
@@ -1204,7 +1238,7 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
 
   if (user) {
     tournamentParticipants.delete(user.id);
-    saveTournamentParticipants();
+    await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
     await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
   } else {
     await interaction.reply({ content: 'User not found.', ephemeral: true });
@@ -1226,7 +1260,7 @@ const handleListTournamentParticipants = async (interaction: CommandInteraction)
 
 const handleClearTournamentParticipants = async (interaction: CommandInteraction) => {
   tournamentParticipants.clear(); // Effacer tous les participants
-  saveTournamentParticipants(); // Sauvegarder l'état vide
+  await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
   await interaction.reply({ content: 'All tournament participants have been cleared.', ephemeral: true });
 };
 
@@ -1720,5 +1754,75 @@ const handleItemsInventory = async (interaction: CommandInteraction) => {
 
   await interaction.reply({content: inventoryItemsMessage, ephemeral: true});
 }
+
+const handleAddWinMatch = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const userId = userOption?.value as string;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+    return;
+  }
+
+  if (!tournamentParticipants.has(userId)) {
+    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+    return;
+  }
+
+  usersPoints[userId].winMatch += 1;
+  savePoints();
+  await interaction.reply({content:`${usersPoints[userId].name} win !`, ephemeral: true});
+}
+
+const handleAddLoseMatch = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const userId = userOption?.value as string;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+    return;
+  }
+
+  if (!tournamentParticipants.has(userId)) {
+    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+    return;
+  }
+
+  usersPoints[userId].loseMatch += 1;
+  savePoints();
+  await interaction.reply({content:`${usersPoints[userId].name} loses !`, ephemeral: true})
+}
+
+const handleListTournamentParticipantsByRanking = async (interaction: CommandInteraction) => {
+  if (tournamentParticipants.size === 0) {
+    await interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
+    return;
+  }
+
+  // Récupérer les données des participants
+  const participants = Array.from(tournamentParticipants.keys()).map(userId => {
+    return {
+      id: userId,
+      name: tournamentParticipants.get(userId),
+      wins: usersPoints[userId]?.winMatch || 0,
+      losses: usersPoints[userId]?.loseMatch || 0
+    };
+  });
+
+  // Classer les participants
+  participants.sort((a, b) => {
+    if (a.wins === b.wins) {
+      return a.losses - b.losses; // Si les victoires sont égales, trier par nombre de défaites (moins de défaites est mieux)
+    }
+    return b.wins - a.wins; // Trier par nombre de victoires (plus de victoires est mieux)
+  });
+
+  // Générer la liste classée
+  const rankedList = participants.map((participant, index) => {
+    return `${index + 1}. ${participant.name} - Wins: ${participant.wins}, Losses: ${participant.losses}`;
+  }).join('\n');
+
+  await interaction.reply({ content: `**Tournament Participants Ranked:**\n\n${rankedList}` });
+};
 
 client.login(process.env.DISCORD_TOKEN!);

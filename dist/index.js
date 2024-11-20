@@ -170,15 +170,15 @@ const saveDecryptedBackup = () => {
 const saveTournamentParticipants = () => __awaiter(void 0, void 0, void 0, function* () {
     const participantsArray = Array.from(tournamentParticipants);
     fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
+    log("Tournament participants data saved.");
 });
 const loadTournamentParticipants = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
         const participantsArray = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
-        tournamentParticipants = new Map(participantsArray.map(participant => [participant.userId, participant.userName]));
+        tournamentParticipants = new Map(participantsArray);
+        log("Tournament participants data loaded.");
     }
 });
-// Appeler loadTournamentParticipants lors du démarrage
-loadTournamentParticipants();
 const loadPoints = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs.existsSync(filePath)) {
         try {
@@ -401,13 +401,29 @@ const commands = [
         .setDescription('view the items you own'),
     new discord_js_1.SlashCommandBuilder()
         .setName('blackjack')
-        .setDescription('Play a game of blackjack')
+        .setDescription('Play a game of blackjack'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('addwinmatch')
+        .setDescription('adds 1 winning point to a user')
+        .addUserOption(option => option.setName('user')
+        .setDescription('The user to add winning point')
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('addlosematch')
+        .setDescription('adds 1 lossing point to a user')
+        .addUserOption(option => option.setName('user')
+        .setDescription('The user to add lossing point')
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('tournamentranking')
+        .setDescription('view the ranking of the tournament participants')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
     loadPoints();
+    yield loadTournamentParticipants();
     yield addPointsToInventory();
     const rest = new discord_js_1.REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     try {
@@ -667,6 +683,30 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
                     savePoints();
                     break;
+                case 'addwinmatch':
+                    if (hasRole('BetManager')) {
+                        yield handleAddWinMatch(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'addlosematch':
+                    if (hasRole('BetManager')) {
+                        yield handleAddLoseMatch(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
+                case 'tournamentranking':
+                    if (hasRole('BetManager')) {
+                        yield handleListTournamentParticipantsByRanking(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
+                    break;
                 default:
                     try {
                         yield interaction.reply('Unknown command');
@@ -799,7 +839,7 @@ const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, functi
         yield interaction.reply({ content: `You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral: true });
         return;
     }
-    usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0, notificationsEnabled: false, betHistory: [], inventoryShop: [] };
+    usersPoints[userId] = { points: 100, name: userName, wins: 0, losses: 0, isDebilus: false, inventory: 0, notificationsEnabled: false, betHistory: [], inventoryShop: [], winMatch: 0, loseMatch: 0 };
     savePoints();
     yield interaction.reply({ content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral: true });
 });
@@ -1080,7 +1120,7 @@ const handleAddTournamentParticipant = (interaction) => __awaiter(void 0, void 0
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
         tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
-        saveTournamentParticipants();
+        yield saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
         yield interaction.reply({ content: `${user.displayName} has been added to the tournament.`, ephemeral: true });
     }
     else {
@@ -1092,7 +1132,7 @@ const handleRemoveTournamentParticipant = (interaction) => __awaiter(void 0, voi
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
         tournamentParticipants.delete(user.id);
-        saveTournamentParticipants();
+        yield saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
         yield interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
     }
     else {
@@ -1111,7 +1151,7 @@ const handleListTournamentParticipants = (interaction) => __awaiter(void 0, void
 });
 const handleClearTournamentParticipants = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     tournamentParticipants.clear(); // Effacer tous les participants
-    saveTournamentParticipants(); // Sauvegarder l'état vide
+    yield saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
     yield interaction.reply({ content: 'All tournament participants have been cleared.', ephemeral: true });
 });
 const handleClaimYesNo = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -1528,5 +1568,63 @@ const handleItemsInventory = (interaction) => __awaiter(void 0, void 0, void 0, 
         inventoryItemsMessage += itemInfo;
     }));
     yield interaction.reply({ content: inventoryItemsMessage, ephemeral: true });
+});
+const handleAddWinMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userOption = interaction.options.get('user');
+    const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+        return;
+    }
+    if (!tournamentParticipants.has(userId)) {
+        yield interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+        return;
+    }
+    usersPoints[userId].winMatch += 1;
+    savePoints();
+    yield interaction.reply({ content: `${usersPoints[userId].name} win !`, ephemeral: true });
+});
+const handleAddLoseMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userOption = interaction.options.get('user');
+    const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+        return;
+    }
+    if (!tournamentParticipants.has(userId)) {
+        yield interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+        return;
+    }
+    usersPoints[userId].loseMatch += 1;
+    savePoints();
+    yield interaction.reply({ content: `${usersPoints[userId].name} loses !`, ephemeral: true });
+});
+const handleListTournamentParticipantsByRanking = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (tournamentParticipants.size === 0) {
+        yield interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
+        return;
+    }
+    // Récupérer les données des participants
+    const participants = Array.from(tournamentParticipants.keys()).map(userId => {
+        var _a, _b;
+        return {
+            id: userId,
+            name: tournamentParticipants.get(userId),
+            wins: ((_a = usersPoints[userId]) === null || _a === void 0 ? void 0 : _a.winMatch) || 0,
+            losses: ((_b = usersPoints[userId]) === null || _b === void 0 ? void 0 : _b.loseMatch) || 0
+        };
+    });
+    // Classer les participants
+    participants.sort((a, b) => {
+        if (a.wins === b.wins) {
+            return a.losses - b.losses; // Si les victoires sont égales, trier par nombre de défaites (moins de défaites est mieux)
+        }
+        return b.wins - a.wins; // Trier par nombre de victoires (plus de victoires est mieux)
+    });
+    // Générer la liste classée
+    const rankedList = participants.map((participant, index) => {
+        return `${index + 1}. ${participant.name} - Wins: ${participant.wins}, Losses: ${participant.losses}`;
+    }).join('\n');
+    yield interaction.reply({ content: `**Tournament Participants Ranked:**\n\n${rankedList}` });
 });
 client.login(process.env.DISCORD_TOKEN);
