@@ -272,7 +272,7 @@ const commands = [
         .setDescription('Register to get initial points'),
     new discord_js_1.SlashCommandBuilder()
         .setName('placeyourbets')
-        .setDescription('Start a betting period')
+        .setDescription('Start a betting period. (BetManager only)')
         .addStringOption(option => option.setName('player1name')
         .setDescription('Name of player 1')
         .setRequired(true))
@@ -281,7 +281,7 @@ const commands = [
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('addpoints')
-        .setDescription('Add points to a user')
+        .setDescription('Add points to a user. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('User to add points to')
         .setRequired(true))
@@ -299,49 +299,49 @@ const commands = [
         .setDescription('Claim your points from Point Vault'),
     new discord_js_1.SlashCommandBuilder()
         .setName('clearbets')
-        .setDescription('Clear all bets in case of issues'),
+        .setDescription('Clear all bets in case of issues. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('leaderboard')
-        .setDescription('Show leaderboard of top betters'),
+        .setDescription('Show leaderboard of top betters. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('win')
-        .setDescription('Declare the winner and redistribute points')
+        .setDescription('Declare the winner and redistribute points. (BetManager only)')
         .addIntegerOption(option => option.setName('winner')
         .setDescription('The winning player (1 or 2)')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('betslist')
-        .setDescription('See the list of players who bet on player 1 and player 2'),
+        .setDescription('View the list of players who bet on player 1 and player 2. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('deleteuser')
-        .setDescription('Delete a registered user')
+        .setDescription('Delete a registered user. (BetManager only)')
         .addStringOption(option => option.setName('userid')
         .setDescription('ID of the user to delete')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('backup')
-        .setDescription('Encrypt and save data from decrypted backup'),
+        .setDescription('Encrypt and save data from decrypted backup. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('sendbackup')
-        .setDescription('Send the decrypted backup file'),
+        .setDescription('Send the decrypted backup file. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('addtournamentparticipant')
-        .setDescription('Add a participant to the tournament')
+        .setDescription('Add a participant to the tournament. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('The user to add to the tournament')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('removetournamentparticipant')
-        .setDescription('Remove a participant from the tournament')
+        .setDescription('Remove a participant from the tournament. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('The user to remove from the tournament')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('listtournamentparticipants')
-        .setDescription('List all participants in the tournament'),
+        .setDescription('List all participants in the tournament. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('cleartournamentparticipants')
-        .setDescription('Clear the list of tournament participants'),
+        .setDescription('Clear the list of tournament participants. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('presentation')
         .setDescription('Present Betty Bet and its functions'),
@@ -359,13 +359,13 @@ const commands = [
         .setDescription('View your detailed statistics'),
     new discord_js_1.SlashCommandBuilder()
         .setName('globalstats')
-        .setDescription('View global betting statistics'),
+        .setDescription('View global betting statistics. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('guess')
         .setDescription('Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'),
     new discord_js_1.SlashCommandBuilder()
         .setName('transferdebilus')
-        .setDescription('Transfer all GearPoints from the debilus closet to a specific user and empty the closet.')
+        .setDescription('Transfer all GearPoints from the debilus closet to a specific user. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('User to transfer the GearPoints to')
         .setRequired(true)),
@@ -380,7 +380,7 @@ const commands = [
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('additem')
-        .setDescription('Add an item to the store')
+        .setDescription('Add an item to the store. (BetManager only)')
         .addStringOption(option => option.setName('itemname')
         .setDescription('Name of the item')
         .setRequired(true))
@@ -395,7 +395,7 @@ const commands = [
         .setDescription('List all items available in the store'),
     new discord_js_1.SlashCommandBuilder()
         .setName('purchasehistory')
-        .setDescription('view purchase history in the store'),
+        .setDescription('view purchase history in the store. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('myitems')
         .setDescription('view the items you own'),
@@ -404,19 +404,19 @@ const commands = [
         .setDescription('Play a game of blackjack'),
     new discord_js_1.SlashCommandBuilder()
         .setName('addwinmatch')
-        .setDescription('adds 1 winning point to a user')
+        .setDescription('adds 1 winning point to a user. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('The user to add winning point')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('addlosematch')
-        .setDescription('adds 1 lossing point to a user')
+        .setDescription('adds 1 lossing point to a user. (BetManager only)')
         .addUserOption(option => option.setName('user')
         .setDescription('The user to add lossing point')
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('tournamentranking')
-        .setDescription('view the ranking of the tournament participants')
+        .setDescription('view the ranking of the tournament participants. (BetManager only)')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -465,7 +465,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             return now - joinedTimestamp >= sevenDaysInMillis;
         };
         if (!hasRole(process.env.ROLE)) {
-            yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            yield interaction.reply({ content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`, ephemeral: true });
             return;
         }
         if (!joinedMoreThan7DaysAgo()) {
@@ -529,7 +529,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'leaderboard':
-                    yield handleLeaderboard(interaction);
+                    if (hasRole('BetManager')) {
+                        yield handleLeaderboard(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
                     break;
                 case 'win':
                     if (hasRole('BetManager')) {
@@ -608,7 +613,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleStats(interaction);
                     break;
                 case 'globalstats':
-                    yield handleGlobalStats(interaction);
+                    if (hasRole('BetManager')) {
+                        yield handleGlobalStats(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+                    }
                     break;
                 case 'guess':
                     yield handleGuess(interaction);
@@ -885,6 +895,10 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
 const handleBetSelection = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     const customId = interaction.customId;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: 'You are not registered yet. Use */register* to register.', ephemeral: true });
+        return;
+    }
     // Vérifier si l'utilisateur essaie de parier sur un autre joueur
     if (currentBets[userId] && currentBets[userId].betOn !== customId) {
         yield interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', ephemeral: true });
@@ -914,7 +928,7 @@ const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function
 const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     for (const [userId, bet] of Object.entries(currentBets)) {
         if (usersPoints[userId]) {
-            usersPoints[userId].points += bet.amount; // Assurez-vous que 'points' est bien un nombre
+            usersPoints[userId].points += bet.amount;
         }
     }
     yield savePoints();
@@ -935,23 +949,27 @@ const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, fun
 const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     let totalPlayer1Bets = 0;
     let totalPlayer2Bets = 0;
+    if (player1Name === undefined && player2Name === undefined) {
+        yield interaction.reply({ content: `no bets, no game ${debilus}`, ephemeral: true });
+        return;
+    }
     const player1Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player1')
         .map(([userId, bet]) => {
         var _a;
         totalPlayer1Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.displayName) || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
     });
     const player2Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player2')
         .map(([userId, bet]) => {
         var _a;
         totalPlayer2Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.tag) || 'Unknown User'}: ${bet.amount} ${pointsEmoji}`;
+        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.displayName) || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
     });
     const totalBets = totalPlayer1Bets + totalPlayer2Bets;
     const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
-    yield interaction.reply(`Bets List:\n\n**Player 1:**\n${player1Bets.join('\n') || 'No bets'}\n\n**Player 2:**\n${player2Bets.join('\n') || 'No bets'}\n\n**Total points bet on Player 1:** ${totalPlayer1Bets} ${pointsEmoji}\n**Total GearPoints bet on Player 2:** ${totalPlayer2Bets} ${pointsEmoji}\n**Total GearPoints bet overall:** ${totalBets} ${pointsEmoji}\n\n**Betting Ratio (Player 1 / Player 2):** ${ratio}`);
+    yield interaction.reply(`**Bets List:**\n\n*${player1Name}:*\n${player1Bets.join('\n') || 'No bets'}\n\n*${player2Name}:*\n${player2Bets.join('\n') || 'No bets'}\n\n*Total GearPoints bet on **${player1Name}**:* **${totalPlayer1Bets}** ${pointsEmoji}\n*Total GearPoints bet on **${player2Name}**:* **${totalPlayer2Bets}** ${pointsEmoji}\n*Total GearPoints bet overall:* **${totalBets}** ${pointsEmoji}\n\n*Betting Ratio (${player1Name} / ${player2Name}):* **${ratio}**`);
 });
 const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void 0, function* () {
     let totalBetAmount = 0;
@@ -1335,12 +1353,12 @@ const handleStats = (interaction) => __awaiter(void 0, void 0, void 0, function*
     const statsMessage = `
 **Your Betting Statistics**:
 
-- ${debcoins} **Total GearPoints**: ${totalPoints} ${pointsEmoji}
-- 💪 **Total Wins**: ${totalWins}
-- 😢 **Total Losses**: ${totalLosses}
-- 🎲 **Total Bets**: ${totalBets}
-- 📈 **Win Percentage**: ${winPercentage}%
-- 📉 **Loss Percentage**: ${lossPercentage}%
+- ${debcoins} **Total GearPoints**: **${totalPoints}** ${pointsEmoji}
+- 💪 **Total Wins**: **${totalWins}**
+- 😢 **Total Losses**: **${totalLosses}**
+- 🎲 **Total Bets**: **${totalBets}**
+- 📈 **Win Percentage**: **${winPercentage}%**
+- 📉 **Loss Percentage**: **${lossPercentage}%**
   `;
     yield interaction.reply({ content: statsMessage, ephemeral: true });
 });
@@ -1359,12 +1377,12 @@ const handleGlobalStats = (interaction) => __awaiter(void 0, void 0, void 0, fun
     const globalStatsMessage = `
 **Global Betting Statistics**:
 
-- ${debcoins} **Total Points**: ${totalPoints} ${pointsEmoji}
-- 🏆 **Total Wins**: ${totalWins}
-- 😢 **Total Losses**: ${totalLosses}
-- 🎲 **Total Bets**: ${totalBets}
-- 📈 **Global Win Percentage**: ${winPercentage}%
-- 📉 **Global Loss Percentage**: ${lossPercentage}%
+- ${debcoins} **Total Points**: **${totalPoints}** ${pointsEmoji}
+- 🏆 **Total Wins**: **${totalWins}**
+- 😢 **Total Losses**: **${totalLosses}**
+- 🎲 **Total Bets**: **${totalBets}**
+- 📈 **Global Win Percentage**: **${winPercentage}%**
+- 📉 **Global Loss Percentage**: **${lossPercentage}%**
   `;
     yield interaction.reply({ content: globalStatsMessage });
 });
