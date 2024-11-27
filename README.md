@@ -103,6 +103,7 @@
    CHANNEL=your-channel-id-for-the-game
    PATHLOG=path/to/your/log/file.log
    BETTYID=Betty-Bet-Id
+   RESTRICTED=true/false
    ```
    Replace each `emoji-id` and `your...` with the appropriate values for your bot.
 

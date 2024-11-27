@@ -25,6 +25,7 @@ const debilus = process.env.DEBILUS!;
 const debcoins = process.env.DEBCOIN!;
 const bettyBettId = process.env.BETTYID!;
 const logFile = process.env.PATHLOG!;
+const restricted = process.env.RESTRICTED!;
 const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
@@ -34,9 +35,9 @@ let usersPoints: { [key: string]: { points: number, name: string, wins: number, 
 let currentBets: { [key: string]: { amount: number, betOn: 'player1' | 'player2' } } = {};
 let store: {[key: string]: {name: string, quantity: number, unitPrice: number}} = {};
 let purchaseHistory: {[key: string]: {userId: string, userName: string, itemName: string, quantity: number, totalPrice: number, timestamp: Date}} = {};
-let bettingOpen = false;
+let bettingOpen: boolean = false;
 let tournamentParticipants: Map<string, string> = new Map();
-let lastUpdateTime = new Date();
+let lastUpdateTime: Date = new Date();
 let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
 
 const blackjackGames: { [key: string]: { playerHand: string[], dealerHand: string[], bet: number } } = {};
@@ -630,9 +631,17 @@ client.on('interactionCreate', async interaction => {
           await handleClearMessages(interaction);
           break;   
         case 'bethistory':
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           await handleBetHistory(interaction);
           break;
         case 'stats':
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           await handleStats(interaction);
           break;
         case 'globalstats':
@@ -643,6 +652,10 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'guess':
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           await handleGuess(interaction);
           break
         case 'transferdebilus':
@@ -653,6 +666,10 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'buyitem': 
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           try { 
             await handleBuyItem(interaction); 
           } catch (error) { 
@@ -673,6 +690,10 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'listitems':
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           try{
             await handleListItems(interaction);
           } catch (error) {
@@ -688,6 +709,10 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'myitems':
+          if (restricted) {
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            break;
+          }
           await handleItemsInventory(interaction);
           break;
         case 'blackjack': 
@@ -712,7 +737,7 @@ client.on('interactionCreate', async interaction => {
 
           usersPoints[userId].points -= 10;  
 
-          await interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
+          await interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
 
           await savePoints();
 
@@ -782,7 +807,7 @@ client.on('interactionCreate', async interaction => {
           return;
         }
 
-        await interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+        await interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()] });
 
       } else if (interaction.customId === 'blackjack_stand') {
         let dealerValue = calculateHandValue(game.dealerHand);
@@ -793,7 +818,7 @@ client.on('interactionCreate', async interaction => {
         }
 
         const playerValue = calculateHandValue(game.playerHand);
-        let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+        let resultMessage = `\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`;
 
         if (dealerValue > 21 || playerValue > dealerValue) {
           usersPoints[userId].points += game.bet * 2;
@@ -1327,72 +1352,75 @@ const handlePresentation = async (interaction: CommandInteraction) => {
 Hello ! I'm **Betty Bet**, your betting bot! Here’s a quick guide to all the commands available to help you make the most of our betting experience:
 
 1. **/register**
-   - Register to get initial GearPoints and start betting.
+   ||- Register to get initial GearPoints and start betting.||
 2. **/points**
-   - Check your current GearPoints and status.
+   ||- Check your current GearPoints and status.||
 3. **/inventory**
-   - Check the GearPoints in your inventory.
+   ||- Check the GearPoints in your inventory.||
 4. **/claim**
-   - Claim GearPoints from your inventory to add them to your balance.
-5. **/leaderboard**
-   - Show the leaderboard of top betters.
-6. **/bethistory**
-   - View your betting history.
-7. **/stats**
-   - View your detailed statistics.
-8. **/globalstats**
-   - View global betting statistics.
-9. **/togglenotifications**
-   - Toggle notifications for inventory GearPoints. *This feature is optional, by default it is disabled*
-10. **/clearmessages**
-    - Clear all private messages sent by the bot.
-11. **/presentation**
-    - Present Betty Bet and its features.
-12. **/guess**
-    - Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)\n  **Warning**: use this command in the #betty-bet-game channel and one person at a time
+   ||- Claim GearPoints from your inventory to add them to your balance.||
+5. **/bethistory**
+   ||- View your betting history.||
+6. **/stats**
+   ||- View your detailed statistics.||
+7. **/globalstats**
+   ||- View global betting statistics.||
+8. **/togglenotifications**
+   ||- Toggle notifications for inventory GearPoints. *This feature is optional, by default it is disabled*||
+9. **/clearmessages**
+    ||- Clear all private messages sent by the bot.||
+10. **/presentation**
+    ||- Present Betty Bet and its features.||
+11. **/guess**
+    ||- Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)  
+      **Warning**: use this command in the #betty-bet-game channel and one person at a time||
+12. **/blackjack**
+    ||- Play a game of blackjack by betting 10 points from your wallet if you win you double your bet; if you lose, the 10 points are sent to the Debilus Closet||
 
 `;
 const part2 = `
 ### Commands reserved for **BetManager** role:
 
-13. **/placeyourbets**
+1. **/placeyourbets**
    - Start a betting period between two players.
    - Options:
      - \`player1name\`: Name of player 1
      - \`player2name\`: Name of player 2
-14. **/addpoints**
+2. **/addpoints**
    - Add GearPoints to a specified user.
    - Options:
      - \`user\`: User to add GearPoints to
      - \`points\`: Number of GearPoints to add
-15. **/clearbets**
+3. **/clearbets**
    - Clear all bets in case of issues and refund GearPoints.
-16. **/win**
+4. **/win**
    - Declare the winner and redistribute GearPoints.
    - Options:
      - \`winner\`: The winning player (1 or 2)
-17. **/betslist**
+5. **/betslist**
     - See the list of bets placed on each player.
-18. **/deleteuser**
+6. **/deleteuser**
     - Delete a registered user.
     - Options:
       - \`userid\`: ID of the user to delete
-19. **/backup**
+7. **/backup**
     - Encrypt and save data from decrypted backup.
-20. **/sendbackup**
+8. **/sendbackup**
     - Send the decrypted backup file.
-21. **/addtournamentparticipant**
+9. **/addtournamentparticipant**
     - Add a user to the tournament participant list.
     - Options:
       - \`user\`: User to add
-22. **/removetournamentparticipant**
+10. **/removetournamentparticipant**
     - Remove a user from the tournament participant list.
     - Options:
       - \`user\`: User to remove
-23. **/listtournamentparticipants**
+11. **/listtournamentparticipants**
     - List all tournament participants.
-24. **/cleartournamentparticipants**
+12. **/cleartournamentparticipants**
     - Clear the list of tournament participants.
+13. **/leaderboard**
+   - Show the leaderboard of top betters.
 
 `;
 const part3 = `
