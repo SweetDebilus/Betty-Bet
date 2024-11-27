@@ -74,24 +74,24 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 1. **Install Node.js**:
    First, make sure Node.jsis installed on your machine. Node.jsis a runtime environment for JavaScript that allows you to run your bot. You can download and install it from [nodejs.org](https://nodejs.org/).
 
-2. **Clone this repository** to your local machine:
+2. **Clone this repository to your local machine**:
    To download the source code of this project to your computer, open your terminal (or command prompt) and run the following commands:
-```sh
+   ```sh
    git clone https://github.com/SweetDebilus/betty-bet.git
    cd betty-bet
-```
+   ```
    The first command downloads the project, and the second command places you in the project directory.
    
 3. **Install the required dependencies**:
    Once you're in the project directory, you need to install all the libraries and modules the project needs to work. Run the following command in your terminal:
-```sh
+   ```sh
    npm install
-```
+   ```
    This command reads the package.json file and installs all the listed dependencies.
    
 4. **Configure the environment variables**:
    Environment variables are sensitive and specific to your setup that you don't want to include directly in your code. To configure these variables, create a file called .env at the root of the project (the same directory where package.json is located) and add the following lines with your own values:
-```sh
+   ```sh
    DISCORD_TOKEN=your-discord-bot-token
    ALGO=your-encryption-algorithm
    KEY=your-secret-key
@@ -103,7 +103,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
    CHANNEL=your-channel-id-for-the-game
    PATHLOG=path/to/your/log/file.log
    BETTYID=Betty-Bet-Id
-```
+   ```
    Replace each emoji-id and your... with the appropriate values for your bot.
 
 5. **Start the bot**:
