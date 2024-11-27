@@ -108,9 +108,9 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 5. **Start the bot**:
    Finally, to launch your bot, run the following command in your terminal:
-```sh
+   ```sh
    node dist/index.js
-```
+   ```
    This command starts your bot by running the index.js file located in the dist directory.
 
 ## Usage
