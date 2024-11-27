@@ -87,10 +87,10 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
    ```sh
    npm install
    ```
-   This command reads the package.json file and installs all the listed dependencies.
+   This command reads the `package.json` file and installs all the listed dependencies.
    
 4. **Configure the environment variables**:
-   Environment variables are sensitive and specific to your setup that you don't want to include directly in your code. To configure these variables, create a file called .env at the root of the project (the same directory where package.json is located) and add the following lines with your own values:
+   Environment variables are sensitive and specific to your setup that you don't want to include directly in your code. To configure these variables, create a file called `.env` at the root of the project (the same directory where package.json is located) and add the following lines with your own values:
    ```sh
    DISCORD_TOKEN=your-discord-bot-token
    ALGO=your-encryption-algorithm
@@ -104,7 +104,7 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
    PATHLOG=path/to/your/log/file.log
    BETTYID=Betty-Bet-Id
    ```
-   Replace each emoji-id and your... with the appropriate values for your bot.
+   Replace each `emoji-id` and `your...` with the appropriate values for your bot.
 
 5. **Start the bot**:
    Finally, to launch your bot, run the following command in your terminal:
