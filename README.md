@@ -1,6 +1,6 @@
 # Betty Bet
 
-Betty Bet is a Discord bot designed to manage bets and games within your server. It offers a variety of commands to place bets, check statistics, organize tournaments, and much more.
+   Betty Bet is a Discord bot designed to manage bets and games within your server. It offers a variety of commands to place bets, check statistics, organize tournaments, and much more.
 
 ## Features
 
@@ -115,14 +115,14 @@ Betty Bet is a Discord bot designed to manage bets and games within your server.
 
 ## Usage
 
-Once the bot is running, invite it to your Discord server and use the commands to start betting and playing. Make sure you have the appropriate roles to use the commands reserved for BetManagers.
+   Once the bot is running, invite it to your Discord server and use the commands to start betting and playing. Make sure you have the appropriate roles to use the commands reserved for BetManagers.
 
-*Please note, this bot meets a specific need and certain features are not suitable for everyone.*
+   *Please note, this bot meets a specific need and certain features are not suitable for everyone.*
 
 ## License
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
+   This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for more information.
 
 ## Conclusion
 
-This README provides a comprehensive overview of Betty Bet, its features, and how to install and use it. If you need more details or additional modifications, let me know!
+   This README provides a comprehensive overview of Betty Bet, its features, and how to install and use it. If you need more details or additional modifications, let me know!
