@@ -434,7 +434,18 @@ const commands = [
           .setRequired(true)),
   new SlashCommandBuilder()
         .setName('tournamentranking')
-        .setDescription('view the ranking of the tournament participants. (BetManager only)')
+        .setDescription('view the ranking of the tournament participants. (BetManager only)'),
+  new SlashCommandBuilder()
+        .setName('exchange')
+        .setDescription('exchange debilus point between users')
+        .addUserOption(option =>
+          option.setName('user')
+          .setDescription('The user to exchange points')
+          .setRequired(true))
+        .addIntegerOption(option =>
+          option.setName('points')
+          .setDescription('Number of points to exchange')
+          .setRequired(true))
 ]; 
 
 const commandData = commands.map(command => command.toJSON()); 
@@ -737,7 +748,7 @@ client.on('interactionCreate', async interaction => {
 
           usersPoints[userId].points -= 10;  
 
-          await interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
+          await interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()], ephemeral: true }); 
 
           await savePoints();
 
@@ -762,6 +773,9 @@ client.on('interactionCreate', async interaction => {
           } else {
             await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
           }
+          break;
+        case 'exchange':
+          await handleExchangePoints(interaction);
           break;
         default:
           try { 
@@ -807,7 +821,7 @@ client.on('interactionCreate', async interaction => {
           return;
         }
 
-        await interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()] });
+        await interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()] });
 
       } else if (interaction.customId === 'blackjack_stand') {
         let dealerValue = calculateHandValue(game.dealerHand);
@@ -1884,6 +1898,45 @@ const handleListTournamentParticipantsByRanking = async (interaction: CommandInt
   }).join('\n');
 
   await interaction.reply({ content: `**Tournament Participants Ranked:**\n\n${rankedList}` });
+};
+
+// echange de points entre deux utilisateurs
+const handleExchangePoints = async (interaction: CommandInteraction) => {
+  const userOption = interaction.options.get('user');
+  const user = userOption?.user;
+  const pointsOption = interaction.options.get('points');
+  const points = pointsOption?.value as number;
+
+  if (!user) {
+    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    return;
+  }
+
+  const userId = user.id;
+
+  if (!usersPoints[userId]) {
+    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    return;
+  }
+
+  const senderId = interaction.user.id;
+
+  if (!usersPoints[senderId]) {
+    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    return;
+  }
+
+  if (usersPoints[senderId].points < points) {
+    await interaction.reply({ content: 'Not enough points.', ephemeral: true });
+    return;
+  }
+
+  usersPoints[senderId].points -= points;
+  usersPoints[userId].points += points;
+
+  await savePoints();
+
+  await interaction.reply({ content: `Successfully transferred ${points} GearPoints to ${user.username}.`, ephemeral: true });
 };
 
 client.login(process.env.DISCORD_TOKEN!);

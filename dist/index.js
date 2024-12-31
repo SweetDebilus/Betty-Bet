@@ -15,13 +15,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -58,6 +68,7 @@ const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
 const bettyBettId = process.env.BETTYID;
 const logFile = process.env.PATHLOG;
+const restricted = process.env.RESTRICTED;
 const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let debilusCloset = 0;
@@ -416,7 +427,16 @@ const commands = [
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('tournamentranking')
-        .setDescription('view the ranking of the tournament participants. (BetManager only)')
+        .setDescription('view the ranking of the tournament participants. (BetManager only)'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('exchange')
+        .setDescription('exchange debilus point between users')
+        .addUserOption(option => option.setName('user')
+        .setDescription('The user to exchange points')
+        .setRequired(true))
+        .addIntegerOption(option => option.setName('points')
+        .setDescription('Number of points to exchange')
+        .setRequired(true))
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -607,9 +627,17 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield handleClearMessages(interaction);
                     break;
                 case 'bethistory':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     yield handleBetHistory(interaction);
                     break;
                 case 'stats':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     yield handleStats(interaction);
                     break;
                 case 'globalstats':
@@ -621,6 +649,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'guess':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     yield handleGuess(interaction);
                     break;
                 case 'transferdebilus':
@@ -632,6 +664,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'buyitem':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     try {
                         yield handleBuyItem(interaction);
                     }
@@ -655,6 +691,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'listitems':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     try {
                         yield handleListItems(interaction);
                     }
@@ -672,6 +712,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'myitems':
+                    if (restricted) {
+                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+                        break;
+                    }
                     yield handleItemsInventory(interaction);
                     break;
                 case 'blackjack':
@@ -690,7 +734,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
                     usersPoints[userId].points -= 10;
-                    yield interaction.reply({ content: `\n*Your hand*: \n**|${playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${dealerHand[0]}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
+                    yield interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
                     yield savePoints();
                     break;
                 case 'addwinmatch':
@@ -716,6 +760,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     else {
                         yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                     }
+                    break;
+                case 'exchange':
+                    yield handleExchangePoints(interaction);
                     break;
                 default:
                     try {
@@ -760,7 +807,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     yield savePoints();
                     return;
                 }
-                yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}|**\n`, components: [createBlackjackActionRow()] });
+                yield interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()] });
             }
             else if (interaction.customId === 'blackjack_stand') {
                 let dealerValue = calculateHandValue(game.dealerHand);
@@ -769,7 +816,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     dealerValue = calculateHandValue(game.dealerHand);
                 }
                 const playerValue = calculateHandValue(game.playerHand);
-                let resultMessage = `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n`;
+                let resultMessage = `\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`;
                 if (dealerValue > 21 || playerValue > dealerValue) {
                     usersPoints[userId].points += game.bet * 2;
                     resultMessage += '**You win!**';
@@ -1215,72 +1262,75 @@ const handlePresentation = (interaction) => __awaiter(void 0, void 0, void 0, fu
 Hello ! I'm **Betty Bet**, your betting bot! Here’s a quick guide to all the commands available to help you make the most of our betting experience:
 
 1. **/register**
-   - Register to get initial GearPoints and start betting.
+   ||- Register to get initial GearPoints and start betting.||
 2. **/points**
-   - Check your current GearPoints and status.
+   ||- Check your current GearPoints and status.||
 3. **/inventory**
-   - Check the GearPoints in your inventory.
+   ||- Check the GearPoints in your inventory.||
 4. **/claim**
-   - Claim GearPoints from your inventory to add them to your balance.
-5. **/leaderboard**
-   - Show the leaderboard of top betters.
-6. **/bethistory**
-   - View your betting history.
-7. **/stats**
-   - View your detailed statistics.
-8. **/globalstats**
-   - View global betting statistics.
-9. **/togglenotifications**
-   - Toggle notifications for inventory GearPoints. *This feature is optional, by default it is disabled*
-10. **/clearmessages**
-    - Clear all private messages sent by the bot.
-11. **/presentation**
-    - Present Betty Bet and its features.
-12. **/guess**
-    - Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)\n  **Warning**: use this command in the #betty-bet-game channel and one person at a time
+   ||- Claim GearPoints from your inventory to add them to your balance.||
+5. **/bethistory**
+   ||- View your betting history.||
+6. **/stats**
+   ||- View your detailed statistics.||
+7. **/globalstats**
+   ||- View global betting statistics.||
+8. **/togglenotifications**
+   ||- Toggle notifications for inventory GearPoints. *This feature is optional, by default it is disabled*||
+9. **/clearmessages**
+    ||- Clear all private messages sent by the bot.||
+10. **/presentation**
+    ||- Present Betty Bet and its features.||
+11. **/guess**
+    ||- Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)  
+      **Warning**: use this command in the #betty-bet-game channel and one person at a time||
+12. **/blackjack**
+    ||- Play a game of blackjack by betting 10 points from your wallet if you win you double your bet; if you lose, the 10 points are sent to the Debilus Closet||
 
 `;
     const part2 = `
 ### Commands reserved for **BetManager** role:
 
-13. **/placeyourbets**
+1. **/placeyourbets**
    - Start a betting period between two players.
    - Options:
      - \`player1name\`: Name of player 1
      - \`player2name\`: Name of player 2
-14. **/addpoints**
+2. **/addpoints**
    - Add GearPoints to a specified user.
    - Options:
      - \`user\`: User to add GearPoints to
      - \`points\`: Number of GearPoints to add
-15. **/clearbets**
+3. **/clearbets**
    - Clear all bets in case of issues and refund GearPoints.
-16. **/win**
+4. **/win**
    - Declare the winner and redistribute GearPoints.
    - Options:
      - \`winner\`: The winning player (1 or 2)
-17. **/betslist**
+5. **/betslist**
     - See the list of bets placed on each player.
-18. **/deleteuser**
+6. **/deleteuser**
     - Delete a registered user.
     - Options:
       - \`userid\`: ID of the user to delete
-19. **/backup**
+7. **/backup**
     - Encrypt and save data from decrypted backup.
-20. **/sendbackup**
+8. **/sendbackup**
     - Send the decrypted backup file.
-21. **/addtournamentparticipant**
+9. **/addtournamentparticipant**
     - Add a user to the tournament participant list.
     - Options:
       - \`user\`: User to add
-22. **/removetournamentparticipant**
+10. **/removetournamentparticipant**
     - Remove a user from the tournament participant list.
     - Options:
       - \`user\`: User to remove
-23. **/listtournamentparticipants**
+11. **/listtournamentparticipants**
     - List all tournament participants.
-24. **/cleartournamentparticipants**
+12. **/cleartournamentparticipants**
     - Clear the list of tournament participants.
+13. **/leaderboard**
+   - Show the leaderboard of top betters.
 
 `;
     const part3 = `
@@ -1659,5 +1709,34 @@ const handleListTournamentParticipantsByRanking = (interaction) => __awaiter(voi
         return `${index + 1}. ${participant.name} - Wins: ${participant.wins}, Losses: ${participant.losses}`;
     }).join('\n');
     yield interaction.reply({ content: `**Tournament Participants Ranked:**\n\n${rankedList}` });
+});
+// echange de points entre deux utilisateurs
+const handleExchangePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userOption = interaction.options.get('user');
+    const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
+    const pointsOption = interaction.options.get('points');
+    const points = pointsOption === null || pointsOption === void 0 ? void 0 : pointsOption.value;
+    if (!user) {
+        yield interaction.reply({ content: 'User not found.', ephemeral: true });
+        return;
+    }
+    const userId = user.id;
+    if (!usersPoints[userId]) {
+        yield interaction.reply({ content: 'User not found.', ephemeral: true });
+        return;
+    }
+    const senderId = interaction.user.id;
+    if (!usersPoints[senderId]) {
+        yield interaction.reply({ content: 'User not found.', ephemeral: true });
+        return;
+    }
+    if (usersPoints[senderId].points < points) {
+        yield interaction.reply({ content: 'Not enough points.', ephemeral: true });
+        return;
+    }
+    usersPoints[senderId].points -= points;
+    usersPoints[userId].points += points;
+    yield savePoints();
+    yield interaction.reply({ content: `Successfully transferred ${points} GearPoints to ${user.username}.`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
