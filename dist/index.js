@@ -430,7 +430,7 @@ const commands = [
         .setDescription('view the ranking of the tournament participants. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('exchange')
-        .setDescription('exchange debilus point between users')
+        .setDescription('exchange GearPoints between users')
         .addUserOption(option => option.setName('user')
         .setDescription('The user to exchange points')
         .setRequired(true))
