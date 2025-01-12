@@ -8,7 +8,6 @@
 - **/points**: Check your current GearPoints and status.
 - **/pointvault**: Check the GearPoints in your Point Vault.
 - **/claim**: Claim GearPoints from your Point Vault to add them to your balance.
-- **/leaderboard**: Show the leaderboard of top betters.
 - **/bethistory**: View your betting history.
 - **/stats**: View your detailed statistics.
 - **/globalstats**: View global betting statistics.
@@ -17,6 +16,7 @@
 - **/presentation**: Present Betty Bet and its features.
 - **/guess**: Play a guessing game! Guess a number between 1 and 10000. Win 5 GearPoints if you guess correctly, lose 10 GearPoints if you guess wrong.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
+- **exchange**: exchange points with another user
 - **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
   - **Options**:
     - `itemname`: Name of item.
@@ -43,6 +43,7 @@
   - **Option**:
     - `userid`: ID of the user to delete.
 - **/backup**: Encrypt and save data from decrypted backup.
+- **/leaderboard**: Show the leaderboard of top betters.
 - **/sendbackup**: Send the decrypted backup file.
 - **/addtournamentparticipant**: Add a user to the tournament participant list.
   - **Option**:
