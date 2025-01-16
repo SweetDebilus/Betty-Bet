@@ -68,9 +68,10 @@ const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
 const bettyBettId = process.env.BETTYID;
 const logFile = process.env.PATHLOG;
-const restricted = process.env.RESTRICTED;
+const restricted = false;
 const fs1 = require('fs');
 const filePath = 'usersPoints.json';
+let maintenanceMode = false;
 let debilusCloset = 0;
 let player1Name;
 let player2Name;
@@ -436,7 +437,10 @@ const commands = [
         .setRequired(true))
         .addIntegerOption(option => option.setName('points')
         .setDescription('Number of points to exchange')
-        .setRequired(true))
+        .setRequired(true)),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('maintenance')
+        .setDescription('Toggle maintenance mode. (BetManager only)')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -490,6 +494,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
         if (!joinedMoreThan7DaysAgo()) {
             yield interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
+            return;
+        }
+        if (maintenanceMode && !hasRole('BetManager')) {
+            yield interaction.reply({ content: 'Betty Bet is currently in maintenance mode. Please try again later.', ephemeral: true });
             return;
         }
         try {
@@ -733,8 +741,10 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         return;
                     }
                     const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
+                    const playerValue = calculateHandValue(playerHand);
+                    const dealerValue = calculateHandValue(dealerHand);
                     usersPoints[userId].points -= 10;
-                    yield interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()], ephemeral: true });
+                    yield interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()], ephemeral: true });
                     yield savePoints();
                     break;
                 case 'addwinmatch':
@@ -763,6 +773,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     break;
                 case 'exchange':
                     yield handleExchangePoints(interaction);
+                    break;
+                case 'maintenance':
+                    yield handleToggleMaintenance(interaction);
                     break;
                 default:
                     try {
@@ -800,14 +813,15 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
             if (interaction.customId === 'blackjack_hit') {
                 game.playerHand.push(drawCard());
                 const playerValue = calculateHandValue(game.playerHand);
+                const dealerValue = calculateHandValue(game.dealerHand);
                 if (playerValue > 21) {
                     delete blackjackGames[userId];
-                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
+                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
                     debilusCloset += 10;
                     yield savePoints();
                     return;
                 }
-                yield interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`, components: [createBlackjackActionRow()] });
+                yield interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()] });
             }
             else if (interaction.customId === 'blackjack_stand') {
                 let dealerValue = calculateHandValue(game.dealerHand);
@@ -816,7 +830,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     dealerValue = calculateHandValue(game.dealerHand);
                 }
                 const playerValue = calculateHandValue(game.playerHand);
-                let resultMessage = `\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n`;
+                let resultMessage = `\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n= **${dealerValue}**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**\n\n`;
                 if (dealerValue > 21 || playerValue > dealerValue) {
                     usersPoints[userId].points += game.bet * 2;
                     resultMessage += '**You win!**';
@@ -989,7 +1003,7 @@ const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, fun
     const top10 = sortedUsers.slice(0, 10);
     const leaderboard = top10.map(([userId, userInfo], index) => {
         const user = client.users.cache.get(userId);
-        return `${index + 1}. ${(user === null || user === void 0 ? void 0 : user.displayName) || userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
+        return `${index + 1}. ${userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
     }).join('\n');
     yield interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
 });
@@ -1440,8 +1454,7 @@ const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function*
     const allowedChannelId = process.env.CHANNEL; // Remplacez par l'ID de votre canal #Betty-Bet-Game
     const channelId = interaction.channelId;
     if (channelId !== allowedChannelId) {
-        const reply = yield interaction.reply({ content: 'This command can only be used in the #Betty-Bet-Game channel.', ephemeral: true });
-        setTimeout(() => reply.delete(), 3000);
+        yield interaction.reply({ content: 'This command can only be used in the #🤖lode-bots-betty👨 channel.', ephemeral: true });
         return;
     }
     const userId = interaction.user.id;
@@ -1738,5 +1751,9 @@ const handleExchangePoints = (interaction) => __awaiter(void 0, void 0, void 0, 
     usersPoints[userId].points += points;
     yield savePoints();
     yield interaction.reply({ content: `Successfully transferred ${points} GearPoints to ${user.username}.`, ephemeral: true });
+});
+const handleToggleMaintenance = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    maintenanceMode = !maintenanceMode;
+    yield interaction.reply({ content: `Maintenance mode has been ${maintenanceMode ? 'enabled' : 'disabled'}.`, ephemeral: true });
 });
 client.login(process.env.DISCORD_TOKEN);
