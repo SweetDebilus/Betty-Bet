@@ -10,14 +10,14 @@
   "license": "ISC",
   "description": "",
   "dependencies": {
-    "@discordjs/rest": "^2.4.2",
+    "@discordjs/rest": "^2.2.0",
     "@discordjs/ws": "^2.0.1",
     "discord.js": "^14.14.1",
     "dotenv": "^16.4.5",
     "fs": "^0.0.1-security",
     "glob": "^11.0.1",
     "node-schedule": "^2.1.1",
-    "undici": "^7.3.0"
+    "undici": "^6.21.1"
   },
   "devDependencies": {
     "@types/node-schedule": "^2.1.7"
