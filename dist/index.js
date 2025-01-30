@@ -15,23 +15,13 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || (function () {
-    var ownKeys = function(o) {
-        ownKeys = Object.getOwnPropertyNames || function (o) {
-            var ar = [];
-            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
-            return ar;
-        };
-        return ownKeys(o);
-    };
-    return function (mod) {
-        if (mod && mod.__esModule) return mod;
-        var result = {};
-        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
-        __setModuleDefault(result, mod);
-        return result;
-    };
-})();
+var __importStar = (this && this.__importStar) || function (mod) {
+    if (mod && mod.__esModule) return mod;
+    var result = {};
+    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
+    __setModuleDefault(result, mod);
+    return result;
+};
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -1273,90 +1263,10 @@ const handleClaimYesNo = (interaction) => __awaiter(void 0, void 0, void 0, func
 });
 const handlePresentation = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const part1 = `
-Hello ! I'm **Betty Bet**, your betting bot! Here’s a quick guide to all the commands available to help you make the most of our betting experience:
+Hello ! I'm **Betty Bet**, your betting bot ! You will find all my features and my source code via this link:
 
-1. **/register**
-   ||- Register to get initial GearPoints and start betting.||
-2. **/points**
-   ||- Check your current GearPoints and status.||
-3. **/inventory**
-   ||- Check the GearPoints in your inventory.||
-4. **/claim**
-   ||- Claim GearPoints from your inventory to add them to your balance.||
-5. **/bethistory**
-   ||- View your betting history.||
-6. **/stats**
-   ||- View your detailed statistics.||
-7. **/globalstats**
-   ||- View global betting statistics.||
-8. **/togglenotifications**
-   ||- Toggle notifications for inventory GearPoints. *This feature is optional, by default it is disabled*||
-9. **/clearmessages**
-    ||- Clear all private messages sent by the bot.||
-10. **/presentation**
-    ||- Present Betty Bet and its features.||
-11. **/guess**
-    ||- Play a guessing game ! Try to guess the number between 1 and 10,000 in 40sec. (**+5 GearPoints** if you win, **-10 GearPoints** if you lose)  
-      **Warning**: use this command in the #betty-bet-game channel and one person at a time||
-12. **/blackjack**
-    ||- Play a game of blackjack by betting 10 points from your wallet if you win you double your bet; if you lose, the 10 points are sent to the Debilus Closet||
-
-`;
-    const part2 = `
-### Commands reserved for **BetManager** role:
-
-1. **/placeyourbets**
-   - Start a betting period between two players.
-   - Options:
-     - \`player1name\`: Name of player 1
-     - \`player2name\`: Name of player 2
-2. **/addpoints**
-   - Add GearPoints to a specified user.
-   - Options:
-     - \`user\`: User to add GearPoints to
-     - \`points\`: Number of GearPoints to add
-3. **/clearbets**
-   - Clear all bets in case of issues and refund GearPoints.
-4. **/win**
-   - Declare the winner and redistribute GearPoints.
-   - Options:
-     - \`winner\`: The winning player (1 or 2)
-5. **/betslist**
-    - See the list of bets placed on each player.
-6. **/deleteuser**
-    - Delete a registered user.
-    - Options:
-      - \`userid\`: ID of the user to delete
-7. **/backup**
-    - Encrypt and save data from decrypted backup.
-8. **/sendbackup**
-    - Send the decrypted backup file.
-9. **/addtournamentparticipant**
-    - Add a user to the tournament participant list.
-    - Options:
-      - \`user\`: User to add
-10. **/removetournamentparticipant**
-    - Remove a user from the tournament participant list.
-    - Options:
-      - \`user\`: User to remove
-11. **/listtournamentparticipants**
-    - List all tournament participants.
-12. **/cleartournamentparticipants**
-    - Clear the list of tournament participants.
-13. **/leaderboard**
-   - Show the leaderboard of top betters.
-
-`;
-    const part3 = `
-Here are some additional features:
-  - **Automatic Points System**: Points are added to your inventory at fixed times every day (12:00 AM and 12:00 PM), up to a maximum of 15 points. You can claim these points using the \`/claim\` command.
-- **Debilus Closet**: If no bets are placed on the winning player, all points are added to the Debilus Closet. If you have zero points, you will be sent to the Debilus Closet until you get points back, either through your inventory with \`/claim\` or by putting **1M gil** in the FC chest to recover **100** ${pointsEmoji}.
-
-I’m here to make your betting experience fun and exciting! Let’s get started!
-  `;
+https://github.com/SweetDebilus/Betty-Bet?tab=readme-ov-file#betty-bet`;
     yield interaction.reply({ content: part1, ephemeral: true });
-    yield interaction.followUp({ content: part2, ephemeral: true });
-    yield interaction.followUp({ content: part3, ephemeral: true });
 });
 const handleClearMessages = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
