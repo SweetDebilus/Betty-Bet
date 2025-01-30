@@ -72,8 +72,8 @@
 
 ## Additional Features
 
-- **Automatic Points System**: Points are added to your inventory at fixed times every day (12:00 AM and 12:00 PM Local Time), up to a maximum of 15 points. You can claim these points using the `/claim` command.
-- **Debilus Closet**: If no bets are placed on the winning player, all points are added to the Debilus Closet. If you have zero points, you will be sent to the Debilus Closet until you get points back, either through your inventory with `/claim` or by putting **1M gil** in the FC chest to recover **100** ${pointsEmoji}.
+- **Automatic Points System**: Points are added to your Point Vault at fixed times every day (12:00 AM and 12:00 PM Local Time), up to a maximum of 15 points. You can claim these points using the `/claim` command.
+- **Debilus Closet**: Every point lost is sent to the Debilus Closet. 
       
 ## Installation
 
