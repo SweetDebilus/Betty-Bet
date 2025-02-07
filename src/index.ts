@@ -1011,6 +1011,12 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
     return;
   }
 
+  // verifier si l'utilisateur a déjà parié
+  if (currentBets[userId] && currentBets[userId].betOn === customId) {
+    await interaction.reply({ content: 'You have already placed a bet on this player.', ephemeral: true });
+    return;
+  }
+
   currentBets[userId] = { amount: 0, betOn: customId as 'player1' | 'player2' };
 
   const points = usersPoints[userId].points;
@@ -1081,14 +1087,14 @@ const handleBetsList = async (interaction: CommandInteraction) => {
     .filter(([, bet]) => bet.betOn === 'player1')
     .map(([userId, bet]) => {
       totalPlayer1Bets += bet.amount;
-      return `${client.users.cache.get(userId)?.displayName || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
+      return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
     });
 
   const player2Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player2')
     .map(([userId, bet]) => {
       totalPlayer2Bets += bet.amount;
-      return `${client.users.cache.get(userId)?.displayName || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
+      return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
     });
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;

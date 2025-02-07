@@ -955,6 +955,11 @@ const handleBetSelection = (interaction) => __awaiter(void 0, void 0, void 0, fu
         yield interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', ephemeral: true });
         return;
     }
+    // verifier si l'utilisateur a déjà parié
+    if (currentBets[userId] && currentBets[userId].betOn === customId) {
+        yield interaction.reply({ content: 'You have already placed a bet on this player.', ephemeral: true });
+        return;
+    }
     currentBets[userId] = { amount: 0, betOn: customId };
     const points = usersPoints[userId].points;
     const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
@@ -1007,16 +1012,14 @@ const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, functi
     const player1Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player1')
         .map(([userId, bet]) => {
-        var _a;
         totalPlayer1Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.displayName) || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
+        return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
     });
     const player2Bets = Object.entries(currentBets)
         .filter(([, bet]) => bet.betOn === 'player2')
         .map(([userId, bet]) => {
-        var _a;
         totalPlayer2Bets += bet.amount;
-        return `${((_a = client.users.cache.get(userId)) === null || _a === void 0 ? void 0 : _a.displayName) || 'Unknown User'}: **${bet.amount}** ${pointsEmoji}`;
+        return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
     });
     const totalBets = totalPlayer1Bets + totalPlayer2Bets;
     const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
