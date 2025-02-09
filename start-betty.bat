@@ -1,4 +1,4 @@
 @echo off
-cd /d "C:\Users\poupi\Documents\BOT BETS\bet-y"
+cd /d ""
 node dist/index.js
 pause
