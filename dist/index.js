@@ -363,9 +363,6 @@ const commands = [
         .setName('globalstats')
         .setDescription('View global betting statistics. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
-        .setName('guess')
-        .setDescription('Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'),
-    new discord_js_1.SlashCommandBuilder()
         .setName('transferdebilus')
         .setDescription('Transfer all GearPoints from the debilus closet to a specific user. (BetManager only)')
         .addUserOption(option => option.setName('user')
@@ -645,13 +642,6 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     else {
                         yield interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
                     }
-                    break;
-                case 'guess':
-                    if (restricted) {
-                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
-                        break;
-                    }
-                    yield handleGuess(interaction);
                     break;
                 case 'transferdebilus':
                     if (hasRole('BetManager')) {
@@ -1362,77 +1352,6 @@ const handleGlobalStats = (interaction) => __awaiter(void 0, void 0, void 0, fun
 - 📉 **Global Loss Percentage**: **${lossPercentage}%**
   `;
     yield interaction.reply({ content: globalStatsMessage });
-});
-const handleGuess = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    const allowedChannelId = process.env.CHANNEL; // Remplacez par l'ID de votre canal #Betty-Bet-Game
-    const channelId = interaction.channelId;
-    if (channelId !== allowedChannelId) {
-        yield interaction.reply({ content: 'This command can only be used in the #🤖lode-bots-betty👨 channel.', ephemeral: true });
-        return;
-    }
-    const userId = interaction.user.id;
-    if (!usersPoints[userId]) {
-        const reply = yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
-        setTimeout(() => reply.delete(), 3000);
-        return;
-    }
-    if (activeGuessGames[channelId]) {
-        const reply = yield interaction.reply({ content: 'A guessing game is already in progress in this channel. Please wait for it to finish.', ephemeral: true });
-        setTimeout(() => reply.delete(), 3000);
-        return;
-    }
-    activeGuessGames[channelId] = userId; // Marquer le jeu comme actif
-    const numberToGuess = Math.floor(Math.random() * 10000) + 1;
-    yield interaction.reply({ content: 'Guess a number between 1 and 10000!' });
-    const channel = interaction.channel;
-    if (!channel || !(channel instanceof discord_js_1.TextChannel)) {
-        yield interaction.followUp({ content: 'Unable to start the guessing game as the channel is not available or is not a text channel.', ephemeral: true });
-        delete activeGuessGames[channelId]; // Nettoyer l'état en cas d'erreur
-        return;
-    }
-    const filter = (response) => {
-        return !isNaN(Number(response.content)) && response.author.id === userId;
-    };
-    const messagesToDelete = [];
-    const collector = channel.createMessageCollector({ filter, time: 40000 });
-    collector.on('collect', (response) => __awaiter(void 0, void 0, void 0, function* () {
-        const guess = Number(response.content);
-        messagesToDelete.push(response);
-        if (guess === numberToGuess) {
-            usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
-            yield savePoints();
-            yield response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
-            collector.stop('guessed correctly');
-        }
-        else if (guess < numberToGuess) {
-            const reply = yield response.reply({ content: 'Higher!' });
-            messagesToDelete.push(reply);
-        }
-        else {
-            const reply = yield response.reply({ content: 'Lower!' });
-            messagesToDelete.push(reply);
-        }
-    }));
-    collector.on('end', (_, reason) => {
-        if (reason !== 'guessed correctly') {
-            const pointsLost = Math.min(10, usersPoints[userId].points); // Nombre de points à perdre
-            usersPoints[userId].points -= pointsLost; // Perdre les points
-            debilusCloset += pointsLost; // Ajouter les points perdus au debilus closet
-            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
-            savePoints();
-            interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
-            ;
-        }
-        const startTime = performance.now();
-        // Supprimer tous les messages collectés après la fin du jeu
-        messagesToDelete.forEach(message => {
-            message.delete();
-        });
-        const endTime = performance.now();
-        const executionTime = endTime - startTime;
-        log(`Temps d'exécution : ${executionTime} millisecondes`);
-        delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
-    });
 });
 const handleTransferDebilus = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userOption = interaction.options.get('user');

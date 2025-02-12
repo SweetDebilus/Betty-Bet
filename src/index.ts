@@ -370,10 +370,7 @@ const commands = [
     .setDescription('View your detailed statistics'), 
   new SlashCommandBuilder() 
     .setName('globalstats') 
-    .setDescription('View global betting statistics. (BetManager only)'), 
-  new SlashCommandBuilder() 
-    .setName('guess') 
-    .setDescription('Play a guessing game! Try to guess the number between 1 and 10000 in 40sec.'), 
+    .setDescription('View global betting statistics. (BetManager only)'),
   new SlashCommandBuilder() 
     .setName('transferdebilus') 
     .setDescription('Transfer all GearPoints from the debilus closet to a specific user. (BetManager only)') 
@@ -672,13 +669,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
           }
           break;
-        case 'guess':
-          if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
-            break;
-          }
-          await handleGuess(interaction);
-          break
         case 'transferdebilus':
           if (hasRole('BetManager')) {
             await handleTransferDebilus(interaction);
@@ -812,7 +802,7 @@ client.on('interactionCreate', async interaction => {
       await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
       return;
     }
-    
+
     if (interaction.customId.startsWith('claim_')) {
       await handleClaimYesNo(interaction as ButtonInteraction);
     } else if (interaction.customId === 'blackjack_hit' || interaction.customId === 'blackjack_stand') {
@@ -1502,94 +1492,6 @@ const handleGlobalStats = async (interaction: CommandInteraction) => {
   `;
 
   await interaction.reply({ content: globalStatsMessage });
-};
-
-const handleGuess = async (interaction: CommandInteraction) => {
-  const allowedChannelId = process.env.CHANNEL!; // Remplacez par l'ID de votre canal #Betty-Bet-Game
-  const channelId = interaction.channelId;
-
-  if (channelId !== allowedChannelId) {
-    await interaction.reply({ content: 'This command can only be used in the #🤖lode-bots-betty👨 channel.', ephemeral: true });
-    return;
-  }
-
-  const userId = interaction.user.id;
-  if (!usersPoints[userId]) {
-    const reply = await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
-    setTimeout(() => reply.delete(), 3000 );
-    return;
-  }
-
-  if (activeGuessGames[channelId]) {
-    const reply = await interaction.reply({ content: 'A guessing game is already in progress in this channel. Please wait for it to finish.', ephemeral: true });
-    setTimeout(() => reply.delete(), 3000 );
-    return;
-  }
-
-  activeGuessGames[channelId] = userId; // Marquer le jeu comme actif
-
-  const numberToGuess = Math.floor(Math.random() * 10000) + 1;
-  await interaction.reply({ content: 'Guess a number between 1 and 10000!' });
-
-  const channel = interaction.channel;
-  if (!channel || !(channel instanceof TextChannel)) {
-    await interaction.followUp({ content: 'Unable to start the guessing game as the channel is not available or is not a text channel.', ephemeral: true });
-    delete activeGuessGames[channelId]; // Nettoyer l'état en cas d'erreur
-    return;
-  }
-
-  const filter = (response: Message) => {
-    return !isNaN(Number(response.content)) && response.author.id === userId;
-  };
-
-  const messagesToDelete: Message[] = [];
-
-  const collector = channel.createMessageCollector({ filter, time: 40000 });
-
-  collector.on('collect', async (response: Message) => {
-    const guess = Number(response.content);
-    messagesToDelete.push(response);
-
-    if (guess === numberToGuess) {
-      usersPoints[userId].points += 5; // Gagner 5 GearPoints en cas de succès
-      await savePoints();
-      await response.reply({ content: `Congratulations! You guessed the correct number: ${numberToGuess}. You have won 5 GearPoints.` });
-      collector.stop('guessed correctly');
-    } else if (guess < numberToGuess) {
-      const reply = await response.reply({ content: 'Higher!' });
-      messagesToDelete.push(reply);
-    } else {
-      const reply = await response.reply({ content: 'Lower!' });
-      messagesToDelete.push(reply);
-    }
-  });
-
-  collector.on('end', (_, reason) => {
-    if (reason !== 'guessed correctly') {
-      const pointsLost = Math.min(10, usersPoints[userId].points); // Nombre de points à perdre
-      usersPoints[userId].points -= pointsLost; // Perdre les points
-      debilusCloset += pointsLost; // Ajouter les points perdus au debilus closet
-      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0
-      savePoints();
-      interaction.followUp({ content: `Time is up! The correct number was: ${numberToGuess}. You have lost 10 GearPoints, which have been added to the debilus closet.\n\nTotal GearPoints in debilus closet: **${debilusCloset}**` });
-      ;
-    }
-
-    const startTime = performance.now();
-
-    // Supprimer tous les messages collectés après la fin du jeu
-    messagesToDelete.forEach(message => {
-      message.delete();
-    });
-
-    const endTime = performance.now();
-    const executionTime = endTime - startTime;
-
-    log(`Temps d'exécution : ${executionTime} millisecondes`);
-
-    delete activeGuessGames[channelId]; // Nettoyer l'état après la fin du jeu
-
-  });
 };
 
 const handleTransferDebilus = async (interaction: CommandInteraction) => {
