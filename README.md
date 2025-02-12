@@ -14,7 +14,6 @@
 - **/togglenotifications**: Toggle notifications for inventory GearPoints.
 - **/clearmessages**: Clear all private messages sent by the bot.
 - **/presentation**: Present Betty Bet and its features.
-- **/guess**: Play a guessing game! Guess a number between 1 and 10000. Win 5 GearPoints if you guess correctly, lose 10 GearPoints if you guess wrong.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
 - **exchange**: exchange points with another user
 - **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
