@@ -403,6 +403,9 @@ const commands = [
         .setName('blackjack')
         .setDescription('Play a game of blackjack'),
     new discord_js_1.SlashCommandBuilder()
+        .setName('stopblackjack')
+        .setDescription('Stop the current game of blackjack'),
+    new discord_js_1.SlashCommandBuilder()
         .setName('addwinmatch')
         .setDescription('adds 1 winning point to a user. (BetManager only)')
         .addUserOption(option => option.setName('user')
@@ -710,7 +713,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         return;
                     }
                     if (blackjackGames[userId]) {
-                        yield interaction.reply({ content: 'You already have an active blackjack game. Please finish it before starting a new one.', flags: discord_js_2.MessageFlags.Ephemeral });
+                        yield interaction.reply({ content: 'You already have an active blackjack game. Please finish it before starting a new one or use `/stopstopblackjack` for delete this one', flags: discord_js_2.MessageFlags.Ephemeral });
                         return;
                     }
                     if (usersPoints[userId].points < 10) {
@@ -731,6 +734,9 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     else {
                         yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_2.MessageFlags.Ephemeral });
                     }
+                    break;
+                case 'stopblackjack':
+                    yield handleStopBlackjack(interaction);
                     break;
                 case 'addlosematch':
                     if (hasRole('BetManager')) {
@@ -1618,5 +1624,18 @@ const handleExchangePoints = (interaction) => __awaiter(void 0, void 0, void 0, 
 const handleToggleMaintenance = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     maintenanceMode = !maintenanceMode;
     yield interaction.reply({ content: `Maintenance mode has been ${maintenanceMode ? 'enabled' : 'disabled'}.`, flags: discord_js_2.MessageFlags.Ephemeral });
+});
+const handleStopBlackjack = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = interaction.user.id;
+    if (!blackjackGames[userId]) {
+        yield interaction.reply({ content: 'No active blackjack game found.', flags: discord_js_2.MessageFlags.Ephemeral });
+        return;
+    }
+    usersPoints[userId].points += 10; // Rembourser 10 points
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+    delete blackjackGames[userId];
+    yield savePoints();
+    yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
+    yield interaction.followUp({ content: `You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
 });
 client.login(process.env.DISCORD_TOKEN);

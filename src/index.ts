@@ -418,6 +418,9 @@ const commands = [
       .setName('blackjack')
       .setDescription('Play a game of blackjack'),
   new SlashCommandBuilder()
+      .setName('stopblackjack')
+      .setDescription('Stop the current game of blackjack'),
+  new SlashCommandBuilder()
       .setName('addwinmatch')
       .setDescription('adds 1 winning point to a user. (BetManager only)')
       .addUserOption(option =>
@@ -731,7 +734,7 @@ client.on('interactionCreate', async interaction => {
           }
 
           if (blackjackGames[userId]) {
-            await interaction.reply({content:'You already have an active blackjack game. Please finish it before starting a new one.', flags: MessageFlags.Ephemeral});
+            await interaction.reply({content:'You already have an active blackjack game. Please finish it before starting a new one or use `/stopstopblackjack` for delete this one', flags: MessageFlags.Ephemeral});
             return;
           }
 
@@ -756,6 +759,9 @@ client.on('interactionCreate', async interaction => {
           } else {
             await interaction.reply({content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
+          break;
+        case 'stopblackjack':
+          await handleStopBlackjack(interaction);
           break;
         case 'addlosematch':
           if (hasRole('BetManager')) {
@@ -1831,6 +1837,20 @@ const handleToggleMaintenance = async (interaction: CommandInteraction) => {
   maintenanceMode = !maintenanceMode;
 
   await interaction.reply({ content: `Maintenance mode has been ${maintenanceMode ? 'enabled' : 'disabled'}.`, flags: MessageFlags.Ephemeral });
+}
+
+const handleStopBlackjack = async (interaction: CommandInteraction) => {
+  const userId = interaction.user.id;
+  if (!blackjackGames[userId]) {
+    await interaction.reply({ content: 'No active blackjack game found.', flags: MessageFlags.Ephemeral });
+    return;
+  }
+  usersPoints[userId].points += 10; // Rembourser 10 points
+  usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+  delete blackjackGames[userId];
+  await savePoints();
+  await interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: MessageFlags.Ephemeral });
+  await interaction.followUp({ content: `You can now play again !`, flags: MessageFlags.Ephemeral });
 }
 
 client.login(process.env.DISCORD_TOKEN!);
