@@ -5,6 +5,7 @@ import * as path from 'path';
 import schedule from 'node-schedule';
 dotenv.config();
 import crypto from 'crypto';
+import { MessageFlags } from 'discord.js';
 import { userInfo } from 'os';
 
 const algorithm = process.env.ALGO!;
@@ -482,11 +483,11 @@ const createBlackjackActionRow = () => {
       new ButtonBuilder()
         .setCustomId('blackjack_hit')
         .setLabel('Hit')
-        .setStyle(ButtonStyle.Primary),
+        .setStyle(ButtonStyle.Danger),
       new ButtonBuilder()
         .setCustomId('blackjack_stand')
         .setLabel('Stand')
-        .setStyle(ButtonStyle.Secondary),
+        .setStyle(ButtonStyle.Success),
     );
 };
 
@@ -513,17 +514,12 @@ client.on('interactionCreate', async interaction => {
     };
 
     if (!hasRole(process.env.ROLE!)) {
-      await interaction.reply({ content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`, ephemeral: true });
-      return;
-    }
-
-    if (!joinedMoreThan7DaysAgo()) {
-      await interaction.reply({ content: 'You must have been a member of the server for at least 7 days to use this command.', ephemeral: true });
+      await interaction.reply({ content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`, flags: MessageFlags.Ephemeral });
       return;
     }
 
     if (maintenanceMode && !hasRole('BetManager')) {
-      await interaction.reply({ content: 'Betty Bet is currently in maintenance mode. Please try again later.', ephemeral: true });
+      await interaction.reply({ content: 'Betty Bet is currently in maintenance mode. Please try again later.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -536,35 +532,35 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
           await handleAddTournamentParticipant(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'removetournamentparticipant':
           if (hasRole('BetManager')) {
             await handleRemoveTournamentParticipant(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'listtournamentparticipants':
           if (hasRole('BetManager')) {
             await handleListTournamentParticipants(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'cleartournamentparticipants':
           if (hasRole('BetManager')) {
             await handleClearTournamentParticipants(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;        
         case 'placeyourbets':
           if (hasRole('BetManager')) {
             await handlePlaceYourBets(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'points':
@@ -574,14 +570,14 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
             await handleClearBets(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'leaderboard':
           if (hasRole('BetManager')) {
             await handleLeaderboard(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'win':
@@ -595,28 +591,28 @@ client.on('interactionCreate', async interaction => {
               await interaction.reply('The winner must be 1 or 2.');
             }
           } else {
-            await interaction.reply({content:'You do not have permission to use this command.', ephemeral:true});
+            await interaction.reply({content:'You do not have permission to use this command.', flags: MessageFlags.Ephemeral});
           }
           break;
         case 'betslist':
           if (hasRole('BetManager')) {
             await handleBetsList(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'deleteuser':
           if (hasRole('BetManager')) {
             await handleDeleteUser(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'addpoints':
           if (hasRole('BetManager')) {
             await handleAddPoints(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'claim':
@@ -629,14 +625,14 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
             await handleBackup(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;  
         case 'sendbackup':
           if (hasRole('BetManager')) {
             await handleSendDecryptedBackup(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'togglenotifications':
@@ -650,14 +646,14 @@ client.on('interactionCreate', async interaction => {
           break;   
         case 'bethistory':
           if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
             break;
           }
           await handleBetHistory(interaction);
           break;
         case 'stats':
           if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
             break;
           }
           await handleStats(interaction);
@@ -666,19 +662,19 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
             await handleGlobalStats(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'transferdebilus':
           if (hasRole('BetManager')) {
             await handleTransferDebilus(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'buyitem': 
           if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
             break;
           }
           try { 
@@ -697,12 +693,12 @@ client.on('interactionCreate', async interaction => {
               await interaction.reply('There was an error adding the item to the store.'); 
             } 
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'listitems':
           if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
             break;
           }
           try{
@@ -716,12 +712,12 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
             await handleViewPurchaseHistory(interaction);
           } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'myitems':
           if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', ephemeral: true });
+            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
             break;
           }
           await handleItemsInventory(interaction);
@@ -730,17 +726,17 @@ client.on('interactionCreate', async interaction => {
           const userId = interaction.user.id; 
 
           if (!usersPoints[userId]) {
-            await interaction.reply({content:'You are not registered yet. Use `/register` to sign up.', ephemeral: true});
+            await interaction.reply({content:'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral});
             return;
           }
 
           if (blackjackGames[userId]) {
-            await interaction.reply({content:'You already have an active blackjack game. Please finish it before starting a new one.', ephemeral: true});
+            await interaction.reply({content:'You already have an active blackjack game. Please finish it before starting a new one.', flags: MessageFlags.Ephemeral});
             return;
           }
 
           if (usersPoints[userId].points < 10) { 
-            await interaction.reply({ content: 'You need at least 10 points to play blackjack.', ephemeral: true });
+            await interaction.reply({ content: 'You need at least 10 points to play blackjack.', flags: MessageFlags.Ephemeral });
             return; 
           } 
 
@@ -749,7 +745,7 @@ client.on('interactionCreate', async interaction => {
           const dealerValue = calculateHandValue(dealerHand);
           usersPoints[userId].points -= 10;  
 
-          await interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()], ephemeral: true }); 
+          await interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()], flags: MessageFlags.Ephemeral }); 
 
           await savePoints();
 
@@ -758,21 +754,21 @@ client.on('interactionCreate', async interaction => {
           if (hasRole('BetManager')) {
             await handleAddWinMatch(interaction);
           } else {
-            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'addlosematch':
           if (hasRole('BetManager')) {
             await handleAddLoseMatch(interaction);
           } else {
-            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'tournamentranking':
           if (hasRole('BetManager')) {
             await handleListTournamentParticipantsByRanking(interaction)
           } else {
-            await interaction.reply({content: 'You do not have permission to use this command.', ephemeral: true });
+            await interaction.reply({content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
           }
           break;
         case 'exchange':
@@ -799,7 +795,7 @@ client.on('interactionCreate', async interaction => {
   } else if (interaction.isButton()) {
     const userId = interaction.user.id;
     if (!usersPoints[userId]) {
-      await interaction.reply({ content: 'Please register first using /register.', ephemeral: true });
+      await interaction.reply({ content: 'Please register first using /register.', flags: MessageFlags.Ephemeral });
       return;
     }
 
@@ -809,7 +805,7 @@ client.on('interactionCreate', async interaction => {
       const game = blackjackGames[userId];
 
       if (!game) {
-        await interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', ephemeral: true });
+        await interaction.reply({ content: 'No active blackjack game found. Start a new game with /blackjack', flags: MessageFlags.Ephemeral });
         return;
       }
 
@@ -878,10 +874,17 @@ client.on('messageCreate', async message => {
   const currentBet = currentBets[userId];
   if (!currentBet) return; // Vérifier si l'utilisateur a déjà sélectionné un joueur
 
+  // Validation stricte : vérifier si le message est entièrement composé de chiffres
+  if (!/^\d+$/.test(message.content)) {
+    const reply = await message.reply('Invalid bet format. Please enter a numeric value.');
+    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
+    return;
+  }
+
   const betAmount = parseInt(message.content);
 
-  if (isNaN(betAmount) || betAmount <= 0) {
-    const reply = await message.reply('Invalid bet amount. Please try again.');
+  if (betAmount <= 0) {
+    const reply = await message.reply('Invalid bet amount. Please enter a positive number.');
     setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
     return;
   }
@@ -924,13 +927,13 @@ const handleRegister = async (interaction: CommandInteraction) => {
   const userName = member.nickname || interaction.user.displayName;
 
   if (usersPoints[userId]) {
-    await interaction.reply({content:`You are already registered.\n\n\n*Debilus* ${debilus}`, ephemeral:true});
+    await interaction.reply({content:`You are already registered.\n\n\n*Debilus* ${debilus}`, flags: MessageFlags.Ephemeral});
     return;
   }
 
   usersPoints[userId] = { points: 100, name: userName, wins:0, losses:0, isDebilus:false, inventory:0, notificationsEnabled: false, betHistory: [], inventoryShop: [], winMatch:0, loseMatch:0 };
   await savePoints();
-  await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, ephemeral:true});
+  await interaction.reply({content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, flags: MessageFlags.Ephemeral});
 
 };
 
@@ -938,13 +941,13 @@ const handleToggleNotifications = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({content:'You are not registered yet. Use `/register` to sign up.', ephemeral: true});
+    await interaction.reply({content:'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral});
     return;
   }
 
   usersPoints[userId].notificationsEnabled = !usersPoints[userId].notificationsEnabled;
   await savePoints();
-  await interaction.reply({content:`Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, ephemeral: true});
+  await interaction.reply({content:`Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, flags: MessageFlags.Ephemeral});
 };
 
 const handlePlaceYourBets = async (interaction: CommandInteraction) => {
@@ -966,7 +969,7 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
       new ButtonBuilder()
         .setCustomId('player2')
         .setLabel(player2Name)
-        .setStyle(ButtonStyle.Primary),
+        .setStyle(ButtonStyle.Danger),
     );
 
   await interaction.reply({ content: `**the bets are open !!!\n\n**You have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.`, components: [row] });
@@ -991,19 +994,19 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
   const customId = interaction.customId;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({content:'You are not registered yet. Use */register* to register.', ephemeral: true});
+    await interaction.reply({content:'You are not registered yet. Use */register* to register.', flags: MessageFlags.Ephemeral});
     return;
   }
 
   // Vérifier si l'utilisateur essaie de parier sur un autre joueur
   if (currentBets[userId] && currentBets[userId].betOn !== customId) {
-    await interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', ephemeral: true });
+    await interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   // verifier si l'utilisateur a déjà parié
   if (currentBets[userId] && currentBets[userId].betOn === customId) {
-    await interaction.reply({ content: 'You have already placed a bet on this player.', ephemeral: true });
+    await interaction.reply({ content: 'You have already placed a bet on this player.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1015,7 +1018,7 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
   if (!interaction.replied) {
     await interaction.reply({
       content: `You have chosen ${chosenPlayerName}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`,
-      ephemeral: true
+      flags: MessageFlags.Ephemeral
     });
   }
 };
@@ -1027,13 +1030,13 @@ const handlePoints = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({content:'You are not registered yet. Use */register* to register.', ephemeral: true});
+    await interaction.reply({content:'You are not registered yet. Use */register* to register.', flags: MessageFlags.Ephemeral});
     return;
   }
 
   const userInfo = usersPoints[userId];
   const status = userInfo.isDebilus ? `you are a **Debilus** ${debilus}` : 'bettor';
-  await interaction.reply({ content: `**${userInfo.name}**\n\nYou have **${userInfo.points}** ${pointsEmoji}\n\n| **${userInfo.wins} wins** | **${userInfo.losses} losses** |\n\n**Status:** ${status}`, ephemeral: true });
+  await interaction.reply({ content: `**${userInfo.name}**\n\nYou have **${userInfo.points}** ${pointsEmoji}\n\n| **${userInfo.wins} wins** | **${userInfo.losses} losses** |\n\n**Status:** ${status}`, flags: MessageFlags.Ephemeral });
 };
 
 const handleClearBets = async (interaction: CommandInteraction) => {
@@ -1051,17 +1054,30 @@ const handleClearBets = async (interaction: CommandInteraction) => {
 };
 
 const handleLeaderboard = async (interaction: CommandInteraction) => {
-
   loadPoints();
 
   const sortedUsers = Object.entries(usersPoints).sort((a, b) => b[1].points - a[1].points);
-  const top10 = sortedUsers.slice(0, 10);
-  const leaderboard = top10.map(([userId, userInfo], index) => {
-    const user = client.users.cache.get(userId);
-    return `${index + 1}. ${userInfo.name} - ${userInfo.points} ${pointsEmoji}`;
+  const top20 = sortedUsers.slice(0, 20);
+
+  // Définir les largeurs de colonnes pour un alignement uniforme
+  const rankWidth = 6; // Largeur de la colonne "Rank"
+  const nameWidth = 32; // Largeur de la colonne "Name"
+  const pointsWidth = 10; // Largeur de la colonne "Points"
+  const winsWidth = 8; // Largeur de la colonne "Wins"
+  const lossesWidth = 8; // Largeur de la colonne "Losses"
+
+  const leaderboard = top20.map(([userId, userInfo], index) => {
+    const userName = userInfo.name.padEnd(nameWidth, ' ');
+    const userPoints = userInfo.points.toString().padStart(pointsWidth, ' ');
+    const userWins = userInfo.wins.toString().padStart(winsWidth, ' ');
+    const userLosses = userInfo.losses.toString().padStart(lossesWidth, ' ');
+
+    return `${(index + 1).toString().padStart(rankWidth, ' ')} ${userName} ${userPoints} ${userWins} ${userLosses}`;
   }).join('\n');
 
-  await interaction.reply(`Ranking of the best bettors :\n\n${leaderboard}`);
+  await interaction.reply(
+    `**Ranking of the best bettors:**\n\n\`\`\`Rank   Name                                  Points     Wins      Losses\n${leaderboard}\`\`\``
+  );
 };
 
 const handleBetsList = async (interaction: CommandInteraction) => {
@@ -1069,7 +1085,7 @@ const handleBetsList = async (interaction: CommandInteraction) => {
   let totalPlayer2Bets = 0;
 
   if (player1Name === undefined && player2Name === undefined) {
-    await interaction.reply({ content:`no bets, no game ${debilus}`, ephemeral: true })
+    await interaction.reply({ content: `no bets, no game ${debilus}`, flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1077,20 +1093,26 @@ const handleBetsList = async (interaction: CommandInteraction) => {
     .filter(([, bet]) => bet.betOn === 'player1')
     .map(([userId, bet]) => {
       totalPlayer1Bets += bet.amount;
-      return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
+      return `${usersPoints[userId].name.padEnd(15)}\t${bet.amount} ${pointsEmoji}`;
     });
 
   const player2Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player2')
     .map(([userId, bet]) => {
       totalPlayer2Bets += bet.amount;
-      return `${usersPoints[userId].name}: **${bet.amount}** ${pointsEmoji}`;
+      return `${usersPoints[userId].name.padEnd(15)}\t${bet.amount} ${pointsEmoji}`;
     });
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;
   const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
 
-  await interaction.reply(`**Bets List:**\n\n*${player1Name}:*\n${player1Bets.join('\n') || 'No bets'}\n\n*${player2Name}:*\n${player2Bets.join('\n') || 'No bets'}\n\n*Total GearPoints bet on **${player1Name}**:* **${totalPlayer1Bets}** ${pointsEmoji}\n*Total GearPoints bet on **${player2Name}**:* **${totalPlayer2Bets}** ${pointsEmoji}\n*Total GearPoints bet overall:* **${totalBets}** ${pointsEmoji}\n\n*Betting Ratio (${player1Name} / ${player2Name}):* **${ratio}**`);
+  await interaction.reply(
+    `**Bets List:**\n\n\`\`\`Player\t\tName\t\tAmount\n${player1Name}:\n${player1Bets.join('\n') || 'No bets'}\n\n${player2Name}:\n${player2Bets.join('\n') || 'No bets'}\`\`\`\n\n` +
+    `Total bet on **${player1Name}**: **${totalPlayer1Bets}** ${pointsEmoji}\n` +
+    `Total bet on **${player2Name}**: **${totalPlayer2Bets}** ${pointsEmoji}\n` +
+    `Total bet overall: **${totalBets}** ${pointsEmoji}\n\n` +
+    `Betting Ratio (${player1Name} / ${player2Name}): **${ratio}**`
+  );
 };
 
 const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player1' | 'player2') => {
@@ -1098,6 +1120,14 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   let winnerBetAmount = 0;
   let loserBetAmount = 0;
   const winningPlayerName = winningPlayer === 'player1' ? player1Name : player2Name;
+
+  let loserTotalPoints = 0;
+
+for (const bet of Object.values(currentBets)) {
+  if (bet.betOn !== winningPlayer) {
+    loserTotalPoints += bet.amount; // Somme totale des mises des perdants
+  }
+}
 
   for (const bet of Object.values(currentBets)) {
     totalBetAmount += bet.amount;
@@ -1110,7 +1140,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
   
   if (winnerBetAmount === 0 && loserBetAmount === 0) {
     const message = `No bets, no money ! ${debilus}`;
-    await interaction.reply({ content: message, ephemeral: true });
+    await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
     return;
   }  
 
@@ -1139,26 +1169,26 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
     return;
   }
 
-  const winningsRatio = totalBetAmount / winnerBetAmount;
-
   for (const [userId, bet] of Object.entries(currentBets)) {
     if (bet.betOn === winningPlayer) {
-      usersPoints[userId].points += Math.floor(bet.amount * winningsRatio);
-      usersPoints[userId].wins += 1; // Incrémenter le nombre de victoires
-      
-      // Mettre à jour le résultat du pari dans l'historique
+      // Calculer la proportion pour chaque gagnant
+      const gainFromLosers = Math.floor(bet.amount / winnerBetAmount * loserTotalPoints);
+      usersPoints[userId].points += bet.amount + gainFromLosers; // Ajouter le pari initial + le gain
+      usersPoints[userId].wins += 1;
+  
+      // Mettre à jour l'historique
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'win';
       usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     } else {
-      usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
-      
-      // Mettre à jour le résultat du pari dans l'historique
+      // Déduire les points pour les perdants
+      usersPoints[userId].losses += 1;
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'loss';
       usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     }
   }
+  
 
   await savePoints();
   currentBets = {};
@@ -1185,9 +1215,9 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
     const userNameToDelete = usersPoints[userIdToDelete].name;
     delete usersPoints[userIdToDelete];
     await savePoints();
-    await interaction.reply({ content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`, ephemeral: true });
+    await interaction.reply({ content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`, flags: MessageFlags.Ephemeral });
   } else {
-    await interaction.reply({ content: 'User no found', ephemeral: true });
+    await interaction.reply({ content: 'User no found', flags: MessageFlags.Ephemeral });
   }
 };
 
@@ -1200,20 +1230,20 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
 
   if (userId == bettyBettId) {
     debilusCloset += pointsToAdd;
-    await interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, ephemeral: true });
+    await interaction.reply({ content: `**${pointsToAdd}** points have been added to DebilusCloset.`, flags: MessageFlags.Ephemeral });
     await savePoints();
     return;
   }
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+    await interaction.reply({ content: `User with id ${userId} is not registered`, flags: MessageFlags.Ephemeral });
     return;
   }
 
   usersPoints[userId].points += pointsToAdd;
   usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
   await savePoints();
-  await interaction.reply({ content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${usersPoints[userId].name}**.`, ephemeral: true });
+  await interaction.reply({ content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${usersPoints[userId].name}**.`, flags: MessageFlags.Ephemeral });
 };
 
 const handleClaim = async (interaction: CommandInteraction) => {
@@ -1221,7 +1251,7 @@ const handleClaim = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'You are not registered yet. Use `/register` to register.', ephemeral: true });
+    await interaction.reply({ content: 'You are not registered yet. Use `/register` to register.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1232,9 +1262,9 @@ const handleClaim = async (interaction: CommandInteraction) => {
     usersPoints[userId].isDebilus = false; // Mettre à jour le statut debilus
     await savePoints();
 
-    await interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, ephemeral: true });
+    await interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, flags: MessageFlags.Ephemeral });
   } else {
-    await interaction.reply({ content: 'You have no points to claim. try again later !', ephemeral: true });
+    await interaction.reply({ content: 'You have no points to claim. try again later !', flags: MessageFlags.Ephemeral });
   }
 };
 
@@ -1245,18 +1275,18 @@ const handleInventory = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content:`You are not registered yet. Use */register* to register.`, ephemeral: true })
+    await interaction.reply({ content:`You are not registered yet. Use */register* to register.`, flags: MessageFlags.Ephemeral })
     return;
   }
   const inventoryPoints = usersPoints[userId].inventory;
-  await interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`, ephemeral: true })
+  await interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`, flags: MessageFlags.Ephemeral })
 };
 
 const handleBackup = async (interaction: CommandInteraction) => {
   createDataDebilusDir();
 
   if (!fs.existsSync('DataDebilus/decrypted_backup.json')) {
-    await interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
+    await interaction.reply({ content: 'No decrypted backup found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1272,19 +1302,19 @@ const handleBackup = async (interaction: CommandInteraction) => {
   purchaseHistory = decryptedData.purchaseHistory;
   lastUpdateTime = new Date(decryptedData.lastUpdateTime);
 
-  await interaction.reply({ content: 'Data from decrypted backup has been encrypted and **saved successfully** !', ephemeral: true });
+  await interaction.reply({ content: 'Data from decrypted backup has been encrypted and **saved successfully** !', flags: MessageFlags.Ephemeral });
 };
 
 const handleSendDecryptedBackup = async (interaction: CommandInteraction) => {
   createDataDebilusDir();
 
   if (!fs.existsSync('DataDebilus/decrypted_backup.json')) {
-    await interaction.reply({ content: 'No decrypted backup found.', ephemeral: true });
+    await interaction.reply({ content: 'No decrypted backup found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const file = new AttachmentBuilder('DataDebilus/decrypted_backup.json');
-  await interaction.reply({ content: 'Here is the decrypted backup file.', files: [file], ephemeral: true });
+  await interaction.reply({ content: 'Here is the decrypted backup file.', files: [file], flags: MessageFlags.Ephemeral });
 };
 
 const handleAddTournamentParticipant = async (interaction: CommandInteraction) => {
@@ -1294,9 +1324,9 @@ const handleAddTournamentParticipant = async (interaction: CommandInteraction) =
   if (user) {
     tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
     await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
-    await interaction.reply({ content: `${user.displayName} has been added to the tournament.`, ephemeral: true });
+    await interaction.reply({ content: `${user.displayName} has been added to the tournament.`, flags: MessageFlags.Ephemeral });
   } else {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
   }
 };
 
@@ -1310,15 +1340,15 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
     usersPoints[user.id].loseMatch = 0;
     await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
     await savePoints();
-    await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, ephemeral: true });
+    await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, flags: MessageFlags.Ephemeral });
   } else {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
   }
 };
 
 const handleListTournamentParticipants = async (interaction: CommandInteraction) => {
   if (tournamentParticipants.size === 0) {
-    await interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
+    await interaction.reply({ content: 'No participants in the tournament.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1326,7 +1356,7 @@ const handleListTournamentParticipants = async (interaction: CommandInteraction)
     return `Pseudo: ${username}`;
   }).join('\n');
 
-  await interaction.reply({ content: `Tournament Participants:\n${participantsList}`, ephemeral: true });
+  await interaction.reply({ content: `Tournament Participants:\n${participantsList}`, flags: MessageFlags.Ephemeral });
 };
 
 const handleClearTournamentParticipants = async (interaction: CommandInteraction) => {
@@ -1339,7 +1369,7 @@ const handleClearTournamentParticipants = async (interaction: CommandInteraction
   tournamentParticipants.clear(); // Effacer tous les participants
   await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
   await savePoints();
-  await interaction.reply({ content: 'All tournament participants have been cleared.', ephemeral: true });
+  await interaction.reply({ content: 'All tournament participants have been cleared.', flags: MessageFlags.Ephemeral });
 };
 
 const handleClaimYesNo = async (interaction: ButtonInteraction) => {
@@ -1347,7 +1377,7 @@ const handleClaimYesNo = async (interaction: ButtonInteraction) => {
   
   if (!usersPoints[userId]) {
     if (!interaction.replied) {
-      await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+      await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral });
     }
     return;
   }
@@ -1377,7 +1407,7 @@ const handlePresentation = async (interaction: CommandInteraction) => {
 Hello ! I'm **Betty Bet**, your betting bot ! You will find all my features and my source code via this link:
 
 https://github.com/SweetDebilus/Betty-Bet?tab=readme-ov-file#betty-bet`;
-  await interaction.reply({ content: part1, ephemeral: true });
+  await interaction.reply({ content: part1, flags: MessageFlags.Ephemeral });
 };
 
 const handleClearMessages = async (interaction: CommandInteraction) => {
@@ -1385,7 +1415,7 @@ const handleClearMessages = async (interaction: CommandInteraction) => {
   const user = await client.users.fetch(userId);
 
   if (!user) {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1399,10 +1429,10 @@ const handleClearMessages = async (interaction: CommandInteraction) => {
       await message.delete();
     }
 
-    await interaction.reply({ content: 'All private messages sent by the bot have been cleared.', ephemeral: true });
+    await interaction.reply({ content: 'All private messages sent by the bot have been cleared.', flags: MessageFlags.Ephemeral });
   } catch (error) {
     log(`Failed to clear messages for user ${userId}: ${error}`);
-    await interaction.reply({ content: 'Failed to clear messages.', ephemeral: true });
+    await interaction.reply({ content: 'Failed to clear messages.', flags: MessageFlags.Ephemeral });
   }
 };
 
@@ -1410,14 +1440,14 @@ const handleBetHistory = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const betHistory = usersPoints[userId].betHistory;
 
   if (betHistory.length === 0) {
-    await interaction.reply({ content: 'You have no betting history.', ephemeral: true });
+    await interaction.reply({ content: 'You have no betting history.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1426,20 +1456,20 @@ const handleBetHistory = async (interaction: CommandInteraction) => {
   betHistory.forEach(async (bet, index) => {
     const betInfo = `\n**Bet ${index + 1}:**\nDate: ${bet.date.toLocaleString()}\nBet On: ${bet.betOn}\nAmount: ${bet.amount}${pointsEmoji}\nResult: ${bet.result}\n`;
     if ((historyMessage + betInfo).length > 2000) {
-      await interaction.reply({ content: historyMessage, ephemeral: true });
+      await interaction.reply({ content: historyMessage, flags: MessageFlags.Ephemeral });
       historyMessage = 'Your Betting History (continued):\n';
     }
     historyMessage += betInfo;
   });
 
-  await interaction.reply({ content: historyMessage, ephemeral: true });
+  await interaction.reply({ content: historyMessage, flags: MessageFlags.Ephemeral });
 };
 
 const handleStats = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1462,7 +1492,7 @@ const handleStats = async (interaction: CommandInteraction) => {
 - 📉 **Loss Percentage**: **${lossPercentage}%**
   `;
 
-  await interaction.reply({ content: statsMessage, ephemeral: true });
+  await interaction.reply({ content: statsMessage, flags: MessageFlags.Ephemeral });
 };
 
 const handleGlobalStats = async (interaction: CommandInteraction) => {
@@ -1499,19 +1529,19 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
   const user = userOption?.user;
 
   if (!user) {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const userId = user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'The specified user is not registered.', ephemeral: true });
+    await interaction.reply({ content: 'The specified user is not registered.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (debilusCloset === 0) {
-    await interaction.reply({ content: 'The debilus closet is already empty.', ephemeral: true });
+    await interaction.reply({ content: 'The debilus closet is already empty.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1521,7 +1551,7 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
   debilusCloset = 0;
 
   await savePoints();
-  await interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, ephemeral: true });
+  await interaction.reply({ content: `Transferred ${transferredPoints} GearPoints from the debilus closet to ${user.username}. The debilus closet is now empty.`, flags: MessageFlags.Ephemeral });
 };
 
 const handleBuyItem = async (interaction: CommandInteraction) => {
@@ -1533,13 +1563,13 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
 
   // Vérifier si l'utilisateur existe
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'User not found', ephemeral: true });
+    await interaction.reply({ content: 'User not found', flags: MessageFlags.Ephemeral });
     return;
   }
 
   // Vérifier si l'article existe dans la boutique
   if (!store[itemName]) {
-    await interaction.reply({ content: 'Item not found', ephemeral: true });
+    await interaction.reply({ content: 'Item not found', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1548,13 +1578,13 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
 
   // Vérifier si l'utilisateur a suffisamment de points
   if (usersPoints[userId].points < totalPrice) {
-    await interaction.reply({ content: 'Not enough points', ephemeral: true });
+    await interaction.reply({ content: 'Not enough points', flags: MessageFlags.Ephemeral });
     return;
   }
 
   // Vérifier si la boutique a suffisamment d'articles en stock
   if (item.quantity < quantity) {
-    await interaction.reply({ content: 'Not enough items in stock', ephemeral: true });
+    await interaction.reply({ content: 'Not enough items in stock', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1588,7 +1618,7 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   await savePoints();  // Sauvegarder les points dans le fichier
 
   // Répondre à l'interaction pour confirmer l'achat
-  await interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, ephemeral: true });
+  await interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, flags: MessageFlags.Ephemeral });
 };
 
 const handleAddItemToStore = async (interaction: CommandInteraction) => {
@@ -1610,7 +1640,7 @@ const handleAddItemToStore = async (interaction: CommandInteraction) => {
 
   await savePoints()
 
-  await interaction.reply({ content: `Added ${quantity} ${itemName}(s) to the store`, ephemeral: true });
+  await interaction.reply({ content: `Added ${quantity} ${itemName}(s) to the store`, flags: MessageFlags.Ephemeral });
 };
 
 const handleListItems = async (interaction: CommandInteraction) => {
@@ -1621,14 +1651,14 @@ const handleListItems = async (interaction: CommandInteraction) => {
     storeItems += `${item.name} - *Quantity*: **${item.quantity}** | *Unit Price*: **${item.unitPrice}** ${pointsEmoji}\n`;
   }
 
-  await interaction.reply({ content: storeItems, ephemeral: true });
+  await interaction.reply({ content: storeItems, flags: MessageFlags.Ephemeral });
 };
 
 const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
   const allPurchaseRecords = Object.values(purchaseHistory);
 
   if (allPurchaseRecords.length === 0) {
-    await interaction.reply({ content: 'No purchase history found.', ephemeral: true });
+    await interaction.reply({ content: 'No purchase history found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1640,7 +1670,7 @@ const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
     return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: **${formattedDate}**\n`;
   }).join('\n');
 
-  await interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, ephemeral: true });
+  await interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, flags: MessageFlags.Ephemeral });
 };
 
 const handleItemsInventory = async (interaction: CommandInteraction) => {
@@ -1648,14 +1678,14 @@ const handleItemsInventory = async (interaction: CommandInteraction) => {
   let inventoryItemsMessage = `**Item Inventory**:\n`;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', ephemeral: true });
+    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const items = usersPoints[userId].inventoryShop;
 
   if (items.length === 0) {
-    await interaction.reply({content:'you have no items in your inventory', ephemeral: true});
+    await interaction.reply({content:'you have no items in your inventory', flags: MessageFlags.Ephemeral});
     return;
   }
 
@@ -1664,7 +1694,7 @@ const handleItemsInventory = async (interaction: CommandInteraction) => {
     inventoryItemsMessage += itemInfo;
   });
 
-  await interaction.reply({content: inventoryItemsMessage, ephemeral: true});
+  await interaction.reply({content: inventoryItemsMessage, flags: MessageFlags.Ephemeral});
 }
 
 const handleAddWinMatch = async (interaction: CommandInteraction) => {
@@ -1672,18 +1702,18 @@ const handleAddWinMatch = async (interaction: CommandInteraction) => {
   const userId = userOption?.value as string;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+    await interaction.reply({ content: `User with id ${userId} is not registered`, flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (!tournamentParticipants.has(userId)) {
-    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, flags: MessageFlags.Ephemeral });
     return;
   }
 
   usersPoints[userId].winMatch += 1;
   await savePoints();
-  await interaction.reply({content:`${usersPoints[userId].name} win !`, ephemeral: true});
+  await interaction.reply({content:`${usersPoints[userId].name} win !`, flags: MessageFlags.Ephemeral});
 }
 
 const handleAddLoseMatch = async (interaction: CommandInteraction) => {
@@ -1691,12 +1721,12 @@ const handleAddLoseMatch = async (interaction: CommandInteraction) => {
   const userId = userOption?.value as string;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: `User with id ${userId} is not registered`, ephemeral: true });
+    await interaction.reply({ content: `User with id ${userId} is not registered`, flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (!tournamentParticipants.has(userId)) {
-    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, ephemeral: true });
+    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1707,12 +1737,12 @@ const handleAddLoseMatch = async (interaction: CommandInteraction) => {
     return
   }
   await savePoints();
-  await interaction.reply({content:`${usersPoints[userId].name} loses !`, ephemeral: true})
+  await interaction.reply({content:`${usersPoints[userId].name} loses !`, flags: MessageFlags.Ephemeral})
 }
 
 const handleListTournamentParticipantsByRanking = async (interaction: CommandInteraction) => {
   if (tournamentParticipants.size === 0) {
-    await interaction.reply({ content: 'No participants in the tournament.', ephemeral: true });
+    await interaction.reply({ content: 'No participants in the tournament.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1750,26 +1780,26 @@ const handleExchangePoints = async (interaction: CommandInteraction) => {
   const points = pointsOption?.value as number;
 
   if (!user) {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const userId = user.id;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   const senderId = interaction.user.id;
 
   if (!usersPoints[senderId]) {
-    await interaction.reply({ content: 'User not found.', ephemeral: true });
+    await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
     return;
   }
 
   if (usersPoints[senderId].points < points) {
-    await interaction.reply({ content: 'Not enough points.', ephemeral: true });
+    await interaction.reply({ content: 'Not enough points.', flags: MessageFlags.Ephemeral });
     return;
   }
 
@@ -1778,13 +1808,13 @@ const handleExchangePoints = async (interaction: CommandInteraction) => {
 
   await savePoints();
 
-  await interaction.reply({ content: `Successfully transferred ${points} GearPoints to ${user.username}.`, ephemeral: true });
+  await interaction.reply({ content: `Successfully transferred ${points} GearPoints to ${user.username}.`, flags: MessageFlags.Ephemeral });
 };
 
 const handleToggleMaintenance = async (interaction: CommandInteraction) => {
   maintenanceMode = !maintenanceMode;
 
-  await interaction.reply({ content: `Maintenance mode has been ${maintenanceMode ? 'enabled' : 'disabled'}.`, ephemeral: true });
+  await interaction.reply({ content: `Maintenance mode has been ${maintenanceMode ? 'enabled' : 'disabled'}.`, flags: MessageFlags.Ephemeral });
 }
 
 client.login(process.env.DISCORD_TOKEN!);
