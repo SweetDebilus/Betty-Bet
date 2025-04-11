@@ -874,6 +874,18 @@ client.on('messageCreate', async message => {
   const currentBet = currentBets[userId];
   if (!currentBet) return; // Vérifier si l'utilisateur a déjà sélectionné un joueur
 
+  // Vérifier si l'utilisateur a déjà parié sur ce joueur
+  const chosenPlayerName = currentBet.betOn === 'player1' ? player1Name : player2Name;
+  const existingBet = usersPoints[userId].betHistory.some(
+    bet => bet.result === 'pending' && bet.betOn === chosenPlayerName
+  );
+
+  if (existingBet) {
+    const reply = await message.reply('You have already placed a bet on this player. You cannot bet again on the same player.');
+    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
+    return;
+  }
+
   // Validation stricte : vérifier si le message est entièrement composé de chiffres
   if (!/^\d+$/.test(message.content)) {
     const reply = await message.reply('Invalid bet format. Please enter a numeric value.');
@@ -901,10 +913,12 @@ client.on('messageCreate', async message => {
 
   // Mettre à jour l'historique des paris
   const betHistory = usersPoints[userId].betHistory;
-  const chosenPlayerName = currentBet.betOn === 'player1' ? player1Name : player2Name;
-  const lastBet = betHistory[betHistory.length - 1];
 
-  if (lastBet && lastBet.result === 'pending' && lastBet.betOn === chosenPlayerName) {
+  const lastBet = betHistory.find(
+    bet => bet.result === 'pending' && bet.betOn === chosenPlayerName
+  );
+
+  if (lastBet) {
     lastBet.amount += betAmount;
   } else {
     betHistory.push({
@@ -914,6 +928,8 @@ client.on('messageCreate', async message => {
       date: new Date()
     });
   }
+
+  usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
 
   await savePoints();
 
@@ -964,26 +980,26 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
     .addComponents(
       new ButtonBuilder()
         .setCustomId('player1')
-        .setLabel(player1Name)
+        .setLabel('Bet on '+player1Name)
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('player2')
-        .setLabel(player2Name)
+        .setLabel('Bet on '+player2Name)
         .setStyle(ButtonStyle.Danger),
     );
 
-  await interaction.reply({ content: `**the bets are open !!!\n\n**You have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.`, components: [row] });
+  await interaction.reply({ content: `## the bets are open !!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`, components: [row] });
 
   const channel = interaction.channel as TextChannel;
   if (channel) {
-    channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+    channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
   }
 
   setTimeout(async () => {
     bettingOpen = false;
-    await interaction.followUp('**Bets are closed !**');
+    await interaction.followUp('## Bets are closed !');
     if (channel) {
-      channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
+      channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
       channel.send('*Thanks for money !*');
     }
   }, 60000);
@@ -1093,14 +1109,14 @@ const handleBetsList = async (interaction: CommandInteraction) => {
     .filter(([, bet]) => bet.betOn === 'player1')
     .map(([userId, bet]) => {
       totalPlayer1Bets += bet.amount;
-      return `${usersPoints[userId].name.padEnd(15)}\t${bet.amount} ${pointsEmoji}`;
+      return `${usersPoints[userId].name.padEnd(32)}\t${bet.amount}`;
     });
 
   const player2Bets = Object.entries(currentBets)
     .filter(([, bet]) => bet.betOn === 'player2')
     .map(([userId, bet]) => {
       totalPlayer2Bets += bet.amount;
-      return `${usersPoints[userId].name.padEnd(15)}\t${bet.amount} ${pointsEmoji}`;
+      return `${usersPoints[userId].name.padEnd(32)}\t${bet.amount}`;
     });
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;
