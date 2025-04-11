@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, ModalBuilder } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -866,81 +866,55 @@ client.on('interactionCreate', async interaction => {
   }
 });
 
-client.on('messageCreate', async message => {
-  if (!bettingOpen || message.author.bot) return;
+client.on('interactionCreate', async interaction => {
+  if (!interaction.isModalSubmit()) return;
 
-  const userId = message.author.id;
+  if (interaction.customId === 'bet_modal') {
+    // Récupérer les données saisies par l'utilisateur
+    const betAmount = interaction.fields.getTextInputValue('bet_amount');
+    const userId = interaction.user.id;
 
-  if (tournamentParticipants.has(userId)) {
-    const reply = await message.reply({ content: 'You are participating in the tournament and cannot place bets during the event.' });
-    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-    return;
-  }
+    // Vérifier si le montant est valide
+    if (!/^\d+$/.test(betAmount) || parseInt(betAmount) <= 0) {
+      await interaction.reply({
+        content: 'Invalid bet amount. Please enter a positive numeric value.',
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
 
-  const currentBet = currentBets[userId];
-  if (!currentBet) return; // Vérifier si l'utilisateur a déjà sélectionné un joueur
+    const betAmountInt = parseInt(betAmount);
 
-  // Vérifier si l'utilisateur a déjà parié sur ce joueur
-  const chosenPlayerName = currentBet.betOn === 'player1' ? player1Name : player2Name;
-  const existingBet = usersPoints[userId].betHistory.some(
-    bet => bet.result === 'pending' && bet.betOn === chosenPlayerName
-  );
+    // Vérifier les points de l'utilisateur
+    if (usersPoints[userId].points < betAmountInt) {
+      await interaction.reply({
+        content: `${pointsEmoji} Not enough points. Try a lower amount.`,
+        flags: MessageFlags.Ephemeral
+      });
+      return;
+    }
 
-  if (existingBet) {
-    const reply = await message.reply('You have already placed a bet on this player. You cannot bet again on the same player.');
-    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-    return;
-  }
+    // Ajouter le pari
+    usersPoints[userId].points -= betAmountInt;
+    const playerBetOn = interaction.message!.content.includes(player1Name) ? 'player1' : 'player2';
+    currentBets[userId] = { amount: betAmountInt, betOn: playerBetOn };
 
-  // Validation stricte : vérifier si le message est entièrement composé de chiffres
-  if (!/^\d+$/.test(message.content)) {
-    const reply = await message.reply('Invalid bet format. Please enter a numeric value.');
-    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-    return;
-  }
-
-  const betAmount = parseInt(message.content);
-
-  if (betAmount <= 0) {
-    const reply = await message.reply('Invalid bet amount. Please enter a positive number.');
-    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-    return;
-  }
-
-  if (usersPoints[userId].points < betAmount) {
-    const reply = await message.reply(`${pointsEmoji} not enough. Try a lower amount.`);
-    setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-    return;
-  }
-
-  // Ajuster les points et ajouter le pari
-  usersPoints[userId].points -= betAmount;
-  currentBets[userId] = { amount: (currentBet.amount || 0) + betAmount, betOn: currentBet.betOn };
-
-  // Mettre à jour l'historique des paris
-  const betHistory = usersPoints[userId].betHistory;
-
-  const lastBet = betHistory.find(
-    bet => bet.result === 'pending' && bet.betOn === chosenPlayerName
-  );
-
-  if (lastBet) {
-    lastBet.amount += betAmount;
-  } else {
-    betHistory.push({
-      betOn: chosenPlayerName,
-      amount: betAmount,
+    // Mettre à jour l'historique
+    usersPoints[userId].betHistory.push({
+      betOn: playerBetOn === 'player1' ? player1Name : player2Name,
+      amount: betAmountInt,
       result: 'pending',
       date: new Date()
     });
+
+    await savePoints();
+
+    // Confirmation
+    await interaction.reply({
+      content: `You have successfully placed a bet of **${betAmountInt}** ${pointsEmoji} on **${playerBetOn === 'player1' ? player1Name : player2Name}**.`,
+      flags: MessageFlags.Ephemeral
+    });
   }
-
-  usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
-
-  await savePoints();
-
-  // Ajouter une réaction au message de l'utilisateur
-  await message.react('✅'); // Remplace '✅' par l'emoji que tu préfères
 });
 
 const handleRegister = async (interaction: CommandInteraction) => {
@@ -973,42 +947,90 @@ const handleToggleNotifications = async (interaction: CommandInteraction) => {
 };
 
 const handlePlaceYourBets = async (interaction: CommandInteraction) => {
+  // Initialisation des variables
   bettingOpen = true;
   currentBets = {};
 
+  // Récupération des noms des joueurs
   const player1Option = interaction.options.get('player1name');
   const player2Option = interaction.options.get('player2name');
 
   player1Name = player1Option ? player1Option.value as string : 'Player 1';
   player2Name = player2Option ? player2Option.value as string : 'Player 2';
 
-  const row = new ActionRowBuilder<ButtonBuilder>()
+  // Création des boutons pour les paris
+  const actionRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
       new ButtonBuilder()
         .setCustomId('player1')
-        .setLabel('Bet on '+player1Name)
+        .setLabel('Bet on ' + player1Name)
         .setStyle(ButtonStyle.Primary),
       new ButtonBuilder()
         .setCustomId('player2')
-        .setLabel('Bet on '+player2Name)
-        .setStyle(ButtonStyle.Danger),
+        .setLabel('Bet on ' + player2Name)
+        .setStyle(ButtonStyle.Danger)
     );
 
-  await interaction.reply({ content: `## the bets are open !!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`, components: [row] });
+  // Envoi du message initial
+  await interaction.reply({
+    content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`,
+    components: [
+      new ActionRowBuilder<ButtonBuilder>().addComponents(
+        new ButtonBuilder()
+          .setCustomId('player1')
+          .setLabel('Bet on ' + player1Name)
+          .setStyle(ButtonStyle.Primary),
+        new ButtonBuilder()
+          .setCustomId('player2')
+          .setLabel('Bet on ' + player2Name)
+          .setStyle(ButtonStyle.Danger)
+      ),
+    ],
+  });
 
+  // Récupérer le message après l'envoi
+  const replyMessage = await interaction.fetchReply();
+
+  // Affichage d'un effet visuel supplémentaire dans le canal
   const channel = interaction.channel as TextChannel;
   if (channel) {
     channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
   }
 
+  // Fermeture des paris après 60 secondes
   setTimeout(async () => {
-    bettingOpen = false;
-    await interaction.followUp('## Bets are closed !');
-    if (channel) {
-      channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
-      channel.send('*Thanks for money !*');
+    try {
+      bettingOpen = false;
+
+      // Désactivation des boutons
+      const disabledRow = new ActionRowBuilder<ButtonBuilder>()
+        .addComponents(
+          new ButtonBuilder()
+            .setCustomId('player1')
+            .setLabel('Bet on ' + player1Name)
+            .setStyle(ButtonStyle.Primary)
+            .setDisabled(true), // Désactiver le bouton
+          new ButtonBuilder()
+            .setCustomId('player2')
+            .setLabel('Bet on ' + player2Name)
+            .setStyle(ButtonStyle.Danger)
+            .setDisabled(true) // Désactiver le bouton
+        );
+
+      // Mise à jour du message pour indiquer que les paris sont fermés
+      await replyMessage.edit({
+        content: `## Bets are now closed!`,
+        components: [disabledRow],
+      });
+
+      // Message de fin de session dans le canal
+      if (channel) {
+        channel.send('*Thanks for the money!*');
+      }
+    } catch (error) {
+      console.error('Error closing bets:', error);
     }
-  }, 60000);
+  }, 60000); // Temps pour fermer les paris (60 secondes)
 };
 
 const handleBetSelection = async (interaction: ButtonInteraction) => {
@@ -1016,34 +1038,127 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
   const customId = interaction.customId;
 
   if (!usersPoints[userId]) {
-    await interaction.reply({content:'You are not registered yet. Use */register* to register.', flags: MessageFlags.Ephemeral});
-    return;
-  }
-
-  // Vérifier si l'utilisateur essaie de parier sur un autre joueur
-  if (currentBets[userId] && currentBets[userId].betOn !== customId) {
-    await interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  // verifier si l'utilisateur a déjà parié
-  if (currentBets[userId] && currentBets[userId].betOn === customId) {
-    await interaction.reply({ content: 'You have already placed a bet on this player.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  currentBets[userId] = { amount: 0, betOn: customId as 'player1' | 'player2' };
-
-  const points = usersPoints[userId].points;
-  const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
-
-  if (!interaction.replied) {
     await interaction.reply({
-      content: `You have chosen ${chosenPlayerName}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`,
-      flags: MessageFlags.Ephemeral
+      content: 'You are not registered yet. Use */register* to register.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  // Vérifier si l'utilisateur a parié sur l'autre joueur
+  if (currentBets[userId] && currentBets[userId].betOn !== customId) {
+    await interaction.reply({
+      content: 'You have already placed a bet on the other player.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  // Vérifier si l'utilisateur a déjà parié
+  if (currentBets[userId]) {
+    await interaction.reply({
+      content: 'You have already placed a bet on this player.',
+      flags: MessageFlags.Ephemeral,
+    });
+    return;
+  }
+
+  const playerName = customId === 'player1' ? player1Name : player2Name;
+
+  // Créer un modal pour demander le montant du pari
+  const modal = new ModalBuilder()
+    .setCustomId(`bet_modal_${customId}`)
+    .setTitle(`Bet on ${playerName}`);
+
+  const betAmountInput = new TextInputBuilder()
+    .setCustomId('bet_amount')
+    .setLabel(`You have ${usersPoints[userId].points} ! Enter your bet amount`)
+    .setStyle(TextInputStyle.Short)
+    .setPlaceholder('e.g. 100')
+    .setRequired(true);
+
+  const row = new ActionRowBuilder<TextInputBuilder>().addComponents(betAmountInput);
+  modal.addComponents(row);
+
+  await interaction.showModal(modal);
+};
+
+const handleBetModal = async (interaction: ModalSubmitInteraction) => {
+  try {
+    const userId = interaction.user.id;
+    const betAmountStr = interaction.fields.getTextInputValue('bet_amount');
+
+    // Vérification stricte : uniquement des nombres
+    if (!/^\d+$/.test(betAmountStr)) {
+      await interaction.reply({
+        content: 'Invalid input. Please enter only numbers.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const betAmount = parseInt(betAmountStr);
+
+    if (betAmount <= 0) {
+      await interaction.reply({
+        content: 'Invalid bet amount. Please enter a positive number.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    const customId = interaction.customId.replace('bet_modal_', ''); // Extract the player ID
+    const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
+
+    if (!usersPoints[userId]) {
+      await interaction.reply({
+        content: 'You are not registered yet. Use */register* to register.',
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    // Vérifier les points disponibles
+    if (usersPoints[userId].points < betAmount) {
+      await interaction.reply({
+        content: `${pointsEmoji} Not enough points. Try a lower amount.`,
+        flags: MessageFlags.Ephemeral,
+      });
+      return;
+    }
+
+    // Enregistrer le pari
+    usersPoints[userId].points -= betAmount;
+    currentBets[userId] = { amount: betAmount, betOn: customId as 'player1' | 'player2' };
+    usersPoints[userId].betHistory.push({
+      betOn: chosenPlayerName,
+      amount: betAmount,
+      result: 'pending',
+      date: new Date(),
+    });
+
+    await savePoints();
+
+    // Confirmation
+    await interaction.reply({
+      content: `You successfully placed a bet of **${betAmount}** ${pointsEmoji} on **${chosenPlayerName}**!`,
+      flags: MessageFlags.Ephemeral,
+    });
+  } catch (error) {
+    console.error('Error in handleBetModal:', error);
+    await interaction.reply({
+      content: 'An error occurred while processing your bet. Please try again.',
+      flags: MessageFlags.Ephemeral,
     });
   }
 };
+
+client.on('interactionCreate', async (interaction) => {
+  if (interaction.isModalSubmit() && interaction.customId.startsWith('bet_modal')) {
+    console.log('Modal submit captured:', interaction.customId); // Debugging
+    await handleBetModal(interaction); // Appel de ta fonction spécifique
+  }
+});
 
 const handlePoints = async (interaction: CommandInteraction) => {
 

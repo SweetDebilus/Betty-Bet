@@ -840,64 +840,48 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
     }
 }));
-client.on('messageCreate', (message) => __awaiter(void 0, void 0, void 0, function* () {
-    if (!bettingOpen || message.author.bot)
+client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isModalSubmit())
         return;
-    const userId = message.author.id;
-    if (tournamentParticipants.has(userId)) {
-        const reply = yield message.reply({ content: 'You are participating in the tournament and cannot place bets during the event.' });
-        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-        return;
-    }
-    const currentBet = currentBets[userId];
-    if (!currentBet)
-        return; // Vérifier si l'utilisateur a déjà sélectionné un joueur
-    // Vérifier si l'utilisateur a déjà parié sur ce joueur
-    const chosenPlayerName = currentBet.betOn === 'player1' ? player1Name : player2Name;
-    const existingBet = usersPoints[userId].betHistory.some(bet => bet.result === 'pending' && bet.betOn === chosenPlayerName);
-    if (existingBet) {
-        const reply = yield message.reply('You have already placed a bet on this player. You cannot bet again on the same player.');
-        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-        return;
-    }
-    // Validation stricte : vérifier si le message est entièrement composé de chiffres
-    if (!/^\d+$/.test(message.content)) {
-        const reply = yield message.reply('Invalid bet format. Please enter a numeric value.');
-        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-        return;
-    }
-    const betAmount = parseInt(message.content);
-    if (betAmount <= 0) {
-        const reply = yield message.reply('Invalid bet amount. Please enter a positive number.');
-        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-        return;
-    }
-    if (usersPoints[userId].points < betAmount) {
-        const reply = yield message.reply(`${pointsEmoji} not enough. Try a lower amount.`);
-        setTimeout(() => reply.delete(), 3000); // Supprimer le message après 3 secondes
-        return;
-    }
-    // Ajuster les points et ajouter le pari
-    usersPoints[userId].points -= betAmount;
-    currentBets[userId] = { amount: (currentBet.amount || 0) + betAmount, betOn: currentBet.betOn };
-    // Mettre à jour l'historique des paris
-    const betHistory = usersPoints[userId].betHistory;
-    const lastBet = betHistory.find(bet => bet.result === 'pending' && bet.betOn === chosenPlayerName);
-    if (lastBet) {
-        lastBet.amount += betAmount;
-    }
-    else {
-        betHistory.push({
-            betOn: chosenPlayerName,
-            amount: betAmount,
+    if (interaction.customId === 'bet_modal') {
+        // Récupérer les données saisies par l'utilisateur
+        const betAmount = interaction.fields.getTextInputValue('bet_amount');
+        const userId = interaction.user.id;
+        // Vérifier si le montant est valide
+        if (!/^\d+$/.test(betAmount) || parseInt(betAmount) <= 0) {
+            yield interaction.reply({
+                content: 'Invalid bet amount. Please enter a positive numeric value.',
+                flags: discord_js_2.MessageFlags.Ephemeral
+            });
+            return;
+        }
+        const betAmountInt = parseInt(betAmount);
+        // Vérifier les points de l'utilisateur
+        if (usersPoints[userId].points < betAmountInt) {
+            yield interaction.reply({
+                content: `${pointsEmoji} Not enough points. Try a lower amount.`,
+                flags: discord_js_2.MessageFlags.Ephemeral
+            });
+            return;
+        }
+        // Ajouter le pari
+        usersPoints[userId].points -= betAmountInt;
+        const playerBetOn = interaction.message.content.includes(player1Name) ? 'player1' : 'player2';
+        currentBets[userId] = { amount: betAmountInt, betOn: playerBetOn };
+        // Mettre à jour l'historique
+        usersPoints[userId].betHistory.push({
+            betOn: playerBetOn === 'player1' ? player1Name : player2Name,
+            amount: betAmountInt,
             result: 'pending',
             date: new Date()
         });
+        yield savePoints();
+        // Confirmation
+        yield interaction.reply({
+            content: `You have successfully placed a bet of **${betAmountInt}** ${pointsEmoji} on **${playerBetOn === 'player1' ? player1Name : player2Name}**.`,
+            flags: discord_js_2.MessageFlags.Ephemeral
+        });
     }
-    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
-    yield savePoints();
-    // Ajouter une réaction au message de l'utilisateur
-    yield message.react('✅'); // Remplace '✅' par l'emoji que tu préfères
 }));
 const handleRegister = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -922,13 +906,16 @@ const handleToggleNotifications = (interaction) => __awaiter(void 0, void 0, voi
     yield interaction.reply({ content: `Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, flags: discord_js_2.MessageFlags.Ephemeral });
 });
 const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    // Initialisation des variables
     bettingOpen = true;
     currentBets = {};
+    // Récupération des noms des joueurs
     const player1Option = interaction.options.get('player1name');
     const player2Option = interaction.options.get('player2name');
     player1Name = player1Option ? player1Option.value : 'Player 1';
     player2Name = player2Option ? player2Option.value : 'Player 2';
-    const row = new discord_js_1.ActionRowBuilder()
+    // Création des boutons pour les paris
+    const actionRow = new discord_js_1.ActionRowBuilder()
         .addComponents(new discord_js_1.ButtonBuilder()
         .setCustomId('player1')
         .setLabel('Bet on ' + player1Name)
@@ -936,47 +923,166 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
         .setCustomId('player2')
         .setLabel('Bet on ' + player2Name)
         .setStyle(discord_js_1.ButtonStyle.Danger));
-    yield interaction.reply({ content: `## the bets are open !!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`, components: [row] });
+    // Envoi du message initial
+    yield interaction.reply({
+        content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`,
+        components: [
+            new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
+                .setCustomId('player1')
+                .setLabel('Bet on ' + player1Name)
+                .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
+                .setCustomId('player2')
+                .setLabel('Bet on ' + player2Name)
+                .setStyle(discord_js_1.ButtonStyle.Danger)),
+        ],
+    });
+    // Récupérer le message après l'envoi
+    const replyMessage = yield interaction.fetchReply();
+    // Affichage d'un effet visuel supplémentaire dans le canal
     const channel = interaction.channel;
     if (channel) {
         channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
     }
+    // Fermeture des paris après 60 secondes
     setTimeout(() => __awaiter(void 0, void 0, void 0, function* () {
-        bettingOpen = false;
-        yield interaction.followUp('## Bets are closed !');
-        if (channel) {
-            channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
-            channel.send('*Thanks for money !*');
+        try {
+            bettingOpen = false;
+            // Désactivation des boutons
+            const disabledRow = new discord_js_1.ActionRowBuilder()
+                .addComponents(new discord_js_1.ButtonBuilder()
+                .setCustomId('player1')
+                .setLabel('Bet on ' + player1Name)
+                .setStyle(discord_js_1.ButtonStyle.Primary)
+                .setDisabled(true), // Désactiver le bouton
+            new discord_js_1.ButtonBuilder()
+                .setCustomId('player2')
+                .setLabel('Bet on ' + player2Name)
+                .setStyle(discord_js_1.ButtonStyle.Danger)
+                .setDisabled(true) // Désactiver le bouton
+            );
+            // Mise à jour du message pour indiquer que les paris sont fermés
+            yield replyMessage.edit({
+                content: `## Bets are now closed!`,
+                components: [disabledRow],
+            });
+            // Message de fin de session dans le canal
+            if (channel) {
+                channel.send('*Thanks for the money!*');
+            }
         }
-    }), 60000);
+        catch (error) {
+            console.error('Error closing bets:', error);
+        }
+    }), 60000); // Temps pour fermer les paris (60 secondes)
 });
 const handleBetSelection = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     const customId = interaction.customId;
     if (!usersPoints[userId]) {
-        yield interaction.reply({ content: 'You are not registered yet. Use */register* to register.', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    // Vérifier si l'utilisateur essaie de parier sur un autre joueur
-    if (currentBets[userId] && currentBets[userId].betOn !== customId) {
-        yield interaction.reply({ content: 'You have already placed a bet on the other player. You cannot bet on both players.', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    // verifier si l'utilisateur a déjà parié
-    if (currentBets[userId] && currentBets[userId].betOn === customId) {
-        yield interaction.reply({ content: 'You have already placed a bet on this player.', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    currentBets[userId] = { amount: 0, betOn: customId };
-    const points = usersPoints[userId].points;
-    const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
-    if (!interaction.replied) {
         yield interaction.reply({
-            content: `You have chosen ${chosenPlayerName}.\n\nYou have ${points}${pointsEmoji}\nEnter the amount you wish to bet:`,
-            flags: discord_js_2.MessageFlags.Ephemeral
+            content: 'You are not registered yet. Use */register* to register.',
+            flags: discord_js_2.MessageFlags.Ephemeral,
+        });
+        return;
+    }
+    // Vérifier si l'utilisateur a parié sur l'autre joueur
+    if (currentBets[userId] && currentBets[userId].betOn !== customId) {
+        yield interaction.reply({
+            content: 'You have already placed a bet on the other player.',
+            flags: discord_js_2.MessageFlags.Ephemeral,
+        });
+        return;
+    }
+    // Vérifier si l'utilisateur a déjà parié
+    if (currentBets[userId]) {
+        yield interaction.reply({
+            content: 'You have already placed a bet on this player.',
+            flags: discord_js_2.MessageFlags.Ephemeral,
+        });
+        return;
+    }
+    const playerName = customId === 'player1' ? player1Name : player2Name;
+    // Créer un modal pour demander le montant du pari
+    const modal = new discord_js_1.ModalBuilder()
+        .setCustomId(`bet_modal_${customId}`)
+        .setTitle(`Bet on ${playerName}`);
+    const betAmountInput = new discord_js_1.TextInputBuilder()
+        .setCustomId('bet_amount')
+        .setLabel(`You have ${usersPoints[userId].points} ! Enter your bet amount`)
+        .setStyle(discord_js_1.TextInputStyle.Short)
+        .setPlaceholder('e.g. 100')
+        .setRequired(true);
+    const row = new discord_js_1.ActionRowBuilder().addComponents(betAmountInput);
+    modal.addComponents(row);
+    yield interaction.showModal(modal);
+});
+const handleBetModal = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const userId = interaction.user.id;
+        const betAmountStr = interaction.fields.getTextInputValue('bet_amount');
+        // Vérification stricte : uniquement des nombres
+        if (!/^\d+$/.test(betAmountStr)) {
+            yield interaction.reply({
+                content: 'Invalid input. Please enter only numbers.',
+                flags: discord_js_2.MessageFlags.Ephemeral,
+            });
+            return;
+        }
+        const betAmount = parseInt(betAmountStr);
+        if (betAmount <= 0) {
+            yield interaction.reply({
+                content: 'Invalid bet amount. Please enter a positive number.',
+                flags: discord_js_2.MessageFlags.Ephemeral,
+            });
+            return;
+        }
+        const customId = interaction.customId.replace('bet_modal_', ''); // Extract the player ID
+        const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
+        if (!usersPoints[userId]) {
+            yield interaction.reply({
+                content: 'You are not registered yet. Use */register* to register.',
+                flags: discord_js_2.MessageFlags.Ephemeral,
+            });
+            return;
+        }
+        // Vérifier les points disponibles
+        if (usersPoints[userId].points < betAmount) {
+            yield interaction.reply({
+                content: `${pointsEmoji} Not enough points. Try a lower amount.`,
+                flags: discord_js_2.MessageFlags.Ephemeral,
+            });
+            return;
+        }
+        // Enregistrer le pari
+        usersPoints[userId].points -= betAmount;
+        currentBets[userId] = { amount: betAmount, betOn: customId };
+        usersPoints[userId].betHistory.push({
+            betOn: chosenPlayerName,
+            amount: betAmount,
+            result: 'pending',
+            date: new Date(),
+        });
+        yield savePoints();
+        // Confirmation
+        yield interaction.reply({
+            content: `You successfully placed a bet of **${betAmount}** ${pointsEmoji} on **${chosenPlayerName}**!`,
+            flags: discord_js_2.MessageFlags.Ephemeral,
+        });
+    }
+    catch (error) {
+        console.error('Error in handleBetModal:', error);
+        yield interaction.reply({
+            content: 'An error occurred while processing your bet. Please try again.',
+            flags: discord_js_2.MessageFlags.Ephemeral,
         });
     }
 });
+client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (interaction.isModalSubmit() && interaction.customId.startsWith('bet_modal')) {
+        console.log('Modal submit captured:', interaction.customId); // Debugging
+        yield handleBetModal(interaction); // Appel de ta fonction spécifique
+    }
+}));
 const handlePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     loadPoints();
     const userId = interaction.user.id;
