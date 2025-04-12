@@ -43,6 +43,7 @@ const node_schedule_1 = __importDefault(require("node-schedule"));
 dotenv_1.default.config();
 const crypto_1 = __importDefault(require("crypto"));
 const discord_js_2 = require("discord.js");
+const fs_1 = __importDefault(require("fs"));
 const algorithm = process.env.ALGO;
 const secretKey = Buffer.from(process.env.KEY, 'hex');
 const client = new discord_js_1.Client({
@@ -60,7 +61,6 @@ const debcoins = process.env.DEBCOIN;
 const bettyBettId = process.env.BETTYID;
 const logFile = process.env.PATHLOG;
 const restricted = false;
-const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let maintenanceMode = false;
 let debilusCloset = 0;
@@ -74,6 +74,7 @@ let bettingOpen = false;
 let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
 let activeGuessGames = {}; // Canal ID -> Utilisateur ID
+const activeQuiz = {};
 const blackjackGames = {};
 const cardValues = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
@@ -122,14 +123,14 @@ const formatDate = (date) => {
 // Fonction pour créer le dossier si nécessaire 
 const ensureLogDirectoryExists = (filePath) => {
     const logDir = path.dirname(filePath);
-    if (!fs1.existsSync(logDir)) {
-        fs1.mkdirSync(logDir, { recursive: true });
+    if (!fs_1.default.existsSync(logDir)) {
+        fs_1.default.mkdirSync(logDir, { recursive: true });
     }
 };
 // Appeler la fonction pour s'assurer que le dossier existe 
 ensureLogDirectoryExists(logFile);
 const log = (message) => {
-    fs1.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`);
+    fs_1.default.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`);
 };
 const encrypt = (text) => {
     const iv = crypto_1.default.randomBytes(16);
@@ -253,10 +254,10 @@ const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, f
             .addComponents(new discord_js_1.ButtonBuilder()
             .setCustomId('claim_yes')
             .setLabel('Yes')
-            .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
+            .setStyle(discord_js_1.ButtonStyle.Success), new discord_js_1.ButtonBuilder()
             .setCustomId('claim_no')
             .setLabel('No')
-            .setStyle(discord_js_1.ButtonStyle.Secondary));
+            .setStyle(discord_js_1.ButtonStyle.Danger));
         yield user.send({
             content: `You have ${points} out of 15 points. Do you want to claim them?`,
             components: [row]
@@ -1417,6 +1418,7 @@ const handleClearMessages = (interaction) => __awaiter(void 0, void 0, void 0, f
         const botMessages = messages.filter(msg => { var _a; return msg.author.id === ((_a = client.user) === null || _a === void 0 ? void 0 : _a.id); });
         for (const message of botMessages.values()) {
             yield message.delete();
+            setInterval(() => { }, 500); // Ajout d'un délai entre les suppressions
         }
         yield interaction.reply({ content: 'All private messages sent by the bot have been cleared.', flags: discord_js_2.MessageFlags.Ephemeral });
     }

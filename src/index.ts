@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, ModalBuilder } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, ModalBuilder, ComponentType } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -7,6 +7,7 @@ dotenv.config();
 import crypto from 'crypto';
 import { MessageFlags } from 'discord.js';
 import { userInfo } from 'os';
+import fs1 from 'fs';
 
 const algorithm = process.env.ALGO!;
 const secretKey = Buffer.from(process.env.KEY!, 'hex');
@@ -27,7 +28,6 @@ const debcoins = process.env.DEBCOIN!;
 const bettyBettId = process.env.BETTYID!;
 const logFile = process.env.PATHLOG!;
 const restricted = false;
-const fs1 = require('fs');
 const filePath = 'usersPoints.json';
 let maintenanceMode: boolean = false;
 let debilusCloset = 0;
@@ -41,6 +41,7 @@ let bettingOpen: boolean = false;
 let tournamentParticipants: Map<string, string> = new Map();
 let lastUpdateTime: Date = new Date();
 let activeGuessGames: { [key: string]: string } = {}; // Canal ID -> Utilisateur ID
+const activeQuiz: { [key: string]: { question: string; choices: string[]; correct: string } } = {};
 
 const blackjackGames: { [key: string]: { playerHand: string[], dealerHand: string[], bet: number } } = {};
 const cardValues: { [key: string]: number } = {
@@ -248,11 +249,11 @@ const sendNotification = async (userId: string, points: number) => {
         new ButtonBuilder()
           .setCustomId('claim_yes')
           .setLabel('Yes')
-          .setStyle(ButtonStyle.Primary),
+          .setStyle(ButtonStyle.Success),
         new ButtonBuilder()
           .setCustomId('claim_no')
           .setLabel('No')
-          .setStyle(ButtonStyle.Secondary),
+          .setStyle(ButtonStyle.Danger),
       );
 
     await user.send({
@@ -1564,6 +1565,7 @@ const handleClearMessages = async (interaction: CommandInteraction) => {
 
     for (const message of botMessages.values()) {
       await message.delete();
+      setInterval(() => {}, 500); // Ajout d'un délai entre les suppressions
     }
 
     await interaction.reply({ content: 'All private messages sent by the bot have been cleared.', flags: MessageFlags.Ephemeral });
