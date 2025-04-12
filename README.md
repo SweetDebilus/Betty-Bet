@@ -15,6 +15,7 @@
 - **/clearmessages**: Clear all private messages sent by the bot.
 - **/presentation**: Present Betty Bet and its features.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
+- **/stopblackjack**: to stop a gaming session in the event of a problem and be reimbursed for the 10 points wagered.
 - **/exchange**: exchange points with another user
 - **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
   - **Options**:
