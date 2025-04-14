@@ -73,14 +73,13 @@ let purchaseHistory = {};
 let bettingOpen = false;
 let tournamentParticipants = new Map();
 let lastUpdateTime = new Date();
-let activeGuessGames = {}; // Canal ID -> Utilisateur ID
-const activeQuiz = {};
 const blackjackGames = {};
+const highlowGames = {};
 const cardValues = {
     '2': 2, '3': 3, '4': 4, '5': 5, '6': 6, '7': 7, '8': 8, '9': 9, '10': 10,
     'J': 10, 'Q': 10, 'K': 10, 'A': 11
 };
-const suits = ['♠', '♥', '♦', '♣'];
+const suits = ['♠️', '♥️', '♦️', '♣️'];
 const cards = ['2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K', 'A'];
 const drawCard = () => {
     const suit = suits[Math.floor(Math.random() * suits.length)];
@@ -91,10 +90,16 @@ const calculateHandValue = (hand) => {
     let value = 0;
     let aces = 0;
     hand.forEach(card => {
-        const cardValue = card.slice(0, -1); // Extrait la valeur de la carte (2, 3, ..., A)
-        value += cardValues[cardValue];
-        if (cardValue === 'A')
-            aces++;
+        const match = card.match(/[0-9]+|[JQKA]/); // Extrait la valeur de la carte (2, 3, ..., A)
+        const cardValue = match ? match[0] : null;
+        if (cardValue) {
+            value += cardValues[cardValue];
+            if (cardValue === 'A')
+                aces++;
+        }
+        else {
+            console.error(`Invalid card value: ${card}`);
+        }
     });
     while (value > 21 && aces) {
         value -= 10;
@@ -432,7 +437,13 @@ const commands = [
         .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('maintenance')
-        .setDescription('Toggle maintenance mode. (BetManager only)')
+        .setDescription('Toggle maintenance mode. (BetManager only)'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('highlow')
+        .setDescription('Play a game of High-Low'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('stophighlow')
+        .setDescription('Stop the current game of High-Low and refund your 10 points')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -471,15 +482,6 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         }
         const roles = member.roles;
         const hasRole = (roleName) => roles.cache.some(role => role.name === roleName);
-        const joinedMoreThan7DaysAgo = () => {
-            const joinedTimestamp = member.joinedTimestamp;
-            if (!joinedTimestamp) {
-                return false;
-            }
-            const now = Date.now();
-            const sevenDaysInMillis = 7 * 24 * 60 * 60 * 1000;
-            return now - joinedTimestamp >= sevenDaysInMillis;
-        };
         if (!hasRole(process.env.ROLE)) {
             yield interaction.reply({ content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`, flags: discord_js_2.MessageFlags.Ephemeral });
             return;
@@ -725,7 +727,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     const playerValue = calculateHandValue(playerHand);
                     const dealerValue = calculateHandValue(dealerHand);
                     usersPoints[userId].points -= 10;
-                    yield interaction.reply({ content: `\n*Betty Bet's visible card*: \n**|${dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()], flags: discord_js_2.MessageFlags.Ephemeral });
+                    yield interaction.reply({ content: `\n# *Betty Bet's visible card*: \n## **|${dealerHand[0]}| |??|**\n\n# *Your hand*: \n## **|${playerHand.join('| |')}|**\n## = **${playerValue}**`, components: [createBlackjackActionRow()], flags: discord_js_2.MessageFlags.Ephemeral });
                     yield savePoints();
                     break;
                 case 'addwinmatch':
@@ -760,6 +762,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     break;
                 case 'maintenance':
                     yield handleToggleMaintenance(interaction);
+                    break;
+                case 'highlow':
+                    yield handleHighLow(interaction);
+                    break;
+                case 'stophighlow':
+                    yield handleStopHighLow(interaction);
                     break;
                 default:
                     try {
@@ -800,12 +808,12 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 const dealerValue = calculateHandValue(game.dealerHand);
                 if (playerValue > 21) {
                     delete blackjackGames[userId];
-                    yield interaction.update({ content: `\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**\n\n**You bust!** *Betty Bet wins.*`, components: [] });
+                    yield interaction.update({ content: `\n# *Your hand*: \n## **|${game.playerHand.join('| |')}|**\n## = **${playerValue}**\n\n## **You bust!** *Betty Bet wins.*`, components: [] });
                     debilusCloset += 10;
                     yield savePoints();
                     return;
                 }
-                yield interaction.update({ content: `\n*Betty Bet's visible card*: \n**|${game.dealerHand[0]}| |??|**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**`, components: [createBlackjackActionRow()] });
+                yield interaction.update({ content: `\n# *Betty Bet's visible card*: \n## **|${game.dealerHand[0]}| |??|**\n\n# *Your hand*: \n## **|${game.playerHand.join('| |')}|**\n## = **${playerValue}**`, components: [createBlackjackActionRow()] });
             }
             else if (interaction.customId === 'blackjack_stand') {
                 let dealerValue = calculateHandValue(game.dealerHand);
@@ -814,29 +822,32 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     dealerValue = calculateHandValue(game.dealerHand);
                 }
                 const playerValue = calculateHandValue(game.playerHand);
-                let resultMessage = `\n*Betty Bet's hand*: \n**|${game.dealerHand.join('| |')}|**\n= **${dealerValue}**\n\n*Your hand*: \n**|${game.playerHand.join('| |')}|**\n= **${playerValue}**\n\n`;
+                let resultMessage = `\n# *Betty Bet's hand*: \n## **|${game.dealerHand.join('| |')}|**\n### = **${dealerValue}**\n\n# *Your hand*: \n## **|${game.playerHand.join('| |')}|**\n## = **${playerValue}**\n\n`;
                 if (dealerValue > 21 || playerValue > dealerValue) {
                     usersPoints[userId].points += game.bet * 2;
-                    resultMessage += '**You win!**';
+                    resultMessage += '## **You win!**';
                     delete blackjackGames[userId];
                     yield savePoints();
                 }
                 else if (playerValue < dealerValue) {
-                    resultMessage += '**Betty Bet wins!**';
+                    resultMessage += '## **Betty Bet wins!**';
                     debilusCloset += 10;
                     delete blackjackGames[userId];
                     yield savePoints();
                 }
                 else {
                     usersPoints[userId].points += game.bet;
-                    resultMessage += '**It\'s a tie!**';
+                    resultMessage += '## ** It\'s a tie!**';
                     delete blackjackGames[userId];
                     yield savePoints();
                 }
-                yield interaction.update({ content: resultMessage + `\n you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
+                yield interaction.update({ content: resultMessage + `\n## you have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
             }
         }
-        else {
+        else if (interaction.customId === 'highlow_higher' || interaction.customId === 'highlow_lower') {
+            yield handleHighLowButton(interaction);
+        }
+        else if (interaction.customId === 'player1' || interaction.customId === 'player2') {
             yield handleBetSelection(interaction);
         }
     }
@@ -927,15 +938,7 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
     // Envoi du message initial
     yield interaction.reply({
         content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`,
-        components: [
-            new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.ButtonBuilder()
-                .setCustomId('player1')
-                .setLabel('Bet on ' + player1Name)
-                .setStyle(discord_js_1.ButtonStyle.Primary), new discord_js_1.ButtonBuilder()
-                .setCustomId('player2')
-                .setLabel('Bet on ' + player2Name)
-                .setStyle(discord_js_1.ButtonStyle.Danger)),
-        ],
+        components: [actionRow]
     });
     // Récupérer le message après l'envoi
     const replyMessage = yield interaction.fetchReply();
@@ -1745,5 +1748,109 @@ const handleStopBlackjack = (interaction) => __awaiter(void 0, void 0, void 0, f
     yield savePoints();
     yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
     yield interaction.followUp({ content: `You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
+});
+// Fonction pour gérer la commande High-Low
+const handleHighLow = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = interaction.user.id;
+    let randomCardVisible = Math.floor(Math.random() * 9) + 1; // Carte visible (entre 1 et 9)
+    let randomCardHidden = Math.floor(Math.random() * 9) + 1; // Carte cachée (entre 1 et 9)
+    // Assurez-vous que les deux cartes sont différentes
+    while (randomCardVisible === randomCardHidden) {
+        randomCardHidden = Math.floor(Math.random() * 9) + 1;
+    }
+    // Ajouter l'utilisateur à la liste des jeux High-Low en cours
+    highlowGames[userId] = {
+        visibleCard: randomCardVisible,
+        hiddenCard: randomCardHidden,
+    };
+    const createHighLowActionRow = () => {
+        return new discord_js_1.ActionRowBuilder()
+            .addComponents(new discord_js_1.ButtonBuilder()
+            .setCustomId('highlow_higher') // Custom ID pour "Higher"
+            .setLabel('Higher') // Texte sur le bouton
+            .setStyle(discord_js_1.ButtonStyle.Success), // Style vert pour un choix positif
+        new discord_js_1.ButtonBuilder()
+            .setCustomId('highlow_lower') // Custom ID pour "Lower"
+            .setLabel('Lower') // Texte sur le bouton
+            .setStyle(discord_js_1.ButtonStyle.Danger) // Style rouge pour un choix négatif
+        );
+    };
+    // Message initial du jeu
+    yield interaction.reply({
+        content: `# High-Low Game\n\n## |${randomCardVisible}| |?|\n\nDo you think the hidden card is higher or lower?`,
+        components: [createHighLowActionRow()], // Ajout des boutons au message
+        flags: discord_js_2.MessageFlags.Ephemeral, // Réponse éphémère
+    });
+    // Stocker les données de jeu dans une mémoire temporaire (à implémenter)
+    usersPoints[userId].points -= 40; // Déduire 10 points pour jouer
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+    yield savePoints();
+});
+// Fonction pour gérer les clics sur les boutons
+const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = interaction.user.id;
+    const customId = interaction.customId;
+    // Récupérer les données du jeu depuis une mémoire temporaire (à implémenter)
+    if (!highlowGames[userId]) {
+        yield interaction.reply({ content: 'No active game found. Please start a new game using the High-Low command.', flags: discord_js_2.MessageFlags.Ephemeral });
+        return;
+    }
+    const { visibleCard, hiddenCard } = highlowGames[userId];
+    let resultMessage;
+    const calculateReward = (visibleCard) => {
+        if (visibleCard <= 2 || visibleCard >= 8) {
+            return 45; // Gain faible pour un faible risque
+        }
+        else if (visibleCard >= 4 && visibleCard <= 6) {
+            return 55; // Gain élevé pour une probabilité équilibrée
+        }
+        else {
+            return 50; // Gain standard pour les zones de risque moyen
+        }
+    };
+    const reward = calculateReward(visibleCard); // Calculer le gain en fonction de la carte visible
+    // Comparer en fonction du choix de l'utilisateur et attribuer 10 point si il gagne
+    if (customId === 'highlow_higher') {
+        resultMessage = hiddenCard > visibleCard
+            ? `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.`
+            : `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.`;
+        if (hiddenCard > visibleCard) {
+            usersPoints[userId].points += reward; // Ajouter 20 points si l'utilisateur gagne
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+            yield savePoints(); // Sauvegarder les points après la mise à jour
+        }
+    }
+    else if (customId === 'highlow_lower') {
+        resultMessage = hiddenCard < visibleCard
+            ? `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.`
+            : `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.`;
+        if (hiddenCard < visibleCard) {
+            usersPoints[userId].points += reward; // Ajouter 5 a 15 points si l'utilisateur gagne
+            usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+            yield savePoints(); // Sauvegarder les points après la mise à jour
+        }
+    }
+    if (usersPoints[userId].isDebilus) {
+        resultMessage += `\n\nYou have ${usersPoints[userId].points}${pointsEmoji} ! You're now a Debilus. Play wisely next time! ${debilus}`;
+    }
+    // Répondre et terminer le jeu
+    yield interaction.update({
+        content: `# High-Low Game\n\n## |${visibleCard}| |${hiddenCard}|\n\n` + resultMessage,
+        components: [], // Supprimer les boutons après un choix
+    });
+    // Supprimer les données de jeu de la mémoire temporaire
+    delete highlowGames[userId];
+});
+const handleStopHighLow = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    const userId = interaction.user.id;
+    if (!highlowGames[userId]) {
+        yield interaction.reply({ content: 'No active high-low game found.', flags: discord_js_2.MessageFlags.Ephemeral });
+        return;
+    }
+    usersPoints[userId].points += 40; // Rembourser 10 points
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+    delete highlowGames[userId];
+    yield savePoints();
+    yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
 });
 client.login(process.env.DISCORD_TOKEN);
