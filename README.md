@@ -16,6 +16,8 @@
 - **/presentation**: Present Betty Bet and its features.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
 - **/stopblackjack**: to stop a gaming session in the event of a problem and be reimbursed for the 10 points wagered.
+- **/highlow**: Play a game of High-Low. You need to have at least 40 points to play.
+- **/stophighlow**: Stop the current game of High-Low and refund your 40 points.
 - **/exchange**: exchange points with another user
 - **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
   - **Options**:
