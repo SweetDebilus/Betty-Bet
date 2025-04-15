@@ -459,10 +459,10 @@ const commands = [
         .setDescription('Toggle maintenance mode. (BetManager only)'),
   new SlashCommandBuilder()
         .setName('highlow')
-        .setDescription('Play a game of High-Low'),
+        .setDescription('Play a game of High-Low. You need to have at least 40 points to play.'),
   new SlashCommandBuilder()
         .setName('stophighlow')
-        .setDescription('Stop the current game of High-Low and refund your 10 points')
+        .setDescription('Stop the current game of High-Low and refund your 40 points')
 ]; 
 
 const commandData = commands.map(command => command.toJSON()); 
