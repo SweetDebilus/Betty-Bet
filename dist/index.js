@@ -1749,7 +1749,6 @@ const handleStopBlackjack = (interaction) => __awaiter(void 0, void 0, void 0, f
     yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
     yield interaction.followUp({ content: `You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
 });
-// Fonction pour gérer la commande High-Low
 const handleHighLow = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
     let randomCardVisible = Math.floor(Math.random() * 9) + 1; // Carte visible (entre 1 et 9)
@@ -1809,25 +1808,27 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
         }
     };
     const reward = calculateReward(visibleCard); // Calculer le gain en fonction de la carte visible
-    // Comparer en fonction du choix de l'utilisateur et attribuer 10 point si il gagne
+    // Comparer en fonction du choix de l'utilisateur et attribuer 10 point s'il gagne
     if (customId === 'highlow_higher') {
-        resultMessage = hiddenCard > visibleCard
-            ? `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.`
-            : `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.`;
         if (hiddenCard > visibleCard) {
             usersPoints[userId].points += reward; // Ajouter 20 points si l'utilisateur gagne
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
             yield savePoints(); // Sauvegarder les points après la mise à jour
+            resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+        }
+        else {
+            resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
         }
     }
     else if (customId === 'highlow_lower') {
-        resultMessage = hiddenCard < visibleCard
-            ? `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.`
-            : `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.`;
         if (hiddenCard < visibleCard) {
-            usersPoints[userId].points += reward; // Ajouter 5 a 15 points si l'utilisateur gagne
+            usersPoints[userId].points += reward; // Ajouter 5 à 15 points si l'utilisateur gagne
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
             yield savePoints(); // Sauvegarder les points après la mise à jour
+            resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+        }
+        else {
+            resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
         }
     }
     if (usersPoints[userId].isDebilus) {
