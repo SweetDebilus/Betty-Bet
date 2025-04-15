@@ -440,10 +440,10 @@ const commands = [
         .setDescription('Toggle maintenance mode. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
         .setName('highlow')
-        .setDescription('Play a game of High-Low'),
+        .setDescription('Play a game of High-Low. You need to have at least 40 points to play.'),
     new discord_js_1.SlashCommandBuilder()
         .setName('stophighlow')
-        .setDescription('Stop the current game of High-Low and refund your 10 points')
+        .setDescription('Stop the current game of High-Low and refund your 40 points')
 ];
 const commandData = commands.map(command => command.toJSON());
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
@@ -1801,7 +1801,7 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
             return 45; // Gain faible pour un faible risque
         }
         else if (visibleCard >= 4 && visibleCard <= 6) {
-            return 55; // Gain élevé pour une probabilité équilibrée
+            return 60; // Gain élevé pour une probabilité équilibrée
         }
         else {
             return 50; // Gain standard pour les zones de risque moyen

@@ -2031,7 +2031,7 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
     if (visibleCard <= 2 || visibleCard >= 8) {
       return 45; // Gain faible pour un faible risque
     } else if (visibleCard >= 4 && visibleCard <= 6) {
-      return 55; // Gain élevé pour une probabilité équilibrée
+      return 60; // Gain élevé pour une probabilité équilibrée
     } else {
       return 50; // Gain standard pour les zones de risque moyen
     }
