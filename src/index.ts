@@ -415,54 +415,54 @@ const commands = [
     .setName('listitems')
     .setDescription('List all items available in the store'),
   new SlashCommandBuilder()
-      .setName('purchasehistory')
-      .setDescription('view purchase history in the store. (BetManager only)'),
+    .setName('purchasehistory')
+    .setDescription('view purchase history in the store. (BetManager only)'),
   new SlashCommandBuilder()
-      .setName('myitems')
-      .setDescription('view the items you own'),
+    .setName('myitems')
+    .setDescription('view the items you own'),
   new SlashCommandBuilder()
-      .setName('blackjack')
-      .setDescription('Play a game of blackjack'),
+    .setName('blackjack')
+    .setDescription('Play a game of blackjack'),
   new SlashCommandBuilder()
-      .setName('stopblackjack')
-      .setDescription('Stop the current game of blackjack'),
+    .setName('stopblackjack')
+    .setDescription('Stop the current game of blackjack'),
   new SlashCommandBuilder()
-      .setName('addwinmatch')
-      .setDescription('adds 1 winning point to a user. (BetManager only)')
-      .addUserOption(option =>
-        option.setName('user')
-        .setDescription('The user to add winning point')
-        .setRequired(true)),
+    .setName('addwinmatch')
+    .setDescription('adds 1 winning point to a user. (BetManager only)')
+    .addUserOption(option =>
+      option.setName('user')
+      .setDescription('The user to add winning point')
+      .setRequired(true)),
   new SlashCommandBuilder()
-        .setName('addlosematch')
-        .setDescription('adds 1 lossing point to a user. (BetManager only)')
-        .addUserOption(option =>
-          option.setName('user')
-          .setDescription('The user to add lossing point')
-          .setRequired(true)),
+    .setName('addlosematch')
+    .setDescription('adds 1 lossing point to a user. (BetManager only)')
+    .addUserOption(option =>
+      option.setName('user')
+      .setDescription('The user to add lossing point')
+      .setRequired(true)),
   new SlashCommandBuilder()
-        .setName('tournamentranking')
-        .setDescription('view the ranking of the tournament participants. (BetManager only)'),
+    .setName('tournamentranking')
+    .setDescription('view the ranking of the tournament participants. (BetManager only)'),
   new SlashCommandBuilder()
-        .setName('exchange')
-        .setDescription('exchange GearPoints between users')
-        .addUserOption(option =>
-          option.setName('user')
-          .setDescription('The user to exchange points')
-          .setRequired(true))
-        .addIntegerOption(option =>
-          option.setName('points')
-          .setDescription('Number of points to exchange')
-          .setRequired(true)),
+    .setName('exchange')
+    .setDescription('exchange GearPoints between users')
+    .addUserOption(option =>
+      option.setName('user')
+      .setDescription('The user to exchange points')
+      .setRequired(true))
+    .addIntegerOption(option =>
+      option.setName('points')
+      .setDescription('Number of points to exchange')
+      .setRequired(true)),
   new SlashCommandBuilder()
-        .setName('maintenance')
-        .setDescription('Toggle maintenance mode. (BetManager only)'),
+    .setName('maintenance')
+    .setDescription('Toggle maintenance mode. (BetManager only)'),
   new SlashCommandBuilder()
-        .setName('highlow')
-        .setDescription('Play a game of High-Low. You need to have at least 40 points to play.'),
+    .setName('highlow')
+    .setDescription('Play a game of High-Low. You need to have at least 40 points to play.'),
   new SlashCommandBuilder()
-        .setName('stophighlow')
-        .setDescription('Stop the current game of High-Low and refund your 40 points')
+    .setName('stophighlow')
+    .setDescription('Stop the current game of High-Low and refund your 40 points')
 ]; 
 
 const commandData = commands.map(command => command.toJSON()); 
