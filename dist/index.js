@@ -719,14 +719,14 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         yield interaction.reply({ content: 'You already have an active blackjack game. Please finish it before starting a new one or use `/stopstopblackjack` for delete this one', flags: discord_js_2.MessageFlags.Ephemeral });
                         return;
                     }
-                    if (usersPoints[userId].points < 10) {
-                        yield interaction.reply({ content: 'You need at least 10 points to play blackjack.', flags: discord_js_2.MessageFlags.Ephemeral });
+                    if (usersPoints[userId].points < 40) {
+                        yield interaction.reply({ content: 'You need at least 40 points to play blackjack.', flags: discord_js_2.MessageFlags.Ephemeral });
                         return;
                     }
-                    const { playerHand, dealerHand } = startBlackjackGame(userId, 10);
+                    const { playerHand, dealerHand } = startBlackjackGame(userId, 40);
                     const playerValue = calculateHandValue(playerHand);
                     const dealerValue = calculateHandValue(dealerHand);
-                    usersPoints[userId].points -= 10;
+                    usersPoints[userId].points -= 40;
                     yield interaction.reply({ content: `\n# *Betty Bet's visible card*: \n## **|${dealerHand[0]}| |??|**\n\n# *Your hand*: \n## **|${playerHand.join('| |')}|**\n## = **${playerValue}**`, components: [createBlackjackActionRow()], flags: discord_js_2.MessageFlags.Ephemeral });
                     yield savePoints();
                     break;
@@ -809,7 +809,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 if (playerValue > 21) {
                     delete blackjackGames[userId];
                     yield interaction.update({ content: `\n# *Your hand*: \n## **|${game.playerHand.join('| |')}|**\n## = **${playerValue}**\n\n## **You bust!** *Betty Bet wins.*`, components: [] });
-                    debilusCloset += 10;
+                    debilusCloset += 40;
                     yield savePoints();
                     return;
                 }
@@ -831,7 +831,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 }
                 else if (playerValue < dealerValue) {
                     resultMessage += '## **Betty Bet wins!**';
-                    debilusCloset += 10;
+                    debilusCloset += 40;
                     delete blackjackGames[userId];
                     yield savePoints();
                 }
@@ -1798,7 +1798,7 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
     let resultMessage;
     const calculateReward = (visibleCard) => {
         if (visibleCard <= 2 || visibleCard >= 8) {
-            return 45; // Gain faible pour un faible risque
+            return 48; // Gain faible pour un faible risque
         }
         else if (visibleCard >= 4 && visibleCard <= 6) {
             return 60; // Gain élevé pour une probabilité équilibrée

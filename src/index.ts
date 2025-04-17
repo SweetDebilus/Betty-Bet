@@ -741,15 +741,15 @@ client.on('interactionCreate', async interaction => {
             return;
           }
 
-          if (usersPoints[userId].points < 10) { 
-            await interaction.reply({ content: 'You need at least 10 points to play blackjack.', flags: MessageFlags.Ephemeral });
+          if (usersPoints[userId].points < 40) { 
+            await interaction.reply({ content: 'You need at least 40 points to play blackjack.', flags: MessageFlags.Ephemeral });
             return; 
           } 
 
-          const { playerHand, dealerHand } = startBlackjackGame(userId, 10); 
+          const { playerHand, dealerHand } = startBlackjackGame(userId, 40); 
           const playerValue = calculateHandValue(playerHand);
           const dealerValue = calculateHandValue(dealerHand);
-          usersPoints[userId].points -= 10;  
+          usersPoints[userId].points -= 40;  
 
           await interaction.reply({ content: `\n# *Betty Bet's visible card*: \n## **|${dealerHand[0]}| |??|**\n\n# *Your hand*: \n## **|${playerHand.join('| |')}|**\n## = **${playerValue}**`, components: [createBlackjackActionRow()], flags: MessageFlags.Ephemeral }); 
 
@@ -832,7 +832,7 @@ client.on('interactionCreate', async interaction => {
         if (playerValue > 21) {
           delete blackjackGames[userId];
           await interaction.update({ content: `\n# *Your hand*: \n## **|${game.playerHand.join('| |')}|**\n## = **${playerValue}**\n\n## **You bust!** *Betty Bet wins.*`, components: [] });
-          debilusCloset += 10;
+          debilusCloset += 40;
           await savePoints();
           return;
         }
@@ -857,7 +857,7 @@ client.on('interactionCreate', async interaction => {
           await savePoints();
         } else if (playerValue < dealerValue) {
           resultMessage += '## **Betty Bet wins!**';
-          debilusCloset += 10;
+          debilusCloset += 40;
           delete blackjackGames[userId];
           await savePoints();
         } else {
@@ -2029,7 +2029,7 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
 
   const calculateReward = (visibleCard: number) => {
     if (visibleCard <= 2 || visibleCard >= 8) {
-      return 45; // Gain faible pour un faible risque
+      return 48; // Gain faible pour un faible risque
     } else if (visibleCard >= 4 && visibleCard <= 6) {
       return 60; // Gain élevé pour une probabilité équilibrée
     } else {
