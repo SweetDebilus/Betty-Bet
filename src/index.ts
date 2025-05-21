@@ -8,6 +8,7 @@ import crypto from 'crypto';
 import { MessageFlags } from 'discord.js';
 import { userInfo } from 'os';
 import fs1 from 'fs';
+import dns from 'dns';
 
 const algorithm = process.env.ALGO!;
 const secretKey = Buffer.from(process.env.KEY!, 'hex');
@@ -69,7 +70,7 @@ const calculateHandValue = (hand: string[]) => {
       value += cardValues[cardValue];
       if (cardValue === 'A') aces++;
     } else {
-      console.error(`Invalid card value: ${card}`);
+      log(`Invalid card value: ${card}`);
     } 
   });
 
@@ -115,8 +116,32 @@ const ensureLogDirectoryExists = (filePath: string): void => {
 // Appeler la fonction pour s'assurer que le dossier existe 
 ensureLogDirectoryExists(logFile); 
 
-const log = (message: string): void => { 
-  fs1.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`); 
+const maxSize = 5 * 1024 * 1024; // Taille max en octets (5MB)
+
+const rotateLogs = async (): Promise<void> => {
+    try {
+        if (fs.existsSync(logFile)) {
+            const stats = fs.statSync(logFile);
+            if (stats.size >= maxSize) {
+                const timestamp = new Date().toISOString().replace(/:/g, '-');
+                const archivedLog = `bot-${timestamp}.log`; // Nouveau fichier avec timestamp
+                await fs.promises.rename(logFile, archivedLog); // Archive le log actuel
+                console.log(`Log archivé sous : ${archivedLog}`);
+            }
+        }
+    } catch (error) {
+        console.error(`Erreur lors de la rotation des logs :`, error);
+    }
+};
+
+const log = async (message: string): Promise<void> => {
+    try {
+        await rotateLogs(); // Vérifie si le log doit être archivé avant d’écrire
+        const logMessage = `${new Date().toISOString()} - ${message}\n`;
+        await fs.promises.appendFile(logFile, logMessage);
+    } catch (error) {
+        console.error(`Erreur lors de l'écriture du log :`, error);
+    }
 };
 
 const encrypt = (text: string) => {
@@ -160,22 +185,23 @@ const saveDecryptedBackup = () => {
       lastUpdateTime: lastUpdateTime.toISOString()
     };
     fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    log("INFO: Decrypted backup data saved.");
   } catch (error) {
-    log(`Error saving points: ${error}`)
+    log(`ERROR: Error saving points: ${error}`)
   }
 };
 
 const saveTournamentParticipants = async () => {
   const participantsArray = Array.from(tournamentParticipants);
   fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
-  log("Tournament participants data saved.");
+  log("INFO: Tournament participants data saved.");
 };
 
 const loadTournamentParticipants = async () => {
   if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
     const participantsArray: [string, string][] = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
     tournamentParticipants = new Map(participantsArray);
-    log("Tournament participants data loaded.");
+    log("INFO: Tournament participants data loaded.");
   }
 };
 
@@ -189,26 +215,54 @@ const loadPoints = async () => {
       store = decryptedData.store || {};
       purchaseHistory = decryptedData.purchaseHistory || {}
       lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
+      log("INFO: Data loaded successfully.");
     } catch (error) {
-      log(`Failed to decrypt data: ${error}`);
+      log(`ERROR: Failed to decrypt data: ${error}`);
     }
   }
 };
 
 const savePoints = async () => {
-  const data = {
-    usersPoints,
-    debilusCloset,
-    store,
-    purchaseHistory,
-    lastUpdateTime: lastUpdateTime.toISOString()
-  };
+    const data = {
+        usersPoints,
+        debilusCloset,
+        store,
+        purchaseHistory,
+        lastUpdateTime: lastUpdateTime.toISOString()
+    };
 
-  const encryptedData = encrypt(JSON.stringify(data));
-  fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    const encryptedData = encrypt(JSON.stringify(data));
 
-  // Créer un fichier de sauvegarde des données déchiffrées
-  saveDecryptedBackup();
+    const maxAttempts = 3;
+    let attempts = 0;
+
+    function tryWriteFile() {
+        try {
+            // Vérification de l'accès en écriture avant d'essayer de sauvegarder
+            if (fs.existsSync(filePath)) {
+                fs.accessSync(filePath, fs.constants.W_OK);
+            } else {
+                log("WARNING: Le fichier n'existe pas, création d'un nouveau...");
+            }
+
+            // Écriture du fichier
+            fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
+            log("INFO: Data saved successfully.");
+
+            // Créer un fichier de sauvegarde des données déchiffrées
+            saveDecryptedBackup();
+        } catch (error) {
+            attempts++;
+            if (attempts < maxAttempts) {
+                log(`WARNING: Tentative ${attempts} échouée, nouvelle tentative dans 500ms...`);
+                setTimeout(tryWriteFile, 500);
+            } else {
+                log("ERROR: Échec après plusieurs tentatives : " + error);
+            }
+        }
+    }
+
+    tryWriteFile();
 };
 
 // Fonction pour ajouter des points à l'inventaire
@@ -224,48 +278,108 @@ const addPointsToInventory = async () => {
         const excessPoints = potentialNewInventory - 15; 
         usersPoints[userId].inventory = 15; 
         debilusCloset += excessPoints; // Ajouter les points excédentaires au debilusCloset 
+        log(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`); // log points ajouter au userId
       } else { 
         usersPoints[userId].inventory = potentialNewInventory; 
+        log(`Added ${cyclesPassed} points to user ${userId}'s inventory.`); // log points ajouter au userId
       }
 
       if (usersPoints[userId].inventory === 10) {
         await sendNotification(userId, 10); // Notification à 10 points
+        log(`Notification sent to user ${userId} for 10 points.`); // log notification
       } else if (usersPoints[userId].inventory === 15) {
         await sendNotification(userId, 15); // Notification à 15 points
+        log(`Notification sent to user ${userId} for 15 points.`); // log notification
       } else {
         debilusCloset += cyclesPassed;
+        // log points ajouter au debilusCloset
+        log(`Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
       }
     }
   }
   if (now.getHours() < 12) {
     lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+    log(`Last update time set to midnight: ${formatDate(lastUpdateTime)}`);
   } else {
     lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+    log(`Last update time set to noon: ${formatDate(lastUpdateTime)}`);
   }
   await savePoints();
 };
 
-const sendNotification = async (userId: string, points: number) => {
-  const user = await client.users.fetch(userId);
-  
-  if (user && usersPoints[userId].notificationsEnabled) {
-    const row = new ActionRowBuilder<ButtonBuilder>()
-      .addComponents(
-        new ButtonBuilder()
-          .setCustomId('claim_yes')
-          .setLabel('Yes')
-          .setStyle(ButtonStyle.Success),
-        new ButtonBuilder()
-          .setCustomId('claim_no')
-          .setLabel('No')
-          .setStyle(ButtonStyle.Danger),
-      );
+const notificationsFile = 'notifications.json';
 
-    await user.send({
-      content: `You have ${points} out of 15 points. Do you want to claim them?`,
-      components: [row]
-    });
-  }
+// Interface pour structurer les données des notifications
+interface NotificationsData {
+    [userId: string]: number;
+}
+
+// Charger les données des notifications
+const loadNotificationData = (): NotificationsData => {
+    if (!fs.existsSync(notificationsFile)) return {};
+    return JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
+};
+
+// Enregistrer la dernière notification envoyée
+const saveNotificationData = (data: NotificationsData) => {
+    fs.writeFileSync(notificationsFile, JSON.stringify(data, null, 2));
+};
+
+// Vérifie si l'utilisateur a déjà été notifié récemment
+const hasBeenNotifiedRecently = (userId: string): boolean => {
+    const data = loadNotificationData();
+    const lastNotification = data[userId] || 0;
+    return Date.now() - lastNotification < 12 * 60 * 60 * 1000; // 12 heures
+};
+
+// Supprimer un utilisateur du suivi des notifications après qu'il ait claim ses points
+const removeNotificationEntry = (userId: string) => {
+    const data = loadNotificationData();
+    
+    if (data[userId]) {
+        delete data[userId]; // Supprime l'entrée de l'utilisateur
+        saveNotificationData(data); // Sauvegarde la mise à jour
+        log(`INFO: User ${userId} removed from notification tracking.`);
+    }
+};
+
+const sendNotification = async (userId: string, points: number) => {
+    if (hasBeenNotifiedRecently(userId)) {
+        log(`INFO: Skipping notification for user ${userId}, already notified recently.`);
+        return;
+    }
+
+    const user = await client.users.fetch(userId);
+    
+    if (user && usersPoints[userId].notificationsEnabled) {
+        const row = new ActionRowBuilder<ButtonBuilder>()
+            .addComponents(
+                new ButtonBuilder()
+                    .setCustomId('claim_yes')
+                    .setLabel('Yes')
+                    .setStyle(ButtonStyle.Success),
+                new ButtonBuilder()
+                    .setCustomId('claim_no')
+                    .setLabel('No')
+                    .setStyle(ButtonStyle.Danger),
+            );
+
+        try {
+            await user.send({
+                content: `You have ${points} out of 15 points. Do you want to claim them?`,
+                components: [row]
+            });
+
+            log(`INFO: Notification sent successfully to user ${userId} for ${points} points.`);
+
+            // Enregistrement de l'envoi de la notification
+            const data = loadNotificationData();
+            data[userId] = Date.now();
+            saveNotificationData(data);
+        } catch (error) {
+            log(`ERROR: sending notification to user ${userId}: ${error}`);
+        }
+    }
 };
 
 // Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
@@ -415,24 +529,11 @@ const commands = [
     .setName('listitems')
     .setDescription('List all items available in the store'),
   new SlashCommandBuilder()
-    .setName('purchasehistory')
-    .setDescription('view purchase history in the store. (BetManager only)'),
-  new SlashCommandBuilder()
-    .setName('myitems')
-    .setDescription('view the items you own'),
-  new SlashCommandBuilder()
     .setName('blackjack')
     .setDescription('Play a game of blackjack'),
   new SlashCommandBuilder()
     .setName('stopblackjack')
     .setDescription('Stop the current game of blackjack'),
-  new SlashCommandBuilder()
-    .setName('addwinmatch')
-    .setDescription('adds 1 winning point to a user. (BetManager only)')
-    .addUserOption(option =>
-      option.setName('user')
-      .setDescription('The user to add winning point')
-      .setRequired(true)),
   new SlashCommandBuilder()
     .setName('addlosematch')
     .setDescription('adds 1 lossing point to a user. (BetManager only)')
@@ -466,6 +567,7 @@ const commands = [
 ]; 
 
 const commandData = commands.map(command => command.toJSON()); 
+log(`INFO: Loaded ${commandData.length} commands.`);
 
 client.once('ready', async () => {
   log(`Logged in as ${client.user?.tag}!`);
@@ -714,20 +816,6 @@ client.on('interactionCreate', async interaction => {
             await interaction.reply('There was an error retrieving the items list.');
           }
           break;
-        case 'purchasehistory':
-          if (hasRole('BetManager')) {
-            await handleViewPurchaseHistory(interaction);
-          } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
-          }
-          break;
-        case 'myitems':
-          if (restricted) {
-            await interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: MessageFlags.Ephemeral });
-            break;
-          }
-          await handleItemsInventory(interaction);
-          break;
         case 'blackjack': 
           const userId = interaction.user.id; 
 
@@ -755,13 +843,6 @@ client.on('interactionCreate', async interaction => {
 
           await savePoints();
 
-          break;
-        case 'addwinmatch':
-          if (hasRole('BetManager')) {
-            await handleAddWinMatch(interaction);
-          } else {
-            await interaction.reply({content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
-          }
           break;
         case 'stopblackjack':
           await handleStopBlackjack(interaction);
@@ -871,7 +952,7 @@ client.on('interactionCreate', async interaction => {
       }
     } else if (interaction.customId === 'highlow_higher'|| interaction.customId === 'highlow_lower') {
       await handleHighLowButton(interaction as ButtonInteraction);
-    } else if (interaction.customId === 'player1' || interaction.customId === 'player2') {
+    } else if (interaction.customId.startsWith('player')) {
       await handleBetSelection(interaction as ButtonInteraction);
     }
   }
@@ -969,6 +1050,8 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
   player1Name = player1Option ? player1Option.value as string : 'Player 1';
   player2Name = player2Option ? player2Option.value as string : 'Player 2';
 
+  log(`Bets are open for ${player1Name} and ${player2Name}`);
+
   // Création des boutons pour les paris
   const actionRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
@@ -1028,7 +1111,7 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
         channel.send('*Thanks for the money!*');
       }
     } catch (error) {
-      console.error('Error closing bets:', error);
+      log(`Error closing bets: ${error}`);
     }
   }, 60000); // Temps pour fermer les paris (60 secondes)
 };
@@ -1241,14 +1324,28 @@ const handleBetsList = async (interaction: CommandInteraction) => {
     });
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;
-  const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
+
+  // Déterminer qui a le plus gros pari
+  const player1HasHigherBet = totalPlayer1Bets >= totalPlayer2Bets;
+
+  // Définir le ratio avec le plus gros pari toujours à gauche
+  const ratio = totalPlayer1Bets === 0 || totalPlayer2Bets === 0
+    ? 'N/A'
+    : player1HasHigherBet
+      ? `${(totalPlayer1Bets / totalPlayer2Bets).toFixed(2)}:1`
+      : `${(totalPlayer2Bets / totalPlayer1Bets).toFixed(2)}:1`;
+
+  // Ajuster l'affichage des noms selon le plus gros pari
+  const formattedNames = player1HasHigherBet
+    ? `(${player1Name} / ${player2Name})`
+    : `(${player2Name} / ${player1Name})`;
 
   await interaction.reply(
-    `**Bets List:**\n\n\`\`\`Player\t\tName\t\tAmount\n${player1Name}:\n${player1Bets.join('\n') || 'No bets'}\n\n${player2Name}:\n${player2Bets.join('\n') || 'No bets'}\`\`\`\n\n` +
+    `## Bets List:\n\n\`\`\`Player\t\tName\t\t                       Amount\n${player1Name}:\n              ${player1Bets.join('\n') || 'No bets'}\n\n${player2Name}:\n              ${player2Bets.join('\n') || 'No bets'}\`\`\`\n\n` +
     `Total bet on **${player1Name}**: **${totalPlayer1Bets}** ${pointsEmoji}\n` +
     `Total bet on **${player2Name}**: **${totalPlayer2Bets}** ${pointsEmoji}\n` +
     `Total bet overall: **${totalBets}** ${pointsEmoji}\n\n` +
-    `Betting Ratio (${player1Name} / ${player2Name}): **${ratio}**`
+    `Betting Ratio ${formattedNames}: **${ratio}**`
   );
 };
 
@@ -1525,8 +1622,13 @@ const handleClaimYesNo = async (interaction: ButtonInteraction) => {
     usersPoints[userId].inventory = 0;
     await savePoints();
 
+    removeNotificationEntry(userId); // Suppression de l'entrée du fichier JSON de notifications
+
     if (!interaction.replied) {
-      await interaction.update({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
+        await interaction.update({ 
+            content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, 
+            components: [] 
+        });
     }
   } else if (interaction.customId === 'claim_no') {
     if (!interaction.replied) {
@@ -1792,68 +1894,6 @@ const handleListItems = async (interaction: CommandInteraction) => {
   await interaction.reply({ content: storeItems, flags: MessageFlags.Ephemeral });
 };
 
-const handleViewPurchaseHistory = async (interaction: CommandInteraction) => {
-  const allPurchaseRecords = Object.values(purchaseHistory);
-
-  if (allPurchaseRecords.length === 0) {
-    await interaction.reply({ content: 'No purchase history found.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  // Trier les enregistrements d'achat par nom d'utilisateur
-  allPurchaseRecords.sort((a, b) => a.userName.localeCompare(b.userName));
-  const historyMessage = allPurchaseRecords.map(record => {
-    const date = new Date(record.timestamp);
-    const formattedDate = formatDate(date);
-    return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: **${formattedDate}**\n`;
-  }).join('\n');
-
-  await interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, flags: MessageFlags.Ephemeral });
-};
-
-const handleItemsInventory = async (interaction: CommandInteraction) => {
-  const userId = interaction.user.id;
-  let inventoryItemsMessage = `**Item Inventory**:\n`;
-
-  if (!usersPoints[userId]) {
-    await interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  const items = usersPoints[userId].inventoryShop;
-
-  if (items.length === 0) {
-    await interaction.reply({content:'you have no items in your inventory', flags: MessageFlags.Ephemeral});
-    return;
-  }
-
-  items.forEach(async (item, index) => {
-    const itemInfo = `\n**Item ${index + 1}**:\n- *Name*: **${item.name}**\n- *Quantity*: **${item.quantity}**\n`;
-    inventoryItemsMessage += itemInfo;
-  });
-
-  await interaction.reply({content: inventoryItemsMessage, flags: MessageFlags.Ephemeral});
-}
-
-const handleAddWinMatch = async (interaction: CommandInteraction) => {
-  const userOption = interaction.options.get('user');
-  const userId = userOption?.value as string;
-
-  if (!usersPoints[userId]) {
-    await interaction.reply({ content: `User with id ${userId} is not registered`, flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  if (!tournamentParticipants.has(userId)) {
-    await interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, flags: MessageFlags.Ephemeral });
-    return;
-  }
-
-  usersPoints[userId].winMatch += 1;
-  await savePoints();
-  await interaction.reply({content:`${usersPoints[userId].name} win !`, flags: MessageFlags.Ephemeral});
-}
-
 const handleAddLoseMatch = async (interaction: CommandInteraction) => {
   const userOption = interaction.options.get('user');
   const userId = userOption?.value as string;
@@ -1967,6 +2007,7 @@ const handleStopBlackjack = async (interaction: CommandInteraction) => {
   await savePoints();
   await interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: MessageFlags.Ephemeral });
   await interaction.followUp({ content: `You can now play again !`, flags: MessageFlags.Ephemeral });
+  log(`Blackjack stopped for user ${userId}`);
 }
 
 const handleHighLow = async (interaction: CommandInteraction) => {
@@ -2072,6 +2113,7 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
 
   // Supprimer les données de jeu de la mémoire temporaire
   delete highlowGames[userId];
+  log(`User ${userId} has finished the game: high-low`);
 };
 
 const handleStopHighLow = async (interaction: CommandInteraction) => {
@@ -2084,7 +2126,41 @@ const handleStopHighLow = async (interaction: CommandInteraction) => {
   usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
   delete highlowGames[userId];
   await savePoints();
-  await interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: MessageFlags.Ephemeral });
+  await interaction.reply({ content: `You have stopped the game. You have been refunded 10 points. You can now play again !`, flags: MessageFlags.Ephemeral });
+  log(`User ${userId} has stopped the game.`);
 }
 
-client.login(process.env.DISCORD_TOKEN!);
+async function waitForDiscord() {
+    return new Promise((resolve) => {
+        const checkConnection = () => {
+            dns.lookup('discord.com', (err) => {
+                if (!err) {
+                    log('Connection to Discord servers detected!');
+                    resolve(undefined);
+                } else {
+                    log('No connection to Discord yet, waiting...');
+                    setTimeout(checkConnection, 5000); // Réessaye toutes les 5 secondes
+                }
+            });
+        };
+        checkConnection();
+    });
+}
+
+async function startBot(): Promise<void> {
+  try {
+      await waitForDiscord(); // Attendre la connexion à Discord
+      log('Discord connection established!');
+      // Initialiser le client Discord
+      log('Connecting to Discord...');
+      await client.login(process.env.DISCORD_TOKEN!);
+      log('Bot successfully connected!');
+  } catch (error) {
+      log(`Bot connection failed: ${error}`);
+      await client.destroy(); // Détruire le client si la connexion échoue
+      log('Process exited due to critical failure.');
+      process.exit(1); // Quitte le processus en cas d'erreur critique
+  }
+}
+
+startBot();

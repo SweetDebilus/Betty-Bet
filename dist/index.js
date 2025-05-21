@@ -44,6 +44,7 @@ dotenv_1.default.config();
 const crypto_1 = __importDefault(require("crypto"));
 const discord_js_2 = require("discord.js");
 const fs_1 = __importDefault(require("fs"));
+const dns_1 = __importDefault(require("dns"));
 const algorithm = process.env.ALGO;
 const secretKey = Buffer.from(process.env.KEY, 'hex');
 const client = new discord_js_1.Client({
@@ -98,7 +99,7 @@ const calculateHandValue = (hand) => {
                 aces++;
         }
         else {
-            console.error(`Invalid card value: ${card}`);
+            log(`Invalid card value: ${card}`);
         }
     });
     while (value > 21 && aces) {
@@ -134,9 +135,33 @@ const ensureLogDirectoryExists = (filePath) => {
 };
 // Appeler la fonction pour s'assurer que le dossier existe 
 ensureLogDirectoryExists(logFile);
-const log = (message) => {
-    fs_1.default.appendFileSync(logFile, `${new Date().toISOString()} - ${message}\n`);
-};
+const maxSize = 5 * 1024 * 1024; // Taille max en octets (5MB)
+const rotateLogs = () => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        if (fs.existsSync(logFile)) {
+            const stats = fs.statSync(logFile);
+            if (stats.size >= maxSize) {
+                const timestamp = new Date().toISOString().replace(/:/g, '-');
+                const archivedLog = `bot-${timestamp}.log`; // Nouveau fichier avec timestamp
+                yield fs.promises.rename(logFile, archivedLog); // Archive le log actuel
+                console.log(`Log archivé sous : ${archivedLog}`);
+            }
+        }
+    }
+    catch (error) {
+        console.error(`Erreur lors de la rotation des logs :`, error);
+    }
+});
+const log = (message) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        yield rotateLogs(); // Vérifie si le log doit être archivé avant d’écrire
+        const logMessage = `${new Date().toISOString()} - ${message}\n`;
+        yield fs.promises.appendFile(logFile, logMessage);
+    }
+    catch (error) {
+        console.error(`Erreur lors de l'écriture du log :`, error);
+    }
+});
 const encrypt = (text) => {
     const iv = crypto_1.default.randomBytes(16);
     const cipher = crypto_1.default.createCipheriv(algorithm, secretKey, iv);
@@ -171,21 +196,22 @@ const saveDecryptedBackup = () => {
             lastUpdateTime: lastUpdateTime.toISOString()
         };
         fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+        log("INFO: Decrypted backup data saved.");
     }
     catch (error) {
-        log(`Error saving points: ${error}`);
+        log(`ERROR: Error saving points: ${error}`);
     }
 };
 const saveTournamentParticipants = () => __awaiter(void 0, void 0, void 0, function* () {
     const participantsArray = Array.from(tournamentParticipants);
     fs.writeFileSync('DataDebilus/tournamentParticipants.json', JSON.stringify(participantsArray, null, 2));
-    log("Tournament participants data saved.");
+    log("INFO: Tournament participants data saved.");
 });
 const loadTournamentParticipants = () => __awaiter(void 0, void 0, void 0, function* () {
     if (fs.existsSync('DataDebilus/tournamentParticipants.json')) {
         const participantsArray = JSON.parse(fs.readFileSync('DataDebilus/tournamentParticipants.json', 'utf-8'));
         tournamentParticipants = new Map(participantsArray);
-        log("Tournament participants data loaded.");
+        log("INFO: Tournament participants data loaded.");
     }
 });
 const loadPoints = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -198,9 +224,10 @@ const loadPoints = () => __awaiter(void 0, void 0, void 0, function* () {
             store = decryptedData.store || {};
             purchaseHistory = decryptedData.purchaseHistory || {};
             lastUpdateTime = new Date(decryptedData.lastUpdateTime || Date.now());
+            log("INFO: Data loaded successfully.");
         }
         catch (error) {
-            log(`Failed to decrypt data: ${error}`);
+            log(`ERROR: Failed to decrypt data: ${error}`);
         }
     }
 });
@@ -213,9 +240,35 @@ const savePoints = () => __awaiter(void 0, void 0, void 0, function* () {
         lastUpdateTime: lastUpdateTime.toISOString()
     };
     const encryptedData = encrypt(JSON.stringify(data));
-    fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
-    // Créer un fichier de sauvegarde des données déchiffrées
-    saveDecryptedBackup();
+    const maxAttempts = 3;
+    let attempts = 0;
+    function tryWriteFile() {
+        try {
+            // Vérification de l'accès en écriture avant d'essayer de sauvegarder
+            if (fs.existsSync(filePath)) {
+                fs.accessSync(filePath, fs.constants.W_OK);
+            }
+            else {
+                log("WARNING: Le fichier n'existe pas, création d'un nouveau...");
+            }
+            // Écriture du fichier
+            fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
+            log("INFO: Data saved successfully.");
+            // Créer un fichier de sauvegarde des données déchiffrées
+            saveDecryptedBackup();
+        }
+        catch (error) {
+            attempts++;
+            if (attempts < maxAttempts) {
+                log(`WARNING: Tentative ${attempts} échouée, nouvelle tentative dans 500ms...`);
+                setTimeout(tryWriteFile, 500);
+            }
+            else {
+                log("ERROR: Échec après plusieurs tentatives : " + error);
+            }
+        }
+    }
+    tryWriteFile();
 });
 // Fonction pour ajouter des points à l'inventaire
 const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* () {
@@ -229,30 +282,68 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
                 const excessPoints = potentialNewInventory - 15;
                 usersPoints[userId].inventory = 15;
                 debilusCloset += excessPoints; // Ajouter les points excédentaires au debilusCloset 
+                log(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`); // log points ajouter au userId
             }
             else {
                 usersPoints[userId].inventory = potentialNewInventory;
+                log(`Added ${cyclesPassed} points to user ${userId}'s inventory.`); // log points ajouter au userId
             }
             if (usersPoints[userId].inventory === 10) {
                 yield sendNotification(userId, 10); // Notification à 10 points
+                log(`Notification sent to user ${userId} for 10 points.`); // log notification
             }
             else if (usersPoints[userId].inventory === 15) {
                 yield sendNotification(userId, 15); // Notification à 15 points
+                log(`Notification sent to user ${userId} for 15 points.`); // log notification
             }
             else {
                 debilusCloset += cyclesPassed;
+                // log points ajouter au debilusCloset
+                log(`Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
             }
         }
     }
     if (now.getHours() < 12) {
         lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
+        log(`Last update time set to midnight: ${formatDate(lastUpdateTime)}`);
     }
     else {
         lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
+        log(`Last update time set to noon: ${formatDate(lastUpdateTime)}`);
     }
     yield savePoints();
 });
+const notificationsFile = 'notifications.json';
+// Charger les données des notifications
+const loadNotificationData = () => {
+    if (!fs.existsSync(notificationsFile))
+        return {};
+    return JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
+};
+// Enregistrer la dernière notification envoyée
+const saveNotificationData = (data) => {
+    fs.writeFileSync(notificationsFile, JSON.stringify(data, null, 2));
+};
+// Vérifie si l'utilisateur a déjà été notifié récemment
+const hasBeenNotifiedRecently = (userId) => {
+    const data = loadNotificationData();
+    const lastNotification = data[userId] || 0;
+    return Date.now() - lastNotification < 12 * 60 * 60 * 1000; // 12 heures
+};
+// Supprimer un utilisateur du suivi des notifications après qu'il ait claim ses points
+const removeNotificationEntry = (userId) => {
+    const data = loadNotificationData();
+    if (data[userId]) {
+        delete data[userId]; // Supprime l'entrée de l'utilisateur
+        saveNotificationData(data); // Sauvegarde la mise à jour
+        log(`INFO: User ${userId} removed from notification tracking.`);
+    }
+};
 const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, function* () {
+    if (hasBeenNotifiedRecently(userId)) {
+        log(`INFO: Skipping notification for user ${userId}, already notified recently.`);
+        return;
+    }
     const user = yield client.users.fetch(userId);
     if (user && usersPoints[userId].notificationsEnabled) {
         const row = new discord_js_1.ActionRowBuilder()
@@ -263,10 +354,20 @@ const sendNotification = (userId, points) => __awaiter(void 0, void 0, void 0, f
             .setCustomId('claim_no')
             .setLabel('No')
             .setStyle(discord_js_1.ButtonStyle.Danger));
-        yield user.send({
-            content: `You have ${points} out of 15 points. Do you want to claim them?`,
-            components: [row]
-        });
+        try {
+            yield user.send({
+                content: `You have ${points} out of 15 points. Do you want to claim them?`,
+                components: [row]
+            });
+            log(`INFO: Notification sent successfully to user ${userId} for ${points} points.`);
+            // Enregistrement de l'envoi de la notification
+            const data = loadNotificationData();
+            data[userId] = Date.now();
+            saveNotificationData(data);
+        }
+        catch (error) {
+            log(`ERROR: sending notification to user ${userId}: ${error}`);
+        }
     }
 });
 // Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
@@ -400,23 +501,11 @@ const commands = [
         .setName('listitems')
         .setDescription('List all items available in the store'),
     new discord_js_1.SlashCommandBuilder()
-        .setName('purchasehistory')
-        .setDescription('view purchase history in the store. (BetManager only)'),
-    new discord_js_1.SlashCommandBuilder()
-        .setName('myitems')
-        .setDescription('view the items you own'),
-    new discord_js_1.SlashCommandBuilder()
         .setName('blackjack')
         .setDescription('Play a game of blackjack'),
     new discord_js_1.SlashCommandBuilder()
         .setName('stopblackjack')
         .setDescription('Stop the current game of blackjack'),
-    new discord_js_1.SlashCommandBuilder()
-        .setName('addwinmatch')
-        .setDescription('adds 1 winning point to a user. (BetManager only)')
-        .addUserOption(option => option.setName('user')
-        .setDescription('The user to add winning point')
-        .setRequired(true)),
     new discord_js_1.SlashCommandBuilder()
         .setName('addlosematch')
         .setDescription('adds 1 lossing point to a user. (BetManager only)')
@@ -446,6 +535,7 @@ const commands = [
         .setDescription('Stop the current game of High-Low and refund your 40 points')
 ];
 const commandData = commands.map(command => command.toJSON());
+log(`INFO: Loaded ${commandData.length} commands.`);
 client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
@@ -694,21 +784,6 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                         yield interaction.reply('There was an error retrieving the items list.');
                     }
                     break;
-                case 'purchasehistory':
-                    if (hasRole('BetManager')) {
-                        yield handleViewPurchaseHistory(interaction);
-                    }
-                    else {
-                        yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_2.MessageFlags.Ephemeral });
-                    }
-                    break;
-                case 'myitems':
-                    if (restricted) {
-                        yield interaction.reply({ content: 'This command is currently unavailable, it will be available later.', flags: discord_js_2.MessageFlags.Ephemeral });
-                        break;
-                    }
-                    yield handleItemsInventory(interaction);
-                    break;
                 case 'blackjack':
                     const userId = interaction.user.id;
                     if (!usersPoints[userId]) {
@@ -729,14 +804,6 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     usersPoints[userId].points -= 40;
                     yield interaction.reply({ content: `\n# *Betty Bet's visible card*: \n## **|${dealerHand[0]}| |??|**\n\n# *Your hand*: \n## **|${playerHand.join('| |')}|**\n## = **${playerValue}**`, components: [createBlackjackActionRow()], flags: discord_js_2.MessageFlags.Ephemeral });
                     yield savePoints();
-                    break;
-                case 'addwinmatch':
-                    if (hasRole('BetManager')) {
-                        yield handleAddWinMatch(interaction);
-                    }
-                    else {
-                        yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_2.MessageFlags.Ephemeral });
-                    }
                     break;
                 case 'stopblackjack':
                     yield handleStopBlackjack(interaction);
@@ -847,7 +914,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
         else if (interaction.customId === 'highlow_higher' || interaction.customId === 'highlow_lower') {
             yield handleHighLowButton(interaction);
         }
-        else if (interaction.customId === 'player1' || interaction.customId === 'player2') {
+        else if (interaction.customId.startsWith('player')) {
             yield handleBetSelection(interaction);
         }
     }
@@ -926,6 +993,7 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
     const player2Option = interaction.options.get('player2name');
     player1Name = player1Option ? player1Option.value : 'Player 1';
     player2Name = player2Option ? player2Option.value : 'Player 2';
+    log(`Bets are open for ${player1Name} and ${player2Name}`);
     // Création des boutons pour les paris
     const actionRow = new discord_js_1.ActionRowBuilder()
         .addComponents(new discord_js_1.ButtonBuilder()
@@ -975,7 +1043,7 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
             }
         }
         catch (error) {
-            console.error('Error closing bets:', error);
+            log(`Error closing bets: ${error}`);
         }
     }), 60000); // Temps pour fermer les paris (60 secondes)
 });
@@ -1148,12 +1216,23 @@ const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, functi
         return `${usersPoints[userId].name.padEnd(32)}\t${bet.amount}`;
     });
     const totalBets = totalPlayer1Bets + totalPlayer2Bets;
-    const ratio = totalPlayer2Bets === 0 ? 'N/A' : (totalPlayer1Bets / totalPlayer2Bets).toFixed(2);
-    yield interaction.reply(`**Bets List:**\n\n\`\`\`Player\t\tName\t\tAmount\n${player1Name}:\n${player1Bets.join('\n') || 'No bets'}\n\n${player2Name}:\n${player2Bets.join('\n') || 'No bets'}\`\`\`\n\n` +
+    // Déterminer qui a le plus gros pari
+    const player1HasHigherBet = totalPlayer1Bets >= totalPlayer2Bets;
+    // Définir le ratio avec le plus gros pari toujours à gauche
+    const ratio = totalPlayer1Bets === 0 || totalPlayer2Bets === 0
+        ? 'N/A'
+        : player1HasHigherBet
+            ? `${(totalPlayer1Bets / totalPlayer2Bets).toFixed(2)}:1`
+            : `${(totalPlayer2Bets / totalPlayer1Bets).toFixed(2)}:1`;
+    // Ajuster l'affichage des noms selon le plus gros pari
+    const formattedNames = player1HasHigherBet
+        ? `(${player1Name} / ${player2Name})`
+        : `(${player2Name} / ${player1Name})`;
+    yield interaction.reply(`## Bets List:\n\n\`\`\`Player\t\tName\t\t                       Amount\n${player1Name}:\n              ${player1Bets.join('\n') || 'No bets'}\n\n${player2Name}:\n              ${player2Bets.join('\n') || 'No bets'}\`\`\`\n\n` +
         `Total bet on **${player1Name}**: **${totalPlayer1Bets}** ${pointsEmoji}\n` +
         `Total bet on **${player2Name}**: **${totalPlayer2Bets}** ${pointsEmoji}\n` +
         `Total bet overall: **${totalBets}** ${pointsEmoji}\n\n` +
-        `Betting Ratio (${player1Name} / ${player2Name}): **${ratio}**`);
+        `Betting Ratio ${formattedNames}: **${ratio}**`);
 });
 const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void 0, function* () {
     let totalBetAmount = 0;
@@ -1386,8 +1465,12 @@ const handleClaimYesNo = (interaction) => __awaiter(void 0, void 0, void 0, func
         usersPoints[userId].points += pointsToClaim;
         usersPoints[userId].inventory = 0;
         yield savePoints();
+        removeNotificationEntry(userId); // Suppression de l'entrée du fichier JSON de notifications
         if (!interaction.replied) {
-            yield interaction.update({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, components: [] });
+            yield interaction.update({
+                content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`,
+                components: []
+            });
         }
     }
     else if (interaction.customId === 'claim_no') {
@@ -1607,54 +1690,6 @@ const handleListItems = (interaction) => __awaiter(void 0, void 0, void 0, funct
     }
     yield interaction.reply({ content: storeItems, flags: discord_js_2.MessageFlags.Ephemeral });
 });
-const handleViewPurchaseHistory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    const allPurchaseRecords = Object.values(purchaseHistory);
-    if (allPurchaseRecords.length === 0) {
-        yield interaction.reply({ content: 'No purchase history found.', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    // Trier les enregistrements d'achat par nom d'utilisateur
-    allPurchaseRecords.sort((a, b) => a.userName.localeCompare(b.userName));
-    const historyMessage = allPurchaseRecords.map(record => {
-        const date = new Date(record.timestamp);
-        const formattedDate = formatDate(date);
-        return `*User*: **${record.userName}**\n- *Item*: **${record.itemName}**\n- *Quantity*: **${record.quantity}**\n- *Total Price*: **${record.totalPrice}** ${pointsEmoji}\n- *Date*: **${formattedDate}**\n`;
-    }).join('\n');
-    yield interaction.reply({ content: `Global purchase history:\n\n${historyMessage}`, flags: discord_js_2.MessageFlags.Ephemeral });
-});
-const handleItemsInventory = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    const userId = interaction.user.id;
-    let inventoryItemsMessage = `**Item Inventory**:\n`;
-    if (!usersPoints[userId]) {
-        yield interaction.reply({ content: 'You are not registered yet. Use `/register` to sign up.', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    const items = usersPoints[userId].inventoryShop;
-    if (items.length === 0) {
-        yield interaction.reply({ content: 'you have no items in your inventory', flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    items.forEach((item, index) => __awaiter(void 0, void 0, void 0, function* () {
-        const itemInfo = `\n**Item ${index + 1}**:\n- *Name*: **${item.name}**\n- *Quantity*: **${item.quantity}**\n`;
-        inventoryItemsMessage += itemInfo;
-    }));
-    yield interaction.reply({ content: inventoryItemsMessage, flags: discord_js_2.MessageFlags.Ephemeral });
-});
-const handleAddWinMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
-    const userOption = interaction.options.get('user');
-    const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
-    if (!usersPoints[userId]) {
-        yield interaction.reply({ content: `User with id ${userId} is not registered`, flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    if (!tournamentParticipants.has(userId)) {
-        yield interaction.reply({ content: `User ${usersPoints[userId].name} is not participating in the tournament`, flags: discord_js_2.MessageFlags.Ephemeral });
-        return;
-    }
-    usersPoints[userId].winMatch += 1;
-    yield savePoints();
-    yield interaction.reply({ content: `${usersPoints[userId].name} win !`, flags: discord_js_2.MessageFlags.Ephemeral });
-});
 const handleAddLoseMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userOption = interaction.options.get('user');
     const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
@@ -1748,6 +1783,7 @@ const handleStopBlackjack = (interaction) => __awaiter(void 0, void 0, void 0, f
     yield savePoints();
     yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
     yield interaction.followUp({ content: `You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
+    log(`Blackjack stopped for user ${userId}`);
 });
 const handleHighLow = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -1841,6 +1877,7 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
     });
     // Supprimer les données de jeu de la mémoire temporaire
     delete highlowGames[userId];
+    log(`User ${userId} has finished the game: high-low`);
 });
 const handleStopHighLow = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -1852,6 +1889,44 @@ const handleStopHighLow = (interaction) => __awaiter(void 0, void 0, void 0, fun
     usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     delete highlowGames[userId];
     yield savePoints();
-    yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points.`, flags: discord_js_2.MessageFlags.Ephemeral });
+    yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points. You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
+    log(`User ${userId} has stopped the game.`);
 });
-client.login(process.env.DISCORD_TOKEN);
+function waitForDiscord() {
+    return __awaiter(this, void 0, void 0, function* () {
+        return new Promise((resolve) => {
+            const checkConnection = () => {
+                dns_1.default.lookup('discord.com', (err) => {
+                    if (!err) {
+                        log('Connection to Discord servers detected!');
+                        resolve(undefined);
+                    }
+                    else {
+                        log('No connection to Discord yet, waiting...');
+                        setTimeout(checkConnection, 5000); // Réessaye toutes les 5 secondes
+                    }
+                });
+            };
+            checkConnection();
+        });
+    });
+}
+function startBot() {
+    return __awaiter(this, void 0, void 0, function* () {
+        try {
+            yield waitForDiscord(); // Attendre la connexion à Discord
+            log('Discord connection established!');
+            // Initialiser le client Discord
+            log('Connecting to Discord...');
+            yield client.login(process.env.DISCORD_TOKEN);
+            log('Bot successfully connected!');
+        }
+        catch (error) {
+            log(`Bot connection failed: ${error}`);
+            yield client.destroy(); // Détruire le client si la connexion échoue
+            log('Process exited due to critical failure.');
+            process.exit(1); // Quitte le processus en cas d'erreur critique
+        }
+    });
+}
+startBot();
