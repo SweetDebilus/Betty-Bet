@@ -1,3 +1,7 @@
+![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)
+![Node.js](https://img.shields.io/badge/Node.js-v18+-green)
+![Discord](https://img.shields.io/badge/Discord-Bot-blue)
+
 # Betty Bet
 
    Betty Bet is a Discord bot designed to manage bets and games within your server. It offers a variety of commands to place bets, check statistics, organize tournaments, and much more.
