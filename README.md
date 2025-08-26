@@ -135,3 +135,5 @@
 ## Conclusion
 
    This README provides a comprehensive overview of Betty Bet, its features, and how to install and use it. If you need more details or additional modifications, let me know!
+
+Made with ❤️ by [Selena V](https://github.com/SweetDebilus)
