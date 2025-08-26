@@ -15,13 +15,23 @@ var __setModuleDefault = (this && this.__setModuleDefault) || (Object.create ? (
 }) : function(o, v) {
     o["default"] = v;
 });
-var __importStar = (this && this.__importStar) || function (mod) {
-    if (mod && mod.__esModule) return mod;
-    var result = {};
-    if (mod != null) for (var k in mod) if (k !== "default" && Object.prototype.hasOwnProperty.call(mod, k)) __createBinding(result, mod, k);
-    __setModuleDefault(result, mod);
-    return result;
-};
+var __importStar = (this && this.__importStar) || (function () {
+    var ownKeys = function(o) {
+        ownKeys = Object.getOwnPropertyNames || function (o) {
+            var ar = [];
+            for (var k in o) if (Object.prototype.hasOwnProperty.call(o, k)) ar[ar.length] = k;
+            return ar;
+        };
+        return ownKeys(o);
+    };
+    return function (mod) {
+        if (mod && mod.__esModule) return mod;
+        var result = {};
+        if (mod != null) for (var k = ownKeys(mod), i = 0; i < k.length; i++) if (k[i] !== "default") __createBinding(result, mod, k[i]);
+        __setModuleDefault(result, mod);
+        return result;
+    };
+})();
 var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, generator) {
     function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); }
     return new (P || (P = Promise))(function (resolve, reject) {
@@ -645,18 +655,25 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     }
                     break;
                 case 'win':
-                    if (hasRole('BetManager')) {
-                        const winnerOption = interaction.options.get('winner');
-                        const winner = winnerOption ? winnerOption.value : null;
-                        if (winner === 1 || winner === 2) {
-                            yield handleWin(interaction, winner === 1 ? 'player1' : 'player2');
-                        }
-                        else {
-                            yield interaction.reply('The winner must be 1 or 2.');
-                        }
+                    if (!interaction.isChatInputCommand()) {
+                        return interaction.reply({
+                            content: 'You do not have permission to use this command.',
+                            flags: discord_js_2.MessageFlags.Ephemeral,
+                        });
+                    }
+                    if (!hasRole('BetManager')) {
+                        return interaction.reply({
+                            content: 'You do not have permission to use this command.',
+                            flags: discord_js_2.MessageFlags.Ephemeral,
+                        });
+                    }
+                    const winnerOption = interaction.options.get('winner');
+                    const winner = winnerOption === null || winnerOption === void 0 ? void 0 : winnerOption.value;
+                    if (winner === 1 || winner === 2) {
+                        yield handleWin(interaction, winner === 1 ? 'player1' : 'player2');
                     }
                     else {
-                        yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_2.MessageFlags.Ephemeral });
+                        yield interaction.reply('The winner must be 1 or 2.');
                     }
                     break;
                 case 'betslist':
@@ -989,6 +1006,9 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
     bettingOpen = true;
     currentBets = {};
     // Récupération des noms des joueurs
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const player1Option = interaction.options.get('player1name');
     const player2Option = interaction.options.get('player2name');
     player1Name = player1Option ? player1Option.value : 'Player 1';
@@ -1317,6 +1337,9 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
 });
 const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userIdToDelete = (_a = interaction.options.get('userid')) === null || _a === void 0 ? void 0 : _a.value;
     if (userIdToDelete && usersPoints[userIdToDelete]) {
         const userNameToDelete = usersPoints[userIdToDelete].name;
@@ -1329,6 +1352,9 @@ const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, func
     }
 });
 const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const pointsOption = interaction.options.get('points');
     const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
@@ -1404,6 +1430,9 @@ const handleSendDecryptedBackup = (interaction) => __awaiter(void 0, void 0, voi
     yield interaction.reply({ content: 'Here is the decrypted backup file.', files: [file], flags: discord_js_2.MessageFlags.Ephemeral });
 });
 const handleAddTournamentParticipant = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
@@ -1416,6 +1445,9 @@ const handleAddTournamentParticipant = (interaction) => __awaiter(void 0, void 0
     }
 });
 const handleRemoveTournamentParticipant = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (user) {
@@ -1585,6 +1617,9 @@ const handleGlobalStats = (interaction) => __awaiter(void 0, void 0, void 0, fun
     yield interaction.reply({ content: globalStatsMessage });
 });
 const handleTransferDebilus = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     if (!user) {
@@ -1609,6 +1644,9 @@ const handleTransferDebilus = (interaction) => __awaiter(void 0, void 0, void 0,
 });
 const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     yield loadPoints(); // Charger les points depuis le fichier
     const userId = interaction.user.id;
     const itemName = (_a = interaction.options.get('itemname', true)) === null || _a === void 0 ? void 0 : _a.value;
@@ -1665,6 +1703,9 @@ const handleBuyItem = (interaction) => __awaiter(void 0, void 0, void 0, functio
 });
 const handleAddItemToStore = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b, _c;
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     yield loadPoints();
     const itemName = (_a = interaction.options.get('itemname', true)) === null || _a === void 0 ? void 0 : _a.value;
     const quantity = (_b = interaction.options.get('quantity', true)) === null || _b === void 0 ? void 0 : _b.value;
@@ -1691,6 +1732,9 @@ const handleListItems = (interaction) => __awaiter(void 0, void 0, void 0, funct
     yield interaction.reply({ content: storeItems, flags: discord_js_2.MessageFlags.Ephemeral });
 });
 const handleAddLoseMatch = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const userId = userOption === null || userOption === void 0 ? void 0 : userOption.value;
     if (!usersPoints[userId]) {
@@ -1740,6 +1784,9 @@ const handleListTournamentParticipantsByRanking = (interaction) => __awaiter(voi
 });
 // echange de points entre deux utilisateurs
 const handleExchangePoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    if (!interaction.isChatInputCommand()) {
+        return interaction.reply('An error has occurred. Please try again.');
+    }
     const userOption = interaction.options.get('user');
     const user = userOption === null || userOption === void 0 ? void 0 : userOption.user;
     const pointsOption = interaction.options.get('points');

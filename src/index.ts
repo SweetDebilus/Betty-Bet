@@ -689,19 +689,31 @@ client.on('interactionCreate', async interaction => {
           }
           break;
         case 'win':
-          if (hasRole('BetManager')) {
-            const winnerOption = interaction.options.get('winner');
-            const winner = winnerOption ? winnerOption.value : null;
-      
-            if (winner === 1 || winner === 2) {
-              await handleWin(interaction, winner === 1 ? 'player1' : 'player2');
-              } else {
-              await interaction.reply('The winner must be 1 or 2.');
-            }
-          } else {
-            await interaction.reply({content:'You do not have permission to use this command.', flags: MessageFlags.Ephemeral});
+          if (!interaction.isChatInputCommand()) {
+            return interaction.reply({
+              content: 'You do not have permission to use this command.',
+              flags: MessageFlags.Ephemeral,
+            });
           }
+
+          if (!hasRole('BetManager')) {
+            return interaction.reply({
+              content: 'You do not have permission to use this command.',
+              flags: MessageFlags.Ephemeral,
+            });
+          }
+
+          const winnerOption = interaction.options.get('winner');
+          const winner = winnerOption?.value;
+
+          if (winner === 1 || winner === 2) {
+            await handleWin(interaction, winner === 1 ? 'player1' : 'player2');
+          } else {
+            await interaction.reply('The winner must be 1 or 2.');
+          }
+
           break;
+
         case 'betslist':
           if (hasRole('BetManager')) {
             await handleBetsList(interaction);
@@ -1044,8 +1056,12 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
   currentBets = {};
 
   // Récupération des noms des joueurs
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const player1Option = interaction.options.get('player1name');
   const player2Option = interaction.options.get('player2name');
+  
 
   player1Name = player1Option ? player1Option.value as string : 'Player 1';
   player2Name = player2Option ? player2Option.value as string : 'Player 2';
@@ -1443,6 +1459,9 @@ for (const bet of Object.values(currentBets)) {
 };
 
 const handleDeleteUser = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userIdToDelete = interaction.options.get('userid')?.value as string;
   
   if (userIdToDelete && usersPoints[userIdToDelete]) {
@@ -1456,6 +1475,9 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
 };
 
 const handleAddPoints = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const pointsOption = interaction.options.get('points');
 
@@ -1552,6 +1574,9 @@ const handleSendDecryptedBackup = async (interaction: CommandInteraction) => {
 };
 
 const handleAddTournamentParticipant = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const user = userOption?.user;
 
@@ -1565,6 +1590,9 @@ const handleAddTournamentParticipant = async (interaction: CommandInteraction) =
 };
 
 const handleRemoveTournamentParticipant = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const user = userOption?.user;
 
@@ -1765,6 +1793,9 @@ const handleGlobalStats = async (interaction: CommandInteraction) => {
 };
 
 const handleTransferDebilus = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const user = userOption?.user;
 
@@ -1795,6 +1826,9 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
 };
 
 const handleBuyItem = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   await loadPoints();  // Charger les points depuis le fichier
 
   const userId = interaction.user.id;
@@ -1862,6 +1896,9 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
 };
 
 const handleAddItemToStore = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   await loadPoints();
 
   const itemName = interaction.options.get('itemname', true)?.value as string;
@@ -1895,6 +1932,9 @@ const handleListItems = async (interaction: CommandInteraction) => {
 };
 
 const handleAddLoseMatch = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const userId = userOption?.value as string;
 
@@ -1952,6 +1992,9 @@ const handleListTournamentParticipantsByRanking = async (interaction: CommandInt
 
 // echange de points entre deux utilisateurs
 const handleExchangePoints = async (interaction: CommandInteraction) => {
+  if (!interaction.isChatInputCommand()) {
+    return interaction.reply('An error has occurred. Please try again.');
+  }
   const userOption = interaction.options.get('user');
   const user = userOption?.user;
   const pointsOption = interaction.options.get('points');
