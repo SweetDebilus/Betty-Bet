@@ -71,6 +71,7 @@ const debilus = process.env.DEBILUS;
 const debcoins = process.env.DEBCOIN;
 const bettyBettId = process.env.BETTYID;
 const logFile = process.env.PATHLOG;
+const roleName = process.env.ROLE;
 const restricted = false;
 const filePath = 'usersPoints.json';
 let maintenanceMode = false;
@@ -542,11 +543,14 @@ const commands = [
         .setDescription('Play a game of High-Low. You need to have at least 40 points to play.'),
     new discord_js_1.SlashCommandBuilder()
         .setName('stophighlow')
-        .setDescription('Stop the current game of High-Low and refund your 40 points')
+        .setDescription('Stop the current game of High-Low and refund your 40 points'),
+    new discord_js_1.SlashCommandBuilder()
+        .setName('veteranlist')
+        .setDescription('View the list of veteran users. (BetManager only)')
 ];
 const commandData = commands.map(command => command.toJSON());
 log(`INFO: Loaded ${commandData.length} commands.`);
-client.once('ready', () => __awaiter(void 0, void 0, void 0, function* () {
+client.once('clientReady', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
     loadPoints();
@@ -852,6 +856,14 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                     break;
                 case 'stophighlow':
                     yield handleStopHighLow(interaction);
+                    break;
+                case 'veteranlist':
+                    if (hasRole('BetManager')) {
+                        yield handleVeteranList(interaction);
+                    }
+                    else {
+                        yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_2.MessageFlags.Ephemeral });
+                    }
                     break;
                 default:
                     try {
@@ -1938,6 +1950,54 @@ const handleStopHighLow = (interaction) => __awaiter(void 0, void 0, void 0, fun
     yield savePoints();
     yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points. You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
     log(`User ${userId} has stopped the game.`);
+});
+const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
+    try {
+        const guild = interaction.guild;
+        const channel = interaction.channel;
+        if (!guild || !channel || channel.type !== 0) {
+            yield interaction.reply({ content: '❌ Cette commande doit être utilisée dans un canal textuel d’un serveur.', flags: 1 << 6 });
+            return;
+        }
+        yield interaction.deferReply({ flags: 1 << 6 });
+        const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
+        const members = yield guild.members.fetch();
+        // Récupère l'ID du rôle "Dæmon Punk"
+        const daemonPunkRole = guild.roles.cache.find(role => role.name === roleName);
+        if (!daemonPunkRole) {
+            yield interaction.editReply({ content: '⚠️ Le rôle "Dæmon Punk" est introuvable sur ce serveur.', flags: 1 << 6 });
+            return;
+        }
+        // Filtrage : membres avec le rôle + présents depuis > 1 an
+        const veterans = members.filter(member => member.roles.cache.has(daemonPunkRole.id) &&
+            member.joinedTimestamp &&
+            member.joinedTimestamp < oneYearAgo);
+        // Tri alphabétique par displayName
+        const sortedVeterans = [...veterans.values()].sort((a, b) => a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' }));
+        const veteranLines = sortedVeterans.map(member => `• ${member.displayName} — depuis le ${new Date(member.joinedTimestamp).toLocaleDateString('fr-FR')}`);
+        const header = '👑 Membres "Dæmon Punk" présents depuis plus d’un an :\n';
+        const chunks = [];
+        let currentChunk = header;
+        for (const line of veteranLines) {
+            if ((currentChunk + line + '\n').length > 2000) {
+                chunks.push(currentChunk);
+                currentChunk = line + '\n';
+            }
+            else {
+                currentChunk += line + '\n';
+            }
+        }
+        if (currentChunk.length > 0)
+            chunks.push(currentChunk);
+        for (const chunk of chunks) {
+            yield channel.send(chunk);
+        }
+        yield interaction.editReply({ content: `✅ ${chunks.length} message(s) envoyés avec la liste des vétérans Dæmon Punk.`, flags: 1 << 6 });
+    }
+    catch (error) {
+        console.error('Erreur dans handleVeteranList :', error);
+        yield interaction.editReply({ content: '⚠️ Une erreur est survenue en générant la liste des vétérans.', flags: 1 << 6 });
+    }
 });
 function waitForDiscord() {
     return __awaiter(this, void 0, void 0, function* () {
