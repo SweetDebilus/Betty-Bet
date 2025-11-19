@@ -464,7 +464,7 @@ const commands = [
         .setName('cleartournamentparticipants')
         .setDescription('Clear the list of tournament participants. (BetManager only)'),
     new discord_js_1.SlashCommandBuilder()
-        .setName('presentation')
+        .setName('help')
         .setDescription('Present Betty Bet and its functions'),
     new discord_js_1.SlashCommandBuilder()
         .setName('togglenotifications')
@@ -553,6 +553,11 @@ log(`INFO: Loaded ${commandData.length} commands.`);
 client.once('clientReady', () => __awaiter(void 0, void 0, void 0, function* () {
     var _a;
     log(`Logged in as ${(_a = client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
+    if (client.user) {
+        client.user.setActivity('/help | Gearbot', {
+            type: discord_js_1.ActivityType.Playing
+        });
+    }
     loadPoints();
     yield loadTournamentParticipants();
     yield addPointsToInventory();
@@ -729,7 +734,7 @@ client.on('interactionCreate', (interaction) => __awaiter(void 0, void 0, void 0
                 case 'togglenotifications':
                     yield handleToggleNotifications(interaction);
                     break;
-                case 'presentation':
+                case 'help':
                     yield handlePresentation(interaction);
                     break;
                 case 'clearmessages':

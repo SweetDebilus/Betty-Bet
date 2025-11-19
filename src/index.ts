@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, ModalBuilder, ComponentType } from 'discord.js';
+import { Client, GatewayIntentBits, ActivityType, REST, Routes, ActionRowBuilder, AttachmentBuilder, ButtonBuilder, ButtonStyle, GuildMember, GuildMemberRoleManager, CommandInteraction, TextChannel, ButtonInteraction, Message, SlashCommandBuilder, InteractionType, User, ModalSubmitInteraction, TextInputBuilder, TextInputStyle, ModalBuilder, ComponentType } from 'discord.js';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
@@ -476,7 +476,7 @@ const commands = [
     .setName('cleartournamentparticipants') 
     .setDescription('Clear the list of tournament participants. (BetManager only)'), 
   new SlashCommandBuilder() 
-    .setName('presentation') 
+    .setName('help') 
     .setDescription('Present Betty Bet and its functions'), 
   new SlashCommandBuilder() 
     .setName('togglenotifications') 
@@ -575,6 +575,12 @@ log(`INFO: Loaded ${commandData.length} commands.`);
 
 client.once('clientReady', async () => {
   log(`Logged in as ${client.user?.tag}!`);
+
+  if (client.user) {
+    client.user.setActivity('/help | Gearbot', {
+      type: ActivityType.Playing
+    });
+  }
 
   loadPoints();
   
@@ -762,7 +768,7 @@ client.on('interactionCreate', async interaction => {
         case 'togglenotifications':
           await handleToggleNotifications(interaction);
           break
-        case 'presentation':
+        case 'help':
           await handlePresentation(interaction);
           break;
         case 'clearmessages':
