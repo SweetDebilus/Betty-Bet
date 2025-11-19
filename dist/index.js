@@ -1951,31 +1951,59 @@ const handleStopHighLow = (interaction) => __awaiter(void 0, void 0, void 0, fun
     yield interaction.reply({ content: `You have stopped the game. You have been refunded 10 points. You can now play again !`, flags: discord_js_2.MessageFlags.Ephemeral });
     log(`User ${userId} has stopped the game.`);
 });
+const veteranFilePath = path.join('DataDebilus', 'veterans.json');
+// Assure que le dossier existe
+const ensureVeteranFile = () => {
+    if (!fs.existsSync('DataDebilus'))
+        fs.mkdirSync('DataDebilus', { recursive: true });
+    if (!fs.existsSync(veteranFilePath))
+        fs.writeFileSync(veteranFilePath, JSON.stringify([]));
+};
+// Charge les IDs déjà enregistrés
+const loadVeteranIds = () => {
+    ensureVeteranFile();
+    const data = JSON.parse(fs.readFileSync(veteranFilePath, 'utf-8'));
+    return new Set(data);
+};
+// Sauvegarde les nouveaux IDs
+const saveVeteranIds = (ids) => {
+    fs.writeFileSync(veteranFilePath, JSON.stringify([...ids], null, 2));
+};
 const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     try {
         const guild = interaction.guild;
         const channel = interaction.channel;
         if (!guild || !channel || channel.type !== 0) {
-            yield interaction.reply({ content: '❌ Cette commande doit être utilisée dans un canal textuel d’un serveur.', flags: 1 << 6 });
+            yield interaction.reply({
+                content: '❌ Cette commande doit être utilisée dans un canal textuel d’un serveur.',
+                flags: discord_js_2.MessageFlags.Ephemeral
+            });
             return;
         }
-        yield interaction.deferReply({ flags: 1 << 6 });
+        yield interaction.deferReply({ flags: discord_js_2.MessageFlags.Ephemeral });
         const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
         const members = yield guild.members.fetch();
-        // Récupère l'ID du rôle "Dæmon Punk"
         const daemonPunkRole = guild.roles.cache.find(role => role.name === roleName);
         if (!daemonPunkRole) {
-            yield interaction.editReply({ content: '⚠️ Le rôle "Dæmon Punk" est introuvable sur ce serveur.', flags: 1 << 6 });
+            yield interaction.editReply({
+                content: '⚠️ Le rôle "Dæmon Punk" est introuvable sur ce serveur.'
+            });
             return;
         }
-        // Filtrage : membres avec le rôle + présents depuis > 1 an
+        const previousVeterans = loadVeteranIds();
         const veterans = members.filter(member => member.roles.cache.has(daemonPunkRole.id) &&
             member.joinedTimestamp &&
-            member.joinedTimestamp < oneYearAgo);
-        // Tri alphabétique par displayName
+            member.joinedTimestamp < oneYearAgo &&
+            !previousVeterans.has(member.id));
+        if (veterans.size === 0) {
+            yield interaction.editReply({
+                content: '✅ Aucun nouveau vétéran à promouvoir.'
+            });
+            return;
+        }
         const sortedVeterans = [...veterans.values()].sort((a, b) => a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' }));
         const veteranLines = sortedVeterans.map(member => `• ${member.displayName} — depuis le ${new Date(member.joinedTimestamp).toLocaleDateString('fr-FR')}`);
-        const header = '👑 Membres "Dæmon Punk" présents depuis plus d’un an :\n';
+        const header = '👑 Nouveaux vétérans "Dæmon Punk" à promouvoir :\n';
         const chunks = [];
         let currentChunk = header;
         for (const line of veteranLines) {
@@ -1992,11 +2020,17 @@ const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, fun
         for (const chunk of chunks) {
             yield channel.send(chunk);
         }
-        yield interaction.editReply({ content: `✅ ${chunks.length} message(s) envoyés avec la liste des vétérans Dæmon Punk.`, flags: 1 << 6 });
+        sortedVeterans.forEach(member => previousVeterans.add(member.id));
+        saveVeteranIds(previousVeterans);
+        yield interaction.editReply({
+            content: `✅ ${chunks.length} message(s) envoyés avec ${sortedVeterans.length} nouveau(x) vétéran(s).`
+        });
     }
     catch (error) {
         console.error('Erreur dans handleVeteranList :', error);
-        yield interaction.editReply({ content: '⚠️ Une erreur est survenue en générant la liste des vétérans.', flags: 1 << 6 });
+        yield interaction.editReply({
+            content: '⚠️ Une erreur est survenue en générant la liste des vétérans.'
+        });
     }
 });
 function waitForDiscord() {

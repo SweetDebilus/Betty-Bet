@@ -2184,36 +2184,68 @@ const handleStopHighLow = async (interaction: CommandInteraction) => {
   log(`User ${userId} has stopped the game.`);
 }
 
+const veteranFilePath = path.join('DataDebilus', 'veterans.json');
+
+// Assure que le dossier existe
+const ensureVeteranFile = () => {
+  if (!fs.existsSync('DataDebilus')) fs.mkdirSync('DataDebilus', { recursive: true });
+  if (!fs.existsSync(veteranFilePath)) fs.writeFileSync(veteranFilePath, JSON.stringify([]));
+};
+
+// Charge les IDs déjà enregistrés
+const loadVeteranIds = (): Set<string> => {
+  ensureVeteranFile();
+  const data = JSON.parse(fs.readFileSync(veteranFilePath, 'utf-8'));
+  return new Set(data);
+};
+
+// Sauvegarde les nouveaux IDs
+const saveVeteranIds = (ids: Set<string>) => {
+  fs.writeFileSync(veteranFilePath, JSON.stringify([...ids], null, 2));
+};
+
 const handleVeteranList = async (interaction: CommandInteraction) => {
   try {
     const guild = interaction.guild;
     const channel = interaction.channel;
 
     if (!guild || !channel || channel.type !== 0) {
-      await interaction.reply({ content: '❌ Cette commande doit être utilisée dans un canal textuel d’un serveur.', flags: 1 << 6 });
+      await interaction.reply({
+        content: '❌ Cette commande doit être utilisée dans un canal textuel d’un serveur.',
+        flags: MessageFlags.Ephemeral
+      });
       return;
     }
 
-    await interaction.deferReply({ flags: 1 << 6 });
+    await interaction.deferReply({ flags: MessageFlags.Ephemeral });
 
     const oneYearAgo = Date.now() - 365 * 24 * 60 * 60 * 1000;
     const members = await guild.members.fetch();
 
-    // Récupère l'ID du rôle "Dæmon Punk"
     const daemonPunkRole = guild.roles.cache.find(role => role.name === roleName);
     if (!daemonPunkRole) {
-      await interaction.editReply({ content: '⚠️ Le rôle "Dæmon Punk" est introuvable sur ce serveur.', flags: 1 << 6 });
+      await interaction.editReply({
+        content: '⚠️ Le rôle "Dæmon Punk" est introuvable sur ce serveur.'
+      });
       return;
     }
 
-    // Filtrage : membres avec le rôle + présents depuis > 1 an
+    const previousVeterans = loadVeteranIds();
+
     const veterans = members.filter(member =>
       member.roles.cache.has(daemonPunkRole.id) &&
       member.joinedTimestamp &&
-      member.joinedTimestamp < oneYearAgo
+      member.joinedTimestamp < oneYearAgo &&
+      !previousVeterans.has(member.id)
     );
 
-    // Tri alphabétique par displayName
+    if (veterans.size === 0) {
+      await interaction.editReply({
+        content: '✅ Aucun nouveau vétéran à promouvoir.'
+      });
+      return;
+    }
+
     const sortedVeterans = [...veterans.values()].sort((a, b) =>
       a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' })
     );
@@ -2222,7 +2254,7 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
       `• ${member.displayName} — depuis le ${new Date(member.joinedTimestamp!).toLocaleDateString('fr-FR')}`
     );
 
-    const header = '👑 Membres "Dæmon Punk" présents depuis plus d’un an :\n';
+    const header = '👑 Nouveaux vétérans "Dæmon Punk" à promouvoir :\n';
     const chunks: string[] = [];
     let currentChunk = header;
 
@@ -2240,10 +2272,17 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
       await (channel as TextChannel).send(chunk);
     }
 
-    await interaction.editReply({ content: `✅ ${chunks.length} message(s) envoyés avec la liste des vétérans Dæmon Punk.`, flags: 1 << 6 });
+    sortedVeterans.forEach(member => previousVeterans.add(member.id));
+    saveVeteranIds(previousVeterans);
+
+    await interaction.editReply({
+      content: `✅ ${chunks.length} message(s) envoyés avec ${sortedVeterans.length} nouveau(x) vétéran(s).`
+    });
   } catch (error) {
     console.error('Erreur dans handleVeteranList :', error);
-    await interaction.editReply({ content: '⚠️ Une erreur est survenue en générant la liste des vétérans.', flags: 1 << 6 });
+    await interaction.editReply({
+      content: '⚠️ Une erreur est survenue en générant la liste des vétérans.'
+    });
   }
 };
 
