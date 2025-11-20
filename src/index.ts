@@ -120,29 +120,29 @@ ensureLogDirectoryExists(logFile);
 const maxSize = 5 * 1024 * 1024; // Taille max en octets (5MB)
 
 const rotateLogs = async (): Promise<void> => {
-    try {
-        if (fs.existsSync(logFile)) {
-            const stats = fs.statSync(logFile);
-            if (stats.size >= maxSize) {
-                const timestamp = new Date().toISOString().replace(/:/g, '-');
-                const archivedLog = `bot-${timestamp}.log`; // Nouveau fichier avec timestamp
-                await fs.promises.rename(logFile, archivedLog); // Archive le log actuel
-                console.log(`Log archivé sous : ${archivedLog}`);
-            }
-        }
-    } catch (error) {
-        console.error(`Erreur lors de la rotation des logs :`, error);
+  try {
+    if (fs.existsSync(logFile)) {
+      const stats = fs.statSync(logFile);
+      if (stats.size >= maxSize) {
+        const timestamp = new Date().toISOString().replace(/:/g, '-');
+        const archivedLog = `bot-${timestamp}.log`; // Nouveau fichier avec timestamp
+        await fs.promises.rename(logFile, archivedLog); // Archive le log actuel
+        console.log(`Log archivé sous : ${archivedLog}`);
+      }
     }
+  } catch (error) {
+    console.error(`Erreur lors de la rotation des logs :`, error);
+  }
 };
 
 const log = async (message: string): Promise<void> => {
-    try {
-        await rotateLogs(); // Vérifie si le log doit être archivé avant d’écrire
-        const logMessage = `${new Date().toISOString()} - ${message}\n`;
-        await fs.promises.appendFile(logFile, logMessage);
-    } catch (error) {
-        console.error(`Erreur lors de l'écriture du log :`, error);
-    }
+  try {
+    await rotateLogs(); // Vérifie si le log doit être archivé avant d’écrire
+    const logMessage = `${new Date().toISOString()} - ${message}\n`;
+    await fs.promises.appendFile(logFile, logMessage);
+  } catch (error) {
+    console.error(`Erreur lors de l'écriture du log :`, error);
+  }
 };
 
 const encrypt = (text: string) => {
@@ -224,46 +224,46 @@ const loadPoints = async () => {
 };
 
 const savePoints = async () => {
-    const data = {
-        usersPoints,
-        debilusCloset,
-        store,
-        purchaseHistory,
-        lastUpdateTime: lastUpdateTime.toISOString()
-    };
+  const data = {
+    usersPoints,
+    debilusCloset,
+    store,
+    purchaseHistory,
+    lastUpdateTime: lastUpdateTime.toISOString()
+  };
 
-    const encryptedData = encrypt(JSON.stringify(data));
+  const encryptedData = encrypt(JSON.stringify(data));
 
-    const maxAttempts = 3;
-    let attempts = 0;
+  const maxAttempts = 3;
+  let attempts = 0;
 
-    function tryWriteFile() {
-        try {
-            // Vérification de l'accès en écriture avant d'essayer de sauvegarder
-            if (fs.existsSync(filePath)) {
-                fs.accessSync(filePath, fs.constants.W_OK);
-            } else {
-                log("WARNING: Le fichier n'existe pas, création d'un nouveau...");
-            }
-
-            // Écriture du fichier
-            fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
-            log("INFO: Data saved successfully.");
-
-            // Créer un fichier de sauvegarde des données déchiffrées
-            saveDecryptedBackup();
-        } catch (error) {
-            attempts++;
-            if (attempts < maxAttempts) {
-                log(`WARNING: Tentative ${attempts} échouée, nouvelle tentative dans 500ms...`);
-                setTimeout(tryWriteFile, 500);
-            } else {
-                log("ERROR: Échec après plusieurs tentatives : " + error);
-            }
-        }
+  function tryWriteFile() {
+  try {
+    // Vérification de l'accès en écriture avant d'essayer de sauvegarder
+    if (fs.existsSync(filePath)) {
+      fs.accessSync(filePath, fs.constants.W_OK);
+    } else {
+      log("WARNING: Le fichier n'existe pas, création d'un nouveau...");
     }
 
-    tryWriteFile();
+    // Écriture du fichier
+    fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
+    log("INFO: Data saved successfully.");
+
+    // Créer un fichier de sauvegarde des données déchiffrées
+    saveDecryptedBackup();
+  } catch (error) {
+    attempts++;
+    if (attempts < maxAttempts) {
+      log(`WARNING: Tentative ${attempts} échouée, nouvelle tentative dans 500ms...`);
+      setTimeout(tryWriteFile, 500);
+    } else {
+      log("ERROR: Échec après plusieurs tentatives : " + error);
+    }
+  }
+}
+
+  tryWriteFile();
 };
 
 // Fonction pour ajouter des points à l'inventaire
@@ -312,75 +312,75 @@ const notificationsFile = 'notifications.json';
 
 // Interface pour structurer les données des notifications
 interface NotificationsData {
-    [userId: string]: number;
+  [userId: string]: number;
 }
 
 // Charger les données des notifications
 const loadNotificationData = (): NotificationsData => {
-    if (!fs.existsSync(notificationsFile)) return {};
-    return JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
+  if (!fs.existsSync(notificationsFile)) return {};
+  return JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
 };
 
 // Enregistrer la dernière notification envoyée
 const saveNotificationData = (data: NotificationsData) => {
-    fs.writeFileSync(notificationsFile, JSON.stringify(data, null, 2));
+  fs.writeFileSync(notificationsFile, JSON.stringify(data, null, 2));
 };
 
 // Vérifie si l'utilisateur a déjà été notifié récemment
 const hasBeenNotifiedRecently = (userId: string): boolean => {
-    const data = loadNotificationData();
-    const lastNotification = data[userId] || 0;
-    return Date.now() - lastNotification < 12 * 60 * 60 * 1000; // 12 heures
+  const data = loadNotificationData();
+  const lastNotification = data[userId] || 0;
+  return Date.now() - lastNotification < 12 * 60 * 60 * 1000; // 12 heures
 };
 
 // Supprimer un utilisateur du suivi des notifications après qu'il ait claim ses points
 const removeNotificationEntry = (userId: string) => {
-    const data = loadNotificationData();
-    
-    if (data[userId]) {
-        delete data[userId]; // Supprime l'entrée de l'utilisateur
-        saveNotificationData(data); // Sauvegarde la mise à jour
-        log(`INFO: User ${userId} removed from notification tracking.`);
-    }
+  const data = loadNotificationData();
+  
+  if (data[userId]) {
+    delete data[userId]; // Supprime l'entrée de l'utilisateur
+    saveNotificationData(data); // Sauvegarde la mise à jour
+    log(`INFO: User ${userId} removed from notification tracking.`);
+  }
 };
 
 const sendNotification = async (userId: string, points: number) => {
-    if (hasBeenNotifiedRecently(userId)) {
-        log(`INFO: Skipping notification for user ${userId}, already notified recently.`);
-        return;
+  if (hasBeenNotifiedRecently(userId)) {
+      log(`INFO: Skipping notification for user ${userId}, already notified recently.`);
+      return;
+  }
+
+  const user = await client.users.fetch(userId);
+  
+  if (user && usersPoints[userId].notificationsEnabled) {
+    const row = new ActionRowBuilder<ButtonBuilder>()
+      .addComponents(
+        new ButtonBuilder()
+          .setCustomId('claim_yes')
+          .setLabel('Yes')
+          .setStyle(ButtonStyle.Success),
+        new ButtonBuilder()
+          .setCustomId('claim_no')
+          .setLabel('No')
+          .setStyle(ButtonStyle.Danger)
+      );
+
+    try {
+      await user.send({
+        content: `You have ${points} out of 15 points. Do you want to claim them?`,
+        components: [row]
+      });
+
+      log(`INFO: Notification sent successfully to user ${userId} for ${points} points.`);
+
+      // Enregistrement de l'envoi de la notification
+      const data = loadNotificationData();
+      data[userId] = Date.now();
+      saveNotificationData(data);
+    } catch (error) {
+      log(`ERROR: sending notification to user ${userId}: ${error}`);
     }
-
-    const user = await client.users.fetch(userId);
-    
-    if (user && usersPoints[userId].notificationsEnabled) {
-        const row = new ActionRowBuilder<ButtonBuilder>()
-            .addComponents(
-                new ButtonBuilder()
-                    .setCustomId('claim_yes')
-                    .setLabel('Yes')
-                    .setStyle(ButtonStyle.Success),
-                new ButtonBuilder()
-                    .setCustomId('claim_no')
-                    .setLabel('No')
-                    .setStyle(ButtonStyle.Danger),
-            );
-
-        try {
-            await user.send({
-                content: `You have ${points} out of 15 points. Do you want to claim them?`,
-                components: [row]
-            });
-
-            log(`INFO: Notification sent successfully to user ${userId} for ${points} points.`);
-
-            // Enregistrement de l'envoi de la notification
-            const data = loadNotificationData();
-            data[userId] = Date.now();
-            saveNotificationData(data);
-        } catch (error) {
-            log(`ERROR: sending notification to user ${userId}: ${error}`);
-        }
-    }
+  }
 };
 
 // Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
@@ -2143,22 +2143,22 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
   // Comparer en fonction du choix de l'utilisateur et attribuer 10 point s'il gagne
   if (customId === 'highlow_higher') {
     if (hiddenCard > visibleCard) {
-        usersPoints[userId].points += reward; // Ajouter 20 points si l'utilisateur gagne
-        usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
-        await savePoints(); // Sauvegarder les points après la mise à jour
-        resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+      usersPoints[userId].points += reward; // Ajouter 20 points si l'utilisateur gagne
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+      await savePoints(); // Sauvegarder les points après la mise à jour
+      resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
     } else {
-        resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+      resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
     }
 } else if (customId === 'highlow_lower') {
-    if (hiddenCard < visibleCard) {
-        usersPoints[userId].points += reward; // Ajouter 5 à 15 points si l'utilisateur gagne
-        usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
-        await savePoints(); // Sauvegarder les points après la mise à jour
-        resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
-    } else {
-        resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
-    }
+  if (hiddenCard < visibleCard) {
+    usersPoints[userId].points += reward; // Ajouter 5 à 15 points si l'utilisateur gagne
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+    await savePoints(); // Sauvegarder les points après la mise à jour
+    resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+  } else {
+    resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+  }
 }
 
   if (usersPoints[userId].isDebilus) {
@@ -2294,35 +2294,35 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
 
 
 async function waitForDiscord() {
-    return new Promise((resolve) => {
-        const checkConnection = () => {
-            dns.lookup('discord.com', (err) => {
-                if (!err) {
-                    log('Connection to Discord servers detected!');
-                    resolve(undefined);
-                } else {
-                    log('No connection to Discord yet, waiting...');
-                    setTimeout(checkConnection, 5000); // Réessaye toutes les 5 secondes
-                }
-            });
-        };
-        checkConnection();
-    });
+  return new Promise((resolve) => {
+    const checkConnection = () => {
+      dns.lookup('discord.com', (err) => {
+        if (!err) {
+          log('Connection to Discord servers detected!');
+          resolve(undefined);
+        } else {
+          log('No connection to Discord yet, waiting...');
+          setTimeout(checkConnection, 5000); // Réessaye toutes les 5 secondes
+        }
+      });
+    };
+    checkConnection();
+  });
 }
 
 async function startBot(): Promise<void> {
   try {
-      await waitForDiscord(); // Attendre la connexion à Discord
-      log('Discord connection established!');
-      // Initialiser le client Discord
-      log('Connecting to Discord...');
-      await client.login(process.env.DISCORD_TOKEN!);
-      log('Bot successfully connected!');
+    await waitForDiscord(); // Attendre la connexion à Discord
+    log('Discord connection established!');
+    // Initialiser le client Discord
+    log('Connecting to Discord...');
+    await client.login(process.env.DISCORD_TOKEN!);
+    log('Bot successfully connected!');
   } catch (error) {
-      log(`Bot connection failed: ${error}`);
-      await client.destroy(); // Détruire le client si la connexion échoue
-      log('Process exited due to critical failure.');
-      process.exit(1); // Quitte le processus en cas d'erreur critique
+    log(`Bot connection failed: ${error}`);
+    await client.destroy(); // Détruire le client si la connexion échoue
+    log('Process exited due to critical failure.');
+    process.exit(1); // Quitte le processus en cas d'erreur critique
   }
 }
 
