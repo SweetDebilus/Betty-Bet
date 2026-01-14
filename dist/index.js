@@ -77,6 +77,18 @@ const commandData = [...exports.commands.values()].map(cmd => cmd.data.toJSON())
 (0, log_1.log)(`INFO: Loaded ${commandData.length} commands.`);
 node_schedule_1.default.scheduleJob('0 0 * * *', pointsManager_1.addPointsToInventory); // Exécute tous les jours à minuit
 node_schedule_1.default.scheduleJob('0 12 * * *', pointsManager_1.addPointsToInventory); // Exécute tous les jours à midi
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
+for (const file of eventFiles) {
+    const filePath = path.join(eventsPath, file);
+    const event = require(filePath).default;
+    if (event.once) {
+        exports.client.once(event.name, (...args) => event.execute(...args));
+    }
+    else {
+        exports.client.on(event.name, (...args) => event.execute(...args));
+    }
+}
 exports.client.once(discord_js_1.Events.ClientReady, () => __awaiter(void 0, void 0, void 0, function* () {
     var _a, _b;
     yield (0, pointsManager_1.loadPoints)();

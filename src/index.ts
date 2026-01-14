@@ -41,6 +41,22 @@ log(`INFO: Loaded ${commandData.length} commands.`);
 schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 
+const eventsPath = path.join(__dirname, 'events');
+const eventFiles = fs.readdirSync(eventsPath).filter(file =>
+    file.endsWith('.ts') || file.endsWith('.js')
+);
+
+for (const file of eventFiles) {
+    const filePath = path.join(eventsPath, file);
+    const event = require(filePath).default;
+
+    if (event.once) {
+        client.once(event.name, (...args) => event.execute(...args));
+    } else {
+        client.on(event.name, (...args) => event.execute(...args));
+    }
+}
+
 client.once(Events.ClientReady, async () => {
 
     await loadPoints();

@@ -1,4 +1,4 @@
-import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager, CommandInteraction } from 'discord.js';
+import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager } from 'discord.js';
 import { usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
 
