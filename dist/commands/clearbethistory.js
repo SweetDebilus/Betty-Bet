@@ -35,6 +35,7 @@ const handleClearBetHistory = (interaction) => __awaiter(void 0, void 0, void 0,
     for (const userId in pointsManager_1.usersPoints) {
         pointsManager_1.usersPoints[userId].betHistory = [];
     }
+    (0, pointsManager_1.savePoints)();
     yield interaction.reply({
         content: '✅ All users\' betting history has been cleared.',
         flags: discord_js_1.MessageFlags.Ephemeral

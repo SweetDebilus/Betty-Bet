@@ -1,5 +1,5 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager, CommandInteraction } from 'discord.js';
-import { usersPoints } from '../services/pointsManager';
+import { savePoints, usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
 
 export const command = {
@@ -22,6 +22,7 @@ const handleClearBetHistory = async (interaction: CommandInteraction) => {
     for (const userId in usersPoints) {
         usersPoints[userId].betHistory = [];
     }
+    savePoints();
     await interaction.reply({ 
         content: '✅ All users\' betting history has been cleared.', 
         flags: MessageFlags.Ephemeral 
