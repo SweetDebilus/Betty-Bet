@@ -104,4 +104,16 @@
 
    This README provides a comprehensive overview of Betty Bet, its features, and how to install and use it. If you need more details or additional modifications, let me know!
 
-Made with ❤️ by [Selena V](https://github.com/SweetDebilus)
+Made with ❤️ & ☠️ by [Selena V](https://github.com/SweetDebilus)
+
+## Personal note:
+
+Betty Bet started as a small, cobbled‑together bot meant for friendly bets.
+As time went on, I kept adding features and behaviors, until the whole thing quietly turned into a complex little monster.
+So I refactored everything.
+
+I revisited the entire architecture; a task that took more than 18 hours, done calmly and at my own pace... to reach the version you see today.
+Now it’s a clean, modular, maintainable project that keeps evolving because I learn alongside it.
+
+This bot was never meant to be perfect.
+It was meant to be alive, dynamic, and tailored to the specific needs of my Discord server.
