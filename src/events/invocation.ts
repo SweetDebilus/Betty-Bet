@@ -3,7 +3,7 @@ import { Events, Message } from "discord.js";
 const COOLDOWN = 10000;
 const cooldowns = new Map<string, number>();
 
-const aliases = ["selena", "sweetheart", "selenya"];
+const aliases = ["selena", "sweetheart", "selenya", "Селена", "σελένα", "سلينا", "סלנה", "सेलेना", "セレナ", "셀레나"];
 
 const invocations = [
     `, the plebeians invoke you.`,

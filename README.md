@@ -44,6 +44,32 @@
 
 - **Automatic Points System**: Points are added to your Point Vault at fixed times every day (12:00 AM and 12:00 PM Local Time), up to a maximum of 15 points. You can claim these points using the `/claim` command.
 - **Debilus Closet**: Every point lost is sent to the Debilus Closet. 
+
+## Event‑Based Behaviors
+
+   Beyond slash commands, Betty Bet reacts dynamically to certain messages in the server through event listeners located in the `events/` directory.
+
+### **Witch / Wizard Detection**
+
+   When a user writes the word **“witch”** (without “wizard” in the same message), Betty responds with a random magical punchline.  
+   These punchlines are thematic, humorous, and reinforce Betty’s occult personality.
+
+   A cooldown prevents spam and ensures the feature remains fun and surprising.
+
+### **Creator Invocation (Name Detection)**
+
+   When someone mentions the creator’s name — **Selena Sweetheart** — Betty performs a ritualistic “summoning”.
+
+   This detection supports multiple alphabets and transliterations, including:
+   Latin, Cyrillic, Greek, Arabic, Hebrew, Devanagari, Japanese, and Korean.
+
+   Example aliases include:
+   `selena`, `sweetheart`, `selenya`, `Селена`, `σελένα`, `سلينا`, `סלנה`, `सेलेना`, `セレナ`, `셀레나`
+
+   When triggered, Betty pings the creator directly using a real Discord mention and adds a dramatic invocation line chosen from a curated list of ritual phrases.
+
+   A global cooldown ensures the summoning remains a rare and amusing event.
+
       
 ## Installation
 

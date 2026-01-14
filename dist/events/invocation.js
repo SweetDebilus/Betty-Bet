@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const COOLDOWN = 10000;
 const cooldowns = new Map();
-const aliases = ["selena", "sweetheart", "selenya"];
+const aliases = ["selena", "sweetheart", "selenya", "Селена", "σελένα", "سلينا", "סלנה", "सेलेना", "セレナ", "셀레나"];
 const invocations = [
     `, the plebeians invoke you.`,
     `, your presence has been requested by mortals.`,
