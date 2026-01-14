@@ -24,7 +24,7 @@ const handleClearBetHistory = async (interaction: CommandInteraction) => {
     }
     savePoints();
     await interaction.reply({ 
-        content: '✅ All users\' betting history has been cleared.', 
+        content: '✅ All user\'s betting history has been cleared.', 
         flags: MessageFlags.Ephemeral 
     });
 };
