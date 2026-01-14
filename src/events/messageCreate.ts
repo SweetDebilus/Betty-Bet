@@ -8,15 +8,19 @@ const cooldowns = new Map<string, number>();
 
 const punchlines = [
     `## You're the witch! 🫵${debilus}`,
-    `## The cauldron is yours now. 🧪`,
     `## Witch detected. Proceed with caution. 🧹`,
     `## Selena’s magic strikes again. ✨`,
-    `## You’ve been cursed with style. 🧛‍♀️`,
+    `## You’ve been cursed with style. 😏`,
     `## Wizardry at its finest! 🪄`,
     `## Alakazam! You’re the wizard! 🧙‍♂️`,
-    `## Spells and potions, you’re the wizard! 🧪`,
-    `## Magic is real, and so are you! 🪄`,
-    `## Enchanted to meet you, heretic ✨`
+    `## Spells, potions and ugly, you’re the wizard! 🫵😂`,
+    `## Magic is real, and so are you! 👍`,
+    `## Enchanted to meet you, heretic ☠️`,
+    `## You must be the chosen one! 🌟`,
+    `## You're the chosen one! 🌟`,
+    `## you reek of heresy! ☠️`,
+    `## By the power of the ancestral skull, I possess all powers! 💀`,
+    `## You shall not pass... without a punchline! 🧙‍♂️`
 ];
 
 function getRandomPunchline(): string {
