@@ -11,7 +11,7 @@
 - **/bethistory**: View your betting history.
 - **/togglenotifications**: Toggle notifications for inventory GearPoints.
 - **/help**: Present Betty Bet and its features.
-- **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
+- **/blackjack**: Pay 40 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 40 points are gone and added to the Debilus Closet.
 - **/higherlower**: Play a game of Higher or Lower
 
   
