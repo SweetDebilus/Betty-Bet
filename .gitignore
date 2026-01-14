@@ -3,5 +3,4 @@ usersPoints.json
 /DataDebilus
 /node_modules
 notifications.json
-/dist
 src/data/*.json
