@@ -9,23 +9,11 @@
 - **/pointvault**: Check the GearPoints in your Point Vault.
 - **/claim**: Claim GearPoints from your Point Vault to add them to your balance.
 - **/bethistory**: View your betting history.
-- **/stats**: View your detailed statistics.
-- **/globalstats**: View global betting statistics.
 - **/togglenotifications**: Toggle notifications for inventory GearPoints.
-- **/clearmessages**: Clear all private messages sent by the bot.
-- **/presentation**: Present Betty Bet and its features.
+- **/help**: Present Betty Bet and its features.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
-- **/stopblackjack**: to stop a gaming session in the event of a problem and be reimbursed for the 10 points wagered.
-- **/highlow**: Play a game of High-Low. You need to have at least 40 points to play.
-- **/stophighlow**: Stop the current game of High-Low and refund your 40 points.
-- **/exchange**: exchange points with another user
-- **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
-  - **Options**:
-    - `itemname`: Name of item.
-    - `quantity`: The number of items you want to buy.
-- **/listitems**: view items for sale in the store.
-- **/myitems**: view items in your inventory.
 
+  
 ### Commands reserved for **BetManager** roles:
 
 - **/placeyourbets**: Start a betting period between two players.
@@ -46,31 +34,8 @@
     - `userid`: ID of the user to delete.
 - **/backup**: Encrypt and save data from decrypted backup.
 - **/leaderboard**: Show the leaderboard of top betters.
-- **/sendbackup**: Send the decrypted backup file.
-- **/addtournamentparticipant**: Add a user to the tournament participant list.
-  - **Option**:
-    - `user`: User to add.
-- **/removetournamentparticipant**: Remove a user from the tournament participant list.
-  - **Option**:
-    - `user`: User to remove.
-- **/listtournamentparticipants**: List all tournament participants.
-- **/addwinmatch**: adds 1 winning point to a user. (the user must be registered and be in the list of participants in the tournament)
-  - **Option**:
-    - `user`: Winning user
-- **/addlosematch**: adds 1 lossing point to a user. (the user must be registered and be in the list of participants in the tournament)
-  - **Option**:
-    - `user`: Losing user.
-- **/cleartournamentparticipants**: Clear the list of tournament participants.
-- **/transferdebilus**: Transfer all GearPoints from the debilus closet to a specific user and empty the closet.
-  - **Options**:
-    - `user`: User to transfer the GearPoints to.
-- **/additem**: Add an item to Betty Bet's shop.
-  - **Option**:
-    - `itemname`: Name of item.
-    - `quantity`: The number of items you want to add.
-    - `unitprice`: Enter the price of the item per unit.
-- **/tournamentranking**: view the ranking of the tournament participants.
-- **/purchasehistory**: View purchase history in the store
+- **/clearbethistory**: Clear the betting history of all users.
+
 
 ## Additional Features
 
