@@ -10,7 +10,7 @@ const roleName = process.env.ROLE!;
 export const command = {
     data: new SlashCommandBuilder()
         .setName('veteranlist')
-        .setDescription('View the list of veteran users. (BetManager only)'),
+        .setDescription('Displays and adds veteran users to a list (BetManager only)'),
     
     async execute(interaction:  ChatInputCommandInteraction) {
         if (hasRole('BetManager', (interaction.member as GuildMember).roles as GuildMemberRoleManager)) {

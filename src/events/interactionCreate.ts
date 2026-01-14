@@ -3,6 +3,7 @@ import { commands } from '../index'; // ou depuis ton module de commandes
 import { handleClaimYesNo } from '../services/notification';
 import { handleBetSelection, handleBetModal } from '../commands/placeyourbets';
 import { handleBlackjackInteraction } from '../commands/blackjack';
+import { handleHighLowButton } from '../commands/higherlower';
 
 let maintenanceMode: boolean = false;
 export const hasRole = (roleName: string, roles: GuildMemberRoleManager) => roles.cache.some(role => role.name === roleName);
@@ -69,6 +70,9 @@ export default {
 
                 case id.startsWith('blackjack_'):
                     return handleBlackjackInteraction(interaction);
+
+                case id.startsWith('highlow_'):
+                    return handleHighLowButton(interaction);
 
                 default:
                     return;

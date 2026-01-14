@@ -15,6 +15,7 @@ const index_1 = require("../index"); // ou depuis ton module de commandes
 const notification_1 = require("../services/notification");
 const placeyourbets_1 = require("../commands/placeyourbets");
 const blackjack_1 = require("../commands/blackjack");
+const higherlower_1 = require("../commands/higherlower");
 let maintenanceMode = false;
 const hasRole = (roleName, roles) => roles.cache.some(role => role.name === roleName);
 exports.hasRole = hasRole;
@@ -70,6 +71,8 @@ exports.default = {
                         return (0, placeyourbets_1.handleBetSelection)(interaction);
                     case id.startsWith('blackjack_'):
                         return (0, blackjack_1.handleBlackjackInteraction)(interaction);
+                    case id.startsWith('highlow_'):
+                        return (0, higherlower_1.handleHighLowButton)(interaction);
                     default:
                         return;
                 }

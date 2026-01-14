@@ -12,6 +12,7 @@
 - **/togglenotifications**: Toggle notifications for inventory GearPoints.
 - **/help**: Present Betty Bet and its features.
 - **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
+- **/higherlower**: Play a game of Higher or Lower
 
   
 ### Commands reserved for **BetManager** roles:
@@ -35,6 +36,8 @@
 - **/backup**: Encrypt and save data from decrypted backup.
 - **/leaderboard**: Show the leaderboard of top betters.
 - **/clearbethistory**: Clear the betting history of all users.
+- **/topbettor**: Display the best bettors based on their betting history
+- **/veteranlist**: Displays and adds users who have been present on the Discord server for more than a year
 
 
 ## Additional Features

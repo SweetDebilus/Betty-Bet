@@ -56,7 +56,7 @@ const roleName = process.env.ROLE;
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('veteranlist')
-        .setDescription('View the list of veteran users. (BetManager only)'),
+        .setDescription('Displays and adds veteran users to a list (BetManager only)'),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
             if ((0, interactionCreate_1.hasRole)('BetManager', interaction.member.roles)) {
