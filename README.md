@@ -70,6 +70,9 @@
 
    A global cooldown ensures the summoning remains a rare and amusing event.
 
+### **Good morning vibe**
+
+   Once a day, Betty sends a GIF and potentially (20% chance) an additional message to wish you a good morning.
       
 ## Installation
 
