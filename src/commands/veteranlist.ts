@@ -3,6 +3,7 @@ import { hasRole } from '../events/interactionCreate';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import { log } from 'console';
 dotenv.config();
 
 const roleName = process.env.ROLE!;
@@ -20,6 +21,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: Veteran list command executed without proper permissions.`);
         }   
     }
 };
@@ -34,6 +36,7 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
                 content: '❌ This command must be used in a server text channel.',
                 flags: MessageFlags.Ephemeral
             });
+            log('ERROR: Veteran list command used in invalid context.');
             return;
         }
 
@@ -47,6 +50,7 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
             await interaction.editReply({
                 content: '⚠️ The "Dæmon Punk" role is not found on this server.'
             });
+            log('ERROR: "Dæmon Punk" role not found.');
             return;
         }
 
@@ -63,6 +67,7 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
             await interaction.editReply({
                 content: '✅ No new veteran to promote.'
             });
+            log('INFO: No new veterans found for promotion.');
             return;
         }
 
@@ -105,11 +110,13 @@ const handleVeteranList = async (interaction: CommandInteraction) => {
         await interaction.editReply({
             content: `✅ ${chunks.length} message(s) sent with ${sortedVeterans.length} new veteran(s).`
         });
+        log(`INFO: Veteran list generated with ${sortedVeterans.length} new veterans.`);
     } catch (error) {
         console.error('Erreur dans handleVeteranList :', error);
         await interaction.editReply({
             content: '⚠️ An error occurred while generating the veterans list.'
         });
+        log(`ERROR: handleVeteranList failed - ${error}`);
     }
 };
 

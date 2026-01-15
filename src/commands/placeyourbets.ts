@@ -92,6 +92,7 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
         content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`,
         components: [actionRow]
     });
+    log(`INFO: Bets are now open for ${player1Name} vs ${player2Name}`);
 
     const replyMessage = await interaction.fetchReply();
 
@@ -126,10 +127,11 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
             if (channel) {
                 channel.send('*Thanks for the money!*');
             }
+            log('INFO: Bets are now closed.');
         } catch (error) {
-            log(`Error closing bets: ${error}`);
+            log(`ERROR: Error closing bets: ${error}`);
         }
-    }, 60000); 
+    }, 60000);
 };
 
 export const handleBetSelection = async (interaction: ButtonInteraction) => {
@@ -185,6 +187,7 @@ export const handleBetSelection = async (interaction: ButtonInteraction) => {
     modal.addComponents(row);
 
     await interaction.showModal(modal);
+    log(`INFO: User ${interaction.user.displayName} is placing a bet on ${playerName}`)
 };
 
 export const handleBetModal = async (interaction: ModalSubmitInteraction) => {
@@ -244,13 +247,14 @@ export const handleBetModal = async (interaction: ModalSubmitInteraction) => {
             content: `You successfully placed a bet of **${betAmount}** ${pointsEmoji} on **${chosenPlayerName}**!`,
             flags: MessageFlags.Ephemeral,
         });
-        log(`User ${interaction.user.displayName} placed a bet of ${betAmount} on ${chosenPlayerName}`);
-        log(`Current Bets: ${JSON.stringify(currentBets)}`);
+        log(`INFO: User ${interaction.user.displayName} placed a bet of ${betAmount} on ${chosenPlayerName}`);
+        log(`INFO: Current Bets: ${JSON.stringify(currentBets)}`);
     } catch (error) {
         console.error('Error in handleBetModal:', error);
         await interaction.reply({
             content: 'An error occurred while processing your bet. Please try again.',
             flags: MessageFlags.Ephemeral,
         });
+        log(`ERROR: Error in handleBetModal: ${error}`);
     }
 };

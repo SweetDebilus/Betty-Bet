@@ -10,9 +10,10 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
+const sleep_1 = require("../utils/sleep");
+const log_1 = require("../utils/log");
 const debilus = process.env.DEBILUS;
-// Cooldown par utilisateur (en millisecondes)
-const COOLDOWN = 10000; // 10 secondes
+const COOLDOWN = 10000;
 const cooldowns = new Map();
 const punchlines = [
     `## You're the witch! 🫵${debilus}`,
@@ -45,19 +46,17 @@ exports.default = {
             const content = message.content.toLowerCase();
             const hasWitch = content.includes("witch");
             const hasWizard = content.includes("wizard");
-            // Condition principale
             if (!hasWitch || hasWizard)
                 return;
-            // Vérification du cooldown
             const lastTrigger = cooldowns.get(message.author.id);
             const now = Date.now();
             if (lastTrigger && now - lastTrigger < COOLDOWN) {
-                return; // On ignore si cooldown pas fini
+                return;
             }
-            // Mise à jour du cooldown
             cooldowns.set(message.author.id, now);
-            // Réponse
+            yield (0, sleep_1.sleep)(3000);
             yield message.reply(getRandomPunchline());
+            (0, log_1.log)(`INFO: Punchline sent to user ${message.author.id} in response to "witch" keyword.`);
         });
     }
 };

@@ -1,4 +1,5 @@
 import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction } from 'discord.js';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder()  
@@ -14,5 +15,6 @@ https://github.com/SweetDebilus/Betty-Bet?tab=readme-ov-file#betty-bet`;
             content: text, 
             flags: MessageFlags.Ephemeral 
         });
+        log(`INFO: User ${interaction.user.id} accessed the help command.`);
     }
 };

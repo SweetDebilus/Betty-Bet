@@ -13,6 +13,7 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
+const console_1 = require("console");
 const pointsEmoji = process.env.POINTS;
 const bettyBettId = process.env.BETTYID;
 exports.command = {
@@ -35,12 +36,14 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, console_1.log)(`ERROR: AddPoints command executed without proper permissions.`);
             }
         });
     }
 };
 const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     if (!interaction.isChatInputCommand()) {
+        (0, console_1.log)(`ERROR: AddPoints command executed but interaction is not a chat input command.`);
         return interaction.reply('An error has occurred. Please try again.');
     }
     const userOption = interaction.options.get('user');
@@ -53,6 +56,7 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
             content: `**${pointsToAdd}** points have been added to DebilusCloset.`,
             flags: discord_js_1.MessageFlags.Ephemeral
         });
+        (0, console_1.log)(`INFO: Points added to DebilusCloset.`);
         yield (0, pointsManager_1.savePoints)();
         return;
     }
@@ -61,6 +65,7 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
             content: `User with id ${userId} is not registered`,
             flags: discord_js_1.MessageFlags.Ephemeral
         });
+        (0, console_1.log)(`WARN: Attempt to add points to non-registered user ID: ${userId}`);
         return;
     }
     pointsManager_1.usersPoints[userId].points += pointsToAdd;
@@ -70,4 +75,5 @@ const handleAddPoints = (interaction) => __awaiter(void 0, void 0, void 0, funct
         content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${pointsManager_1.usersPoints[userId].name}**.`,
         flags: discord_js_1.MessageFlags.Ephemeral
     });
+    (0, console_1.log)(`INFO: ${pointsToAdd} points added to user ID: ${userId}`);
 });

@@ -13,6 +13,7 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
+const log_1 = require("../utils/log");
 const pointsEmoji = process.env.POINTS;
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
@@ -28,6 +29,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`ERROR: Top bettor command executed without proper permissions.`);
             }
         });
     }
@@ -63,4 +65,5 @@ const handleTopBettor = (interaction) => __awaiter(void 0, void 0, void 0, funct
         content: replyMessage,
         flags: discord_js_1.MessageFlags.Ephemeral
     });
+    (0, log_1.log)(`INFO: Top bettor list generated with ${sortedBettors.length} bettors.`);
 });

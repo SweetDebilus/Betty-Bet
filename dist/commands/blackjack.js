@@ -33,6 +33,7 @@ exports.command = {
                     content: 'You are not registered yet. Use `/register` to sign up.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: Unregistered user ${userId} attempted to start a blackjack game.`);
                 return;
             }
             if (blackjackGames[userId]) {
@@ -40,6 +41,7 @@ exports.command = {
                     content: 'You already have an ongoing blackjack game.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: User ${userId} already has an ongoing blackjack game.`);
                 return;
             }
             if (pointsManager_1.usersPoints[userId].points < 40) {
@@ -47,6 +49,7 @@ exports.command = {
                     content: 'You need at least 40 points to play blackjack.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: User ${userId} attempted to start blackjack game with insufficient points.`);
                 return;
             }
             const { playerHand, dealerHand } = startBlackjackGame(userId, 40);
@@ -63,6 +66,7 @@ exports.command = {
                 components: [createBlackjackActionRow()],
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
+            (0, log_1.log)(`INFO: User ${userId} started a blackjack game with a bet of 40 points.`);
         });
     }
 };
@@ -96,6 +100,7 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
 ## **You bust!** *Betty Bet wins.*`,
                 components: []
             });
+            (0, log_1.log)(`INFO: User ${userId} busted in blackjack game.`);
             return;
         }
         yield interaction.update({
@@ -125,14 +130,17 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
         if (dealerValue > 21 || playerValue > dealerValue) {
             pointsManager_1.usersPoints[userId].points += game.bet * 2;
             resultMessage += '## **You win!**';
+            (0, log_1.log)(`INFO: User ${userId} won the blackjack game.`);
         }
         else if (playerValue < dealerValue) {
             (0, pointsManager_1.addToDebilusCloset)(40);
             resultMessage += '## **Betty Bet wins!**';
+            (0, log_1.log)(`INFO: User ${userId} lost the blackjack game.`);
         }
         else {
             pointsManager_1.usersPoints[userId].points += game.bet;
             resultMessage += '## **It\'s a tie!**';
+            (0, log_1.log)(`INFO: User ${userId} tied the blackjack game.`);
         }
         delete blackjackGames[userId];
         yield (0, pointsManager_1.savePoints)();
@@ -140,6 +148,7 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
             content: resultMessage + `\n## You now have **${pointsManager_1.usersPoints[userId].points}** ${pointsEmoji}`,
             components: []
         });
+        (0, log_1.log)(`INFO: Blackjack game for user ${userId} concluded. Points updated.`);
     }
 });
 exports.handleBlackjackInteraction = handleBlackjackInteraction;
@@ -160,6 +169,7 @@ const startBlackjackGame = (userId, bet) => {
     const playerHand = [drawCard(), drawCard()];
     const dealerHand = [drawCard(), drawCard()];
     blackjackGames[userId] = { playerHand, dealerHand, bet };
+    (0, log_1.log)(`INFO: Blackjack game started for user ${userId}`);
     return { playerHand, dealerHand };
 };
 const drawCard = () => {
@@ -179,7 +189,7 @@ const calculateHandValue = (hand) => {
                 aces++;
         }
         else {
-            (0, log_1.log)(`Invalid card value: ${card}`);
+            (0, log_1.log)(`ERROR: Invalid card format encountered: ${card}`);
         }
     });
     while (value > 21 && aces) {

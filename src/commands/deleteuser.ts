@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, ChatInputCommandInteraction, GuildMember, GuildMemberRoleManager, MessageFlags, CommandInteraction } from 'discord.js';
 import { savePoints, usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -14,6 +15,7 @@ export const command = {
                 content: 'You do not have permission to use this command.',
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: DeleteUser command executed without proper permissions.`);
         }
     }
 };
@@ -33,10 +35,12 @@ const handleDeleteUser = async (interaction: CommandInteraction) => {
             content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`,
             flags: MessageFlags.Ephemeral 
         });
+        log(`INFO: User ${userNameToDelete} (${userIdToDelete}) has been deleted by a BetManager.`);
     } else {
         await interaction.reply({ 
             content: 'User no found', 
             flags: MessageFlags.Ephemeral
         });
+        log(`WARN: Attempt to delete non-existent user ID: ${userIdToDelete}`);
     }
 };

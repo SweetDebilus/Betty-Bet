@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction } from 'discord.js';
 import { savePoints, usersPoints } from '../services/pointsManager';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder()  
@@ -20,5 +21,6 @@ export const command = {
             content:`Notifications have been ${usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`, 
             flags: MessageFlags.Ephemeral
         });
+        log(`INFO: User ${userId} toggled notifications.`);
     }
 };

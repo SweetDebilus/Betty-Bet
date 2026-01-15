@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('togglenotifications')
@@ -29,6 +30,7 @@ exports.command = {
                 content: `Notifications have been ${pointsManager_1.usersPoints[userId].notificationsEnabled ? 'enabled' : 'disabled'}.`,
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
+            (0, log_1.log)(`INFO: User ${userId} toggled notifications.`);
         });
     }
 };

@@ -11,6 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('help')
@@ -25,6 +26,7 @@ https://github.com/SweetDebilus/Betty-Bet?tab=readme-ov-file#betty-bet`;
                 content: text,
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
+            (0, log_1.log)(`INFO: User ${interaction.user.id} accessed the help command.`);
         });
     }
 };

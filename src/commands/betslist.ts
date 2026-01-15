@@ -2,6 +2,7 @@ import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInterac
 import { usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
 import { currentBets, player1Name, player2Name } from './placeyourbets';
+import { log } from '../utils/log';
 
 const pointsEmoji = process.env.POINTS!;
 const debilus = process.env.DEBILUS!;
@@ -18,6 +19,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: BetsList command executed without proper permissions.`);
         }
     }
 };
@@ -69,4 +71,5 @@ const handleBetsList = async (interaction: CommandInteraction) => {
         `Total bet overall: **${totalBets}** ${pointsEmoji}\n\n` +
         `Betting Ratio ${formattedNames}: **${ratio}**`
     );
+    log(`INFO: Bets list generated`);
 };

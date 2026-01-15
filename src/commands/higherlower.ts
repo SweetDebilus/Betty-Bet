@@ -28,6 +28,7 @@ export const command = {
                 content: 'You are not registered yet. Use `/register` to sign up.',
                 flags: MessageFlags.Ephemeral
             });
+            log(`WARN: Unregistered user ${userId} attempted to start High-Low game.`);
             return;
         }
         if (usersPoints[userId].points < 40) {
@@ -35,6 +36,7 @@ export const command = {
                 content: 'You do not have enough points to play this game.',
                 flags: MessageFlags.Ephemeral
             });
+            log(`WARN: User ${userId} attempted to start High-Low game with insufficient points.`);
             return;
         }
         await handleHighLow(interaction);
@@ -81,6 +83,7 @@ const handleHighLow = async (interaction: CommandInteraction) => {
     usersPoints[userId].points -= 40;
     usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; 
     await savePoints();
+    log(`INFO: User ${userId} started a High-Low game. 40 points deducted for playing.`);
 };
 
 export const handleHighLowButton = async (interaction: ButtonInteraction) => {
@@ -137,5 +140,5 @@ export const handleHighLowButton = async (interaction: ButtonInteraction) => {
     });
 
     delete highlowGames[userId];
-    log(`User ${userId} has finished the game: high-low`);
+    log(`INFO: User ${userId} has finished the game: high-low`);
 };

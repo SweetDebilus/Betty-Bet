@@ -14,6 +14,7 @@ const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
 const placeyourbets_1 = require("./placeyourbets");
+const log_1 = require("../utils/log");
 const pointsEmoji = process.env.POINTS;
 const debilus = process.env.DEBILUS;
 exports.command = {
@@ -30,6 +31,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`ERROR: BetsList command executed without proper permissions.`);
             }
         });
     }
@@ -71,4 +73,5 @@ const handleBetsList = (interaction) => __awaiter(void 0, void 0, void 0, functi
         `Total bet on **${placeyourbets_1.player2Name}**: **${totalPlayer2Bets}** ${pointsEmoji}\n` +
         `Total bet overall: **${totalBets}** ${pointsEmoji}\n\n` +
         `Betting Ratio ${formattedNames}: **${ratio}**`);
+    (0, log_1.log)(`INFO: Bets list generated`);
 });

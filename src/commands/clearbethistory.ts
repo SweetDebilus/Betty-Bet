@@ -1,6 +1,7 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager, CommandInteraction } from 'discord.js';
 import { savePoints, usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -14,6 +15,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: ClearBetHistory command executed without proper permissions.`);
         }
     }
 };
@@ -27,4 +29,5 @@ const handleClearBetHistory = async (interaction: CommandInteraction) => {
         content: '✅ All user\'s betting history has been cleared.', 
         flags: MessageFlags.Ephemeral 
     });
+    log(`INFO: All users' betting history has been cleared by a BetManager.`);
 };

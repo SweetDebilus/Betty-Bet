@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('pointvault')
@@ -21,11 +22,19 @@ exports.command = {
             const pointsEmoji = process.env.POINTS;
             const userId = interaction.user.id;
             if (!pointsManager_1.usersPoints[userId]) {
-                yield interaction.reply({ content: `You are not registered yet. Use */register* to register.`, flags: discord_js_1.MessageFlags.Ephemeral });
+                yield interaction.reply({
+                    content: `You are not registered yet. Use */register* to register.`,
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
+                (0, log_1.log)(`WARN: Unregistered user ${userId} attempted to access Point Vault.`);
                 return;
             }
             const inventoryPoints = pointsManager_1.usersPoints[userId].inventory;
-            yield interaction.reply({ content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`, flags: discord_js_1.MessageFlags.Ephemeral });
+            yield interaction.reply({
+                content: `You have **${inventoryPoints}** ${pointsEmoji} in your Point Vault.`,
+                flags: discord_js_1.MessageFlags.Ephemeral
+            });
+            (0, log_1.log)(`INFO: User ${userId} checked their Point Vault balance of ${inventoryPoints} points.`);
         });
     }
 };

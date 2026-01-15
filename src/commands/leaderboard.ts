@@ -1,6 +1,7 @@
 import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, CommandInteraction, GuildMember, GuildMemberRoleManager } from 'discord.js';
 import { usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder()
@@ -14,6 +15,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: Leaderboard command executed without proper permissions.`);
         }   
     }
 };
@@ -41,4 +43,5 @@ const handleLeaderboard = async (interaction: CommandInteraction) => {
     await interaction.reply(
         `**Ranking of the best bettors:**\n\n\`\`\`Rank   Name                                  Points     Wins      Losses\n${leaderboard}\`\`\``
     );
+    log(`INFO: Leaderboard command executed successfully.`);
 };

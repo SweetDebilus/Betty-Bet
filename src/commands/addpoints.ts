@@ -1,6 +1,7 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager, CommandInteraction } from 'discord.js';
 import { usersPoints, savePoints, addToDebilusCloset } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from 'console';
 
 const pointsEmoji = process.env.POINTS!;
 const bettyBettId = process.env.BETTYID!;
@@ -25,12 +26,14 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: AddPoints command executed without proper permissions.`);
         }
     }
 };
 
 const handleAddPoints = async (interaction: CommandInteraction) => {
     if (!interaction.isChatInputCommand()) {
+        log(`ERROR: AddPoints command executed but interaction is not a chat input command.`);
         return interaction.reply('An error has occurred. Please try again.');
     }
     const userOption = interaction.options.get('user');
@@ -45,6 +48,7 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
             content: `**${pointsToAdd}** points have been added to DebilusCloset.`, 
             flags: MessageFlags.Ephemeral 
         });
+        log(`INFO: Points added to DebilusCloset.`);
         await savePoints();
         return;
     }
@@ -54,6 +58,7 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
             content: `User with id ${userId} is not registered`, 
             flags: MessageFlags.Ephemeral 
         });
+        log(`WARN: Attempt to add points to non-registered user ID: ${userId}`);
         return;
     }
 
@@ -64,4 +69,5 @@ const handleAddPoints = async (interaction: CommandInteraction) => {
         content: `**${pointsToAdd}** ${pointsEmoji} Points have been added to **${usersPoints[userId].name}**.`, 
         flags: MessageFlags.Ephemeral 
     });
+    log(`INFO: ${pointsToAdd} points added to user ID: ${userId}`);
 };

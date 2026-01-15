@@ -13,6 +13,7 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('leaderboard')
@@ -27,6 +28,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`ERROR: Leaderboard command executed without proper permissions.`);
             }
         });
     }
@@ -47,4 +49,5 @@ const handleLeaderboard = (interaction) => __awaiter(void 0, void 0, void 0, fun
         return `${(index + 1).toString().padStart(rankWidth, ' ')} ${userName} ${userPoints} ${userWins} ${userLosses}`;
     }).join('\n');
     yield interaction.reply(`**Ranking of the best bettors:**\n\n\`\`\`Rank   Name                                  Points     Wins      Losses\n${leaderboard}\`\`\``);
+    (0, log_1.log)(`INFO: Leaderboard command executed successfully.`);
 });

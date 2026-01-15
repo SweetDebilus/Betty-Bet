@@ -14,6 +14,7 @@ const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
 const placeyourbets_1 = require("./placeyourbets");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('clearbets')
@@ -25,6 +26,7 @@ exports.command = {
             }
             else {
                 yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_1.MessageFlags.Ephemeral });
+                (0, log_1.log)(`ERROR: ClearBets command executed without proper permissions.`);
             }
         });
     }
@@ -39,4 +41,5 @@ const handleClearBets = (interaction) => __awaiter(void 0, void 0, void 0, funct
     (0, placeyourbets_1.setCurrentBets)({});
     (0, placeyourbets_1.setBettingOpen)(false);
     yield interaction.reply('All bets were void and Gearpoints were refunded.');
+    (0, log_1.log)(`INFO: All bets have been cleared and points refunded by a BetManager.`);
 });

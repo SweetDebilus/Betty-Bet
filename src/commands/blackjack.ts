@@ -42,6 +42,7 @@ export const command = {
                 content: 'You are not registered yet. Use `/register` to sign up.',
                 flags: MessageFlags.Ephemeral
             });
+            log(`WARN: Unregistered user ${userId} attempted to start a blackjack game.`);
             return;
         }
 
@@ -50,6 +51,7 @@ export const command = {
                 content: 'You already have an ongoing blackjack game.',
                 flags: MessageFlags.Ephemeral
             });
+            log(`WARN: User ${userId} already has an ongoing blackjack game.`);
             return;
         }
 
@@ -58,6 +60,7 @@ export const command = {
                 content: 'You need at least 40 points to play blackjack.',
                 flags: MessageFlags.Ephemeral
             });
+            log(`WARN: User ${userId} attempted to start blackjack game with insufficient points.`);
             return;
         }
 
@@ -77,6 +80,7 @@ export const command = {
             components: [createBlackjackActionRow()],
             flags: MessageFlags.Ephemeral
         });
+        log(`INFO: User ${userId} started a blackjack game with a bet of 40 points.`);
     }
 };
 
@@ -115,6 +119,7 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
 ## **You bust!** *Betty Bet wins.*`,
                 components: []
             });
+            log(`INFO: User ${userId} busted in blackjack game.`);
             return;
         }
 
@@ -149,12 +154,15 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
         if (dealerValue > 21 || playerValue > dealerValue) {
             usersPoints[userId].points += game.bet * 2;
             resultMessage += '## **You win!**';
+            log(`INFO: User ${userId} won the blackjack game.`);
         } else if (playerValue < dealerValue) {
             addToDebilusCloset(40);
             resultMessage += '## **Betty Bet wins!**';
+            log(`INFO: User ${userId} lost the blackjack game.`);
         } else {
             usersPoints[userId].points += game.bet;
             resultMessage += '## **It\'s a tie!**';
+            log(`INFO: User ${userId} tied the blackjack game.`);
         }
 
         delete blackjackGames[userId];
@@ -164,6 +172,7 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
             content: resultMessage + `\n## You now have **${usersPoints[userId].points}** ${pointsEmoji}`,
             components: []
         });
+        log(`INFO: Blackjack game for user ${userId} concluded. Points updated.`);
     }
 };
 
@@ -191,6 +200,7 @@ const startBlackjackGame = (userId: string, bet: number) => {
 
     blackjackGames[userId] = { playerHand, dealerHand, bet };
 
+    log(`INFO: Blackjack game started for user ${userId}`);
     return { playerHand, dealerHand };
 };
 
@@ -212,7 +222,7 @@ const calculateHandValue = (hand: string[]) => {
             value += cardValues[cardValue];
             if (cardValue === 'A') aces++;
         } else {
-            log(`Invalid card value: ${card}`);
+            log(`ERROR: Invalid card format encountered: ${card}`);
         }
     });
 

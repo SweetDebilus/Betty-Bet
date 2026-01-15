@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('claim')
@@ -25,6 +26,7 @@ exports.command = {
                     content: 'You are not registered yet. Use `/register` to register.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: Unregistered user ${userId} attempted to claim points from Point Vault.`);
                 return;
             }
             const pointsToClaim = pointsManager_1.usersPoints[userId].inventory;
@@ -37,12 +39,14 @@ exports.command = {
                     content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${pointsManager_1.usersPoints[userId].points}** ${pointsEmoji}`,
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`INFO: User ${userId} claimed ${pointsToClaim} points from Point Vault.`);
             }
             else {
                 yield interaction.reply({
                     content: 'You have no points to claim. try again later !',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`INFO: User ${userId} attempted to claim points but had none in the Point Vault.`);
             }
         });
     }

@@ -1,6 +1,7 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager } from 'discord.js';
 import { usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from '../utils/log';
 
 const pointsEmoji = process.env.POINTS!;
 
@@ -17,6 +18,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: Top bettor command executed without proper permissions.`);
         }
     }
 };
@@ -56,4 +58,5 @@ const handleTopBettor = async (interaction: ChatInputCommandInteraction) => {
         content: replyMessage,
         flags: MessageFlags.Ephemeral
     });
+    log(`INFO: Top bettor list generated with ${sortedBettors.length} bettors.`);
 };

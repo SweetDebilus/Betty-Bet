@@ -13,6 +13,7 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('clearbethistory')
@@ -27,6 +28,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`ERROR: ClearBetHistory command executed without proper permissions.`);
             }
         });
     }
@@ -40,4 +42,5 @@ const handleClearBetHistory = (interaction) => __awaiter(void 0, void 0, void 0,
         content: '✅ All user\'s betting history has been cleared.',
         flags: discord_js_1.MessageFlags.Ephemeral
     });
+    (0, log_1.log)(`INFO: All users' betting history has been cleared by a BetManager.`);
 });

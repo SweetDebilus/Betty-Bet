@@ -51,6 +51,7 @@ const interactionCreate_1 = require("../events/interactionCreate");
 const dotenv_1 = __importDefault(require("dotenv"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const console_1 = require("console");
 dotenv_1.default.config();
 const roleName = process.env.ROLE;
 exports.command = {
@@ -67,6 +68,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, console_1.log)(`ERROR: Veteran list command executed without proper permissions.`);
             }
         });
     }
@@ -80,6 +82,7 @@ const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, fun
                 content: '❌ This command must be used in a server text channel.',
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
+            (0, console_1.log)('ERROR: Veteran list command used in invalid context.');
             return;
         }
         yield interaction.deferReply({ flags: discord_js_1.MessageFlags.Ephemeral });
@@ -90,6 +93,7 @@ const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, fun
             yield interaction.editReply({
                 content: '⚠️ The "Dæmon Punk" role is not found on this server.'
             });
+            (0, console_1.log)('ERROR: "Dæmon Punk" role not found.');
             return;
         }
         const previousVeterans = loadVeteranIds();
@@ -101,6 +105,7 @@ const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, fun
             yield interaction.editReply({
                 content: '✅ No new veteran to promote.'
             });
+            (0, console_1.log)('INFO: No new veterans found for promotion.');
             return;
         }
         const sortedVeterans = [...veterans.values()].sort((a, b) => a.displayName.localeCompare(b.displayName, 'fr', { sensitivity: 'base' }));
@@ -131,12 +136,14 @@ const handleVeteranList = (interaction) => __awaiter(void 0, void 0, void 0, fun
         yield interaction.editReply({
             content: `✅ ${chunks.length} message(s) sent with ${sortedVeterans.length} new veteran(s).`
         });
+        (0, console_1.log)(`INFO: Veteran list generated with ${sortedVeterans.length} new veterans.`);
     }
     catch (error) {
         console.error('Erreur dans handleVeteranList :', error);
         yield interaction.editReply({
             content: '⚠️ An error occurred while generating the veterans list.'
         });
+        (0, console_1.log)(`ERROR: handleVeteranList failed - ${error}`);
     }
 });
 const veteranFilePath = path.join('src/data', 'veterans.json');

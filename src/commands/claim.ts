@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction } from 'discord.js';
 import { usersPoints, savePoints } from '../services/pointsManager';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -15,6 +16,7 @@ export const command = {
             content: 'You are not registered yet. Use `/register` to register.', 
             flags: MessageFlags.Ephemeral 
         });
+        log(`WARN: Unregistered user ${userId} attempted to claim points from Point Vault.`);
         return;
     }
 
@@ -29,11 +31,13 @@ export const command = {
             content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, 
             flags: MessageFlags.Ephemeral 
         });
+        log(`INFO: User ${userId} claimed ${pointsToClaim} points from Point Vault.`);
     } else {
         await interaction.reply({ 
             content: 'You have no points to claim. try again later !', 
             flags: MessageFlags.Ephemeral 
         });
+        log(`INFO: User ${userId} attempted to claim points but had none in the Point Vault.`);
     }
     }
 };

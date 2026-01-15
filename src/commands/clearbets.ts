@@ -2,6 +2,7 @@ import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, Command
 import { savePoints, usersPoints } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
 import { currentBets, setCurrentBets, setBettingOpen } from './placeyourbets';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -13,6 +14,7 @@ export const command = {
             await handleClearBets(interaction);
         } else {
             await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
+            log(`ERROR: ClearBets command executed without proper permissions.`);
         }
     }
 };
@@ -29,4 +31,5 @@ const handleClearBets = async (interaction: CommandInteraction) => {
     setBettingOpen(false);
 
     await interaction.reply('All bets were void and Gearpoints were refunded.');
+    log(`INFO: All bets have been cleared and points refunded by a BetManager.`);
 };

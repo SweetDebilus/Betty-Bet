@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
+const log_1 = require("../utils/log");
 const pointsEmoji = process.env.POINTS;
 const debilus = process.env.DEBILUS;
 exports.command = {
@@ -24,7 +25,11 @@ exports.command = {
             const member = interaction.member;
             const userName = member.nickname || interaction.user.displayName;
             if (pointsManager_1.usersPoints[userId]) {
-                yield interaction.reply({ content: `You are already registered.\n\n\n*Debilus* ${debilus}`, flags: discord_js_1.MessageFlags.Ephemeral });
+                yield interaction.reply({
+                    content: `You are already registered.\n\n\n*Debilus* ${debilus}`,
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
+                (0, log_1.log)(`INFO: User ${userId} attempted to register but is already registered.`);
                 return;
             }
             pointsManager_1.usersPoints[userId] = {
@@ -45,6 +50,7 @@ exports.command = {
                 content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`,
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
+            (0, log_1.log)(`INFO: User ${userId} registered successfully.`);
         });
     }
 };

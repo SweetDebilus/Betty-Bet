@@ -1,5 +1,6 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction } from 'discord.js';
 import { usersPoints, savePoints } from '../services/pointsManager';
+import { log } from '../utils/log';
 
 const pointsEmoji = process.env.POINTS!;
 const debilus = process.env.DEBILUS!;
@@ -15,7 +16,11 @@ export const command = {
         const userName = member.nickname || interaction.user.displayName;
 
         if (usersPoints[userId]) {
-            await interaction.reply({content:`You are already registered.\n\n\n*Debilus* ${debilus}`, flags: MessageFlags.Ephemeral});
+            await interaction.reply({
+                content:`You are already registered.\n\n\n*Debilus* ${debilus}`, 
+                flags: MessageFlags.Ephemeral
+            });
+            log(`INFO: User ${userId} attempted to register but is already registered.`);
             return;
         }
 
@@ -38,5 +43,6 @@ export const command = {
             content:`Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`, 
             flags: MessageFlags.Ephemeral
         });
+        log(`INFO: User ${userId} registered successfully.`);
     }
 };

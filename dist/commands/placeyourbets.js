@@ -93,6 +93,7 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
         content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${exports.player1Name}** and **${exports.player2Name}**.\n\n`,
         components: [actionRow]
     });
+    (0, log_1.log)(`INFO: Bets are now open for ${exports.player1Name} vs ${exports.player2Name}`);
     const replyMessage = yield interaction.fetchReply();
     const channel = interaction.channel;
     if (channel) {
@@ -118,9 +119,10 @@ const handlePlaceYourBets = (interaction) => __awaiter(void 0, void 0, void 0, f
             if (channel) {
                 channel.send('*Thanks for the money!*');
             }
+            (0, log_1.log)('INFO: Bets are now closed.');
         }
         catch (error) {
-            (0, log_1.log)(`Error closing bets: ${error}`);
+            (0, log_1.log)(`ERROR: Error closing bets: ${error}`);
         }
     }), 60000);
 });
@@ -170,6 +172,7 @@ const handleBetSelection = (interaction) => __awaiter(void 0, void 0, void 0, fu
     const row = new discord_js_1.ActionRowBuilder().addComponents(betAmountInput);
     modal.addComponents(row);
     yield interaction.showModal(modal);
+    (0, log_1.log)(`INFO: User ${interaction.user.displayName} is placing a bet on ${playerName}`);
 });
 exports.handleBetSelection = handleBetSelection;
 const handleBetModal = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
@@ -220,8 +223,8 @@ const handleBetModal = (interaction) => __awaiter(void 0, void 0, void 0, functi
             content: `You successfully placed a bet of **${betAmount}** ${pointsEmoji} on **${chosenPlayerName}**!`,
             flags: discord_js_2.MessageFlags.Ephemeral,
         });
-        (0, log_1.log)(`User ${interaction.user.displayName} placed a bet of ${betAmount} on ${chosenPlayerName}`);
-        (0, log_1.log)(`Current Bets: ${JSON.stringify(exports.currentBets)}`);
+        (0, log_1.log)(`INFO: User ${interaction.user.displayName} placed a bet of ${betAmount} on ${chosenPlayerName}`);
+        (0, log_1.log)(`INFO: Current Bets: ${JSON.stringify(exports.currentBets)}`);
     }
     catch (error) {
         console.error('Error in handleBetModal:', error);
@@ -229,6 +232,7 @@ const handleBetModal = (interaction) => __awaiter(void 0, void 0, void 0, functi
             content: 'An error occurred while processing your bet. Please try again.',
             flags: discord_js_2.MessageFlags.Ephemeral,
         });
+        (0, log_1.log)(`ERROR: Error in handleBetModal: ${error}`);
     }
 });
 exports.handleBetModal = handleBetModal;

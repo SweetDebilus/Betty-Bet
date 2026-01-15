@@ -3,6 +3,7 @@ import * as fs from 'fs';
 import { addToDebilusCloset, encrypt, setLastUpdateTime, setPurchaseHistory, setStore, filePath } from '../services/pointsManager';
 import { usersPoints} from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
+import { log } from 'console';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -16,6 +17,7 @@ export const command = {
                 content: 'You do not have permission to use this command.',
                 flags: MessageFlags.Ephemeral 
             });
+            log(`ERROR: Backup command executed without proper permissions.`);
         }
     }
 };
@@ -31,6 +33,7 @@ const handleBackup = async (interaction: CommandInteraction) => {
 
     if (!fs.existsSync('src/data/decrypted_backup.json')) {
         await interaction.reply({ content: 'No decrypted backup found.', flags: MessageFlags.Ephemeral });
+        log(`WARN: Backup command executed but no decrypted backup file found.`);
         return;
     }
 
@@ -50,4 +53,5 @@ const handleBackup = async (interaction: CommandInteraction) => {
         content: 'Data from decrypted backup has been encrypted and **saved successfully** !', 
         flags: MessageFlags.Ephemeral 
     });
+    log(`INFO: Data from decrypted backup has been encrypted and saved by a BetManager.`);
 };

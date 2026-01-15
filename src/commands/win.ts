@@ -4,6 +4,7 @@ import { hasRole } from '../events/interactionCreate';
 import { AttachmentBuilder } from 'discord.js';
 import { savePoints, debilusCloset } from '../services/pointsManager';
 import { currentBets, player1Name, player2Name, setCurrentBets, setBettingOpen, setPlayerNames } from './placeyourbets';
+import { log } from '../utils/log';
 
 const debilus = process.env.DEBILUS!;
 const pointsEmoji = process.env.POINTS!;
@@ -112,4 +113,5 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
     }
 
     setPlayerNames('Player 1', 'Player 2');
+    log(`INFO: Win command executed. Winner: ${winningPlayerName}. Points redistributed.`);
 };

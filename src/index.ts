@@ -61,8 +61,8 @@ client.once(Events.ClientReady, async () => {
 
     await loadPoints();
     await addPointsToInventory();
-    
-    log(`Logged in as ${client.user?.tag}!`);
+
+    log(`INFO: Logged in as ${client.user?.tag}!`);
 
     client.user?.setActivity('/help | Gearbot', {
         type: ActivityType.Playing
@@ -71,16 +71,16 @@ client.once(Events.ClientReady, async () => {
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
     try {
-        log('Started refreshing application (/) commands.');
+        log('INFO: Started refreshing application (/) commands.');
 
         await rest.put(
             Routes.applicationCommands(client.user!.id),
             { body: commandData }
         );
 
-        log('Successfully reloaded application (/) commands.');
+        log('INFO: Successfully reloaded application (/) commands.');
     } catch (error) {
-        log(`${error}`);
+        log(`ERROR: ${error}`);
     }
 });
 
@@ -89,10 +89,10 @@ async function waitForDiscord() {
         const checkConnection = () => {
             dns.lookup('discord.com', (err) => {
                 if (!err) {
-                    log('Connection to Discord servers detected!');
+                    log('INFO: Connection to Discord servers detected!');
                     resolve(undefined);
                 } else {
-                    log('No connection to Discord yet, waiting...');
+                    log('WARNING: No connection to Discord yet, waiting...');
                     setTimeout(checkConnection, 5000);
                 }
             });
@@ -104,14 +104,14 @@ async function waitForDiscord() {
 async function startBot(): Promise<void> {
     try {
         await waitForDiscord();
-        log('Discord connection established!');
-        log('Connecting to Discord...');
+        log('INFO: Discord connection established!');
+        log('INFO: Connecting to Discord...');
         await client.login(process.env.DISCORD_TOKEN!);
-        log('Bot successfully connected!');
+        log('INFO: Bot successfully connected!');
     } catch (error) {
-        log(`Bot connection failed: ${error}`);
+        log(`ERROR: Bot connection failed: ${error}`);
         await client.destroy();
-        log('Process exited due to critical failure.');
+        log('ERROR: Process exited due to critical failure.');
         process.exit(1);
     }
 }

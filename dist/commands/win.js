@@ -16,6 +16,7 @@ const interactionCreate_1 = require("../events/interactionCreate");
 const discord_js_2 = require("discord.js");
 const pointsManager_2 = require("../services/pointsManager");
 const placeyourbets_1 = require("./placeyourbets");
+const log_1 = require("../utils/log");
 const debilus = process.env.DEBILUS;
 const pointsEmoji = process.env.POINTS;
 exports.command = {
@@ -115,4 +116,5 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
         yield interaction.reply({ content: message, files: [winFile] });
     }
     (0, placeyourbets_1.setPlayerNames)('Player 1', 'Player 2');
+    (0, log_1.log)(`INFO: Win command executed. Winner: ${winningPlayerName}. Points redistributed.`);
 });

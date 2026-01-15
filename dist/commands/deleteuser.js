@@ -13,6 +13,7 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('deleteuser')
@@ -27,6 +28,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`ERROR: DeleteUser command executed without proper permissions.`);
             }
         });
     }
@@ -45,11 +47,13 @@ const handleDeleteUser = (interaction) => __awaiter(void 0, void 0, void 0, func
             content: `The user **${userNameToDelete}** (${userIdToDelete}) has been deleted.`,
             flags: discord_js_1.MessageFlags.Ephemeral
         });
+        (0, log_1.log)(`INFO: User ${userNameToDelete} (${userIdToDelete}) has been deleted by a BetManager.`);
     }
     else {
         yield interaction.reply({
             content: 'User no found',
             flags: discord_js_1.MessageFlags.Ephemeral
         });
+        (0, log_1.log)(`WARN: Attempt to delete non-existent user ID: ${userIdToDelete}`);
     }
 });

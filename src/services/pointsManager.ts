@@ -148,30 +148,30 @@ export const addPointsToInventory = async () => {
                 const excessPoints = potentialNewInventory - 15; 
                 usersPoints[userId].inventory = 15; 
                 debilusCloset += excessPoints;
-                log(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`);
+                log(`INFO: Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`);
             } else { 
                 usersPoints[userId].inventory = potentialNewInventory; 
-                log(`Added ${cyclesPassed} points to user ${userId}'s inventory.`);
+                log(`INFO: Added ${cyclesPassed} points to user ${userId}'s inventory.`);
             }
 
             if (usersPoints[userId].inventory === 10) {
                 await sendNotification(userId, 10);
-                log(`Notification sent to user ${userId} for 10 points.`);
+                log(`INFO: Notification sent to user ${userId} for 10 points.`);
             } else if (usersPoints[userId].inventory === 15) {
                 await sendNotification(userId, 15);
-                log(`Notification sent to user ${userId} for 15 points.`);
+                log(`INFO: Notification sent to user ${userId} for 15 points.`);
             } else {
                 debilusCloset += cyclesPassed;
-                log(`Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
+                log(`INFO: Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
             }
         }
     }
     if (now.getHours() < 12) {
         lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        log(`Last update time set to midnight: ${formatDate(lastUpdateTime)}`);
+        log(`INFO: Last update time set to midnight: ${formatDate(lastUpdateTime)}`);
     } else {
         lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-        log(`Last update time set to noon: ${formatDate(lastUpdateTime)}`);
+        log(`INFO: Last update time set to noon: ${formatDate(lastUpdateTime)}`);
     }
     log(`INFO: Points added to inventories where applicable. Last update time is now ${formatDate(lastUpdateTime)}.`);
     await savePoints();

@@ -28,6 +28,7 @@ exports.command = {
                     content: 'You are not registered yet. Use `/register` to sign up.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: Unregistered user ${userId} attempted to start High-Low game.`);
                 return;
             }
             if (pointsManager_1.usersPoints[userId].points < 40) {
@@ -35,6 +36,7 @@ exports.command = {
                     content: 'You do not have enough points to play this game.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARN: User ${userId} attempted to start High-Low game with insufficient points.`);
                 return;
             }
             yield handleHighLow(interaction);
@@ -71,6 +73,7 @@ const handleHighLow = (interaction) => __awaiter(void 0, void 0, void 0, functio
     pointsManager_1.usersPoints[userId].points -= 40;
     pointsManager_1.usersPoints[userId].isDebilus = pointsManager_1.usersPoints[userId].points <= 0;
     yield (0, pointsManager_1.savePoints)();
+    (0, log_1.log)(`INFO: User ${userId} started a High-Low game. 40 points deducted for playing.`);
 });
 const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, function* () {
     const userId = interaction.user.id;
@@ -123,6 +126,6 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
         components: [],
     });
     delete highlowGames[userId];
-    (0, log_1.log)(`User ${userId} has finished the game: high-low`);
+    (0, log_1.log)(`INFO: User ${userId} has finished the game: high-low`);
 });
 exports.handleHighLowButton = handleHighLowButton;

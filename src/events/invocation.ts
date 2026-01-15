@@ -1,4 +1,7 @@
 import { Events, Message } from "discord.js";
+import { sleep } from "../utils/sleep";
+import { log } from "../utils/log";
+
 
 const COOLDOWN = 10000;
 const cooldowns = new Map<string, number>();
@@ -48,6 +51,9 @@ export default {
         const selena = message.guild?.members.cache.get(process.env.SELENA_ID!);
         if (!selena) return;
 
+        await sleep(3000);
+
         await message.reply(`### ${selena}${getRandomInvocation()}`);
+        log(`INFO: Invocation message sent to user ${message.author.id} in response to alias.`);
     }
 };

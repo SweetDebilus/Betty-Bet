@@ -1,9 +1,11 @@
 import { Events, Message } from "discord.js";
+import { sleep } from "../utils/sleep";
+import { log } from "../utils/log";
+
 
 const debilus = process.env.DEBILUS!;
 
-// Cooldown par utilisateur (en millisecondes)
-const COOLDOWN = 10_000; // 10 secondes
+const COOLDOWN = 10000;
 const cooldowns = new Map<string, number>();
 
 const punchlines = [
@@ -38,21 +40,21 @@ export default {
         const hasWitch = content.includes("witch");
         const hasWizard = content.includes("wizard");
 
-        // Condition principale
         if (!hasWitch || hasWizard) return;
 
-        // Vérification du cooldown
         const lastTrigger = cooldowns.get(message.author.id);
         const now = Date.now();
 
         if (lastTrigger && now - lastTrigger < COOLDOWN) {
-            return; // On ignore si cooldown pas fini
+            return; 
         }
 
-        // Mise à jour du cooldown
         cooldowns.set(message.author.id, now);
 
-        // Réponse
+        await sleep(3000);
+
         await message.reply(getRandomPunchline());
+
+        log(`INFO: Punchline sent to user ${message.author.id} in response to "witch" keyword.`);
     }
 };

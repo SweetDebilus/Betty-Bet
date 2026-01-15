@@ -189,33 +189,33 @@ const addPointsToInventory = () => __awaiter(void 0, void 0, void 0, function* (
                 const excessPoints = potentialNewInventory - 15;
                 exports.usersPoints[userId].inventory = 15;
                 exports.debilusCloset += excessPoints;
-                (0, log_1.log)(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`);
+                (0, log_1.log)(`INFO: Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`);
             }
             else {
                 exports.usersPoints[userId].inventory = potentialNewInventory;
-                (0, log_1.log)(`Added ${cyclesPassed} points to user ${userId}'s inventory.`);
+                (0, log_1.log)(`INFO: Added ${cyclesPassed} points to user ${userId}'s inventory.`);
             }
             if (exports.usersPoints[userId].inventory === 10) {
                 yield (0, notification_1.sendNotification)(userId, 10);
-                (0, log_1.log)(`Notification sent to user ${userId} for 10 points.`);
+                (0, log_1.log)(`INFO: Notification sent to user ${userId} for 10 points.`);
             }
             else if (exports.usersPoints[userId].inventory === 15) {
                 yield (0, notification_1.sendNotification)(userId, 15);
-                (0, log_1.log)(`Notification sent to user ${userId} for 15 points.`);
+                (0, log_1.log)(`INFO: Notification sent to user ${userId} for 15 points.`);
             }
             else {
                 exports.debilusCloset += cyclesPassed;
-                (0, log_1.log)(`Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
+                (0, log_1.log)(`INFO: Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
             }
         }
     }
     if (now.getHours() < 12) {
         exports.lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 0, 0, 0);
-        (0, log_1.log)(`Last update time set to midnight: ${(0, notification_1.formatDate)(exports.lastUpdateTime)}`);
+        (0, log_1.log)(`INFO: Last update time set to midnight: ${(0, notification_1.formatDate)(exports.lastUpdateTime)}`);
     }
     else {
         exports.lastUpdateTime = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 12, 0, 0);
-        (0, log_1.log)(`Last update time set to noon: ${(0, notification_1.formatDate)(exports.lastUpdateTime)}`);
+        (0, log_1.log)(`INFO: Last update time set to noon: ${(0, notification_1.formatDate)(exports.lastUpdateTime)}`);
     }
     (0, log_1.log)(`INFO: Points added to inventories where applicable. Last update time is now ${(0, notification_1.formatDate)(exports.lastUpdateTime)}.`);
     yield savePoints();

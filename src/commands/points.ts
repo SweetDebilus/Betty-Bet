@@ -1,5 +1,6 @@
 import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction } from 'discord.js';
 import { usersPoints } from '../services/pointsManager';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -19,5 +20,6 @@ export const command = {
     const userInfo = usersPoints[userId];
     const status = userInfo.isDebilus ? `you are a **Debilus** ${debilus}` : 'bettor';
     await interaction.reply({ content: `**${userInfo.name}**\n\nYou have **${userInfo.points}** ${pointsEmoji}\n\n| **${userInfo.wins} wins** | **${userInfo.losses} losses** |\n\n**Status:** ${status}`, flags: MessageFlags.Ephemeral });
+    log(`INFO: User ${userId} checked their points balance of ${userInfo.points} points.`);
     }
 };

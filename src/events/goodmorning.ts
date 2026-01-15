@@ -2,6 +2,8 @@ import { Events, Message, TextChannel, ThreadChannel } from "discord.js";
 import fs from "fs";
 import path from "path";
 import { log } from "../utils/log";
+import { sleep } from "../utils/sleep";
+
 
 const morningTriggers = [
     "good morning",
@@ -10,7 +12,8 @@ const morningTriggers = [
     "ohayo",
     "おはよう",
     "buenos dias",
-    "buenos días"
+    "buenos días",
+    "morning"
 ];
 
 const morningGifs = [
@@ -67,11 +70,13 @@ export default {
         const line = morningLines[Math.floor(Math.random() * morningLines.length)];
 
         if (message.channel instanceof TextChannel || message.channel instanceof ThreadChannel) { 
+            await sleep(3000);
             if (addLine) { 
                 await message.channel.send(`${gif}\n${line}`); 
             } else { 
                 await message.channel.send(gif); 
             } 
+            log(`INFO: Good morning message sent in channel ${message.channel.id} in response to morning trigger.`);
         } else {
             log("WARNING: Betty tried to send a message in a non-text channel.");
         }

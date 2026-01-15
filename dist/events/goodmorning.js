@@ -16,6 +16,7 @@ const discord_js_1 = require("discord.js");
 const fs_1 = __importDefault(require("fs"));
 const path_1 = __importDefault(require("path"));
 const log_1 = require("../utils/log");
+const sleep_1 = require("../utils/sleep");
 const morningTriggers = [
     "good morning",
     "gm",
@@ -23,7 +24,8 @@ const morningTriggers = [
     "ohayo",
     "おはよう",
     "buenos dias",
-    "buenos días"
+    "buenos días",
+    "morning"
 ];
 const morningGifs = [
     "https://tenor.com/view/good-morning-cyberpunk-2077-night-city-gif-19591988",
@@ -73,12 +75,14 @@ exports.default = {
             const addLine = Math.random() < 0.2;
             const line = morningLines[Math.floor(Math.random() * morningLines.length)];
             if (message.channel instanceof discord_js_1.TextChannel || message.channel instanceof discord_js_1.ThreadChannel) {
+                yield (0, sleep_1.sleep)(3000);
                 if (addLine) {
                     yield message.channel.send(`${gif}\n${line}`);
                 }
                 else {
                     yield message.channel.send(gif);
                 }
+                (0, log_1.log)(`INFO: Good morning message sent in channel ${message.channel.id} in response to morning trigger.`);
             }
             else {
                 (0, log_1.log)("WARNING: Betty tried to send a message in a non-text channel.");

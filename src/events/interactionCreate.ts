@@ -4,6 +4,7 @@ import { handleClaimYesNo } from '../services/notification';
 import { handleBetSelection, handleBetModal } from '../commands/placeyourbets';
 import { handleBlackjackInteraction } from '../commands/blackjack';
 import { handleHighLowButton } from '../commands/higherlower';
+import { log } from 'console';
 
 let maintenanceMode: boolean = false;
 export const hasRole = (roleName: string, roles: GuildMemberRoleManager) => roles.cache.some(role => role.name === roleName);
@@ -18,10 +19,12 @@ export default {
             const member = interaction.member as GuildMember;
             if (!member) {
                 await interaction.reply('An error has occurred. Unable to verify user roles.');
+                log(`ERROR: interactionCreate event - member not found in interaction.`);
                 return;
             }
 
             const command = commands.get(interaction.commandName);
+            log(`DEBUG: Slash command interaction received: ${interaction.commandName}`);
             if (!command) return;
 
             try {
@@ -32,6 +35,7 @@ export default {
                     content: 'There was an error executing this command.',
                     ephemeral: true
                 });
+                log(`ERROR: Error executing command ${interaction.commandName}: ${error}`);
             }
 
             const roles = member.roles as GuildMemberRoleManager;
@@ -43,6 +47,7 @@ export default {
                     content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`,
                     flags: MessageFlags.Ephemeral
                 });
+                log('INFO: Command attempt by user without required role.');
                 return;
             }
 
@@ -51,6 +56,7 @@ export default {
                     content: 'Betty Bet is currently in maintenance mode. Please try again later.',
                     flags: MessageFlags.Ephemeral
                 });
+                log('INFO: Command attempt during maintenance mode by non-BetManager.');
                 return;
             }
 
@@ -60,6 +66,7 @@ export default {
         // --- BUTTONS ---
         if (interaction.isButton()) {
             const id = interaction.customId;
+            log(`DEBUG: Button interaction received with customId: ${id}`);
 
             switch (true) {
                 case id.startsWith('claim_'):
@@ -82,6 +89,7 @@ export default {
         // --- MODALS ---
         if (interaction.isModalSubmit()) {
             await handleBetModal(interaction);
+            log(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
             return;
         }
     }

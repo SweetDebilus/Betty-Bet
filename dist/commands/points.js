@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('points')
@@ -28,6 +29,7 @@ exports.command = {
             const userInfo = pointsManager_1.usersPoints[userId];
             const status = userInfo.isDebilus ? `you are a **Debilus** ${debilus}` : 'bettor';
             yield interaction.reply({ content: `**${userInfo.name}**\n\nYou have **${userInfo.points}** ${pointsEmoji}\n\n| **${userInfo.wins} wins** | **${userInfo.losses} losses** |\n\n**Status:** ${status}`, flags: discord_js_1.MessageFlags.Ephemeral });
+            (0, log_1.log)(`INFO: User ${userId} checked their points balance of ${userInfo.points} points.`);
         });
     }
 };
