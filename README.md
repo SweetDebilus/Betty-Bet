@@ -60,12 +60,6 @@
 
    When someone mentions the creator’s name — **Selena Sweetheart** — Betty performs a ritualistic “summoning”.
 
-   This detection supports multiple alphabets and transliterations, including:
-   Latin, Cyrillic, Greek, Arabic, Hebrew, Devanagari, Japanese, and Korean.
-
-   Example aliases include:
-   `selena`, `sweetheart`, `selenya`, `Селена`, `σελένα`, `سلينا`, `סלנה`, `सेलेना`, `セレナ`, `셀레나`
-
    When triggered, Betty pings the creator directly using a real Discord mention and adds a dramatic invocation line chosen from a curated list of ritual phrases.
 
    A global cooldown ensures the summoning remains a rare and amusing event.
