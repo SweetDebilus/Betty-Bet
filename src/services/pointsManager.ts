@@ -140,6 +140,11 @@ export const addPointsToInventory = async () => {
     const now = new Date();
     const timeDifference = now.getTime() - lastUpdateTime.getTime();
     const cyclesPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 12));
+    
+    if (cyclesPassed < 1) {
+        log('INFO: No inventory points to add at this time.');
+        return;
+    }
 
     for (const userId in usersPoints) {
         if (usersPoints[userId].inventory < 15) {

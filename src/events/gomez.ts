@@ -1,6 +1,7 @@
 import { Events, Message } from "discord.js";
 import { sleep } from "../utils/sleep";
 import { log } from "../utils/log";
+import { usersPoints } from "../services/pointsManager";
 
 const aliases = ["gomez", "gómez", "gomezz", "gomees", "gomeez"];
 const POINTS_PENALTY = 10;
@@ -17,7 +18,8 @@ const responses = [
     `You tread on dangerous ground by using that name.`
 ];
 
-const warnings = `If you continue, I'll deduct points from you and put them in my debilus closet.`;
+const warningsForMembers = `If you continue, I'll deduct points from you and put them in my debilus closet.`;
+const warningsForNonMembers = `If you were registered in my system, I would have punished you.`;
 
 const countMessages = new Map<string, number>();
 const WARNING_THRESHOLD = 3;
@@ -37,56 +39,58 @@ export default {
         if (!isInvoked) return;
 
         const userId = message.author.id;
+        const isRegistered = Boolean(usersPoints[userId]);
+
         let count = (countMessages.get(userId) || 0) + 1;
         countMessages.set(userId, count);
+
         await sleep(2000);
 
-        // Punition
+        // --- Warnings 1 & 2 ---
+        if (count === 1 || count === 2) {
+            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()}`);
+            log(`INFO: Warning ${count}/3 sent to user ${userId}.`);
+            return;
+        }
+
+        // --- Warning 3 (final) ---
+        if (count === WARNING_THRESHOLD) {
+            const extra = isRegistered ? warningsForMembers : warningsForNonMembers;
+            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()} ${extra}`);
+            log(`INFO: Final warning sent to user ${userId}.`);
+            return;
+        }
+
+        // --- Punition (4ᵉ message) ---
         if (count >= WARNING_THRESHOLD + 1) {
             countMessages.set(userId, 0);
 
             const { usersPoints, savePoints } = require("../services/pointsManager");
 
-            if (usersPoints[userId]) {
-                if (usersPoints[userId].points < POINTS_PENALTY) {
-                    await message.reply({
-                        content: `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
-                                `You're lucky to be poor, otherwise I would have taken away ${POINTS_PENALTY} points from you.`,
-                    });
-                    log(`WARNING: User ${userId} has insufficient points for penalty.`);
-                    return;
-                }
-
-                usersPoints[userId].points -= POINTS_PENALTY;
-                await savePoints();
-
-                await message.reply({
-                    content: `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
-                            `I'm taking ${POINTS_PENALTY} points from your inventory and store them in my debilus closet.`,
-                });
-
-                log(`PENALTY: Removed ${POINTS_PENALTY} points from user ${userId}. Current points: ${usersPoints[userId].points}`);
-            } else {
-                await message.reply({
-                    content: `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
-                            `If you were registered, Betty would have punished you.`,
-                });
-
-                log(`WARNING: Unregistered user ${userId} reached forbidden-name threshold.`);
+            if (!isRegistered) {
+                await message.reply(`⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n${warningsForNonMembers}`);
+                log(`WARNING: Unregistered user ${userId} reached punishment threshold.`);
+                return;
             }
 
-            return;
-        }
+            if (usersPoints[userId].points < POINTS_PENALTY) {
+                await message.reply(
+                    `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                    `You're lucky to be poor, otherwise I would have taken away ${POINTS_PENALTY} points from you.`
+                );
+                log(`WARNING: User ${userId} has insufficient points for penalty.`);
+                return;
+            }
 
-        // Warnings
-        if (count === 1 || count === 2) {
-            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()}`);
-            log(`INFO: Warning message sent to user ${userId}.`);
-        }
+            usersPoints[userId].points -= POINTS_PENALTY;
+            await savePoints();
 
-        if (count === WARNING_THRESHOLD) {
-            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()} ${warnings}`);
-            log(`INFO: Final warning message sent to user ${userId}.`);
+            await message.reply(
+                `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                `I'm taking ${POINTS_PENALTY} points from your inventory and store them in my debilus closet.`
+            );
+
+            log(`PENALTY: Removed ${POINTS_PENALTY} points from user ${userId}. Remaining: ${usersPoints[userId].points}`);
         }
     }
 };
