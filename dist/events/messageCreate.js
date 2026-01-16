@@ -13,7 +13,7 @@ const discord_js_1 = require("discord.js");
 const sleep_1 = require("../utils/sleep");
 const log_1 = require("../utils/log");
 const debilus = process.env.DEBILUS;
-const COOLDOWN = 10000;
+const COOLDOWN = 20000;
 const cooldowns = new Map();
 const punchlines = [
     `## You're the witch! 🫵${debilus}`,

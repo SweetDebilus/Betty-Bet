@@ -5,7 +5,7 @@ import { log } from "../utils/log";
 
 const debilus = process.env.DEBILUS!;
 
-const COOLDOWN = 10000;
+const COOLDOWN = 20000;
 const cooldowns = new Map<string, number>();
 
 const punchlines = [
