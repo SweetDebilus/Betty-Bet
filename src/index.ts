@@ -3,7 +3,6 @@ import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
 dotenv.config();
-
 import dns from 'dns';
 import schedule from 'node-schedule';
 import { log } from './utils/log';
