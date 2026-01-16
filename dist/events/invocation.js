@@ -12,8 +12,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const sleep_1 = require("../utils/sleep");
 const log_1 = require("../utils/log");
-const COOLDOWN = 60000;
-const cooldowns = new Map();
+const globalCooldowns = new Map();
+const COOLDOWN = 300000; // 5 minutes
+function isOnCooldown(trigger) {
+    const last = globalCooldowns.get(trigger);
+    const now = Date.now();
+    return last && now - last < COOLDOWN;
+}
+function setCooldown(trigger) {
+    globalCooldowns.set(trigger, Date.now());
+}
 const aliases = ["selena", "sweetheart", "selenya", "séléna", "sélénya", "sélena", "sélenna"];
 const invocations = [
     `, the plebeians invoke you.`,
@@ -39,7 +47,6 @@ exports.default = {
     name: discord_js_1.Events.MessageCreate,
     execute(message) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
             if (message.author.bot)
                 return;
             if (message.channel.id !== process.env.CHANNEL_GENERAL_ID)
@@ -52,17 +59,13 @@ exports.default = {
             if (content.includes("gomez") || content.includes("gómez") || content.includes("gomezz") || content.includes("gomees") || content.includes("gomeez")) {
                 return;
             }
-            // Cooldown global pour éviter le spam
-            const last = cooldowns.get("invocation");
-            const now = Date.now();
-            if (last && now - last < COOLDOWN)
+            // --- Cooldown global ---
+            if (isOnCooldown("invocation")) {
                 return;
-            cooldowns.set("invocation", now);
-            const selena = (_a = message.guild) === null || _a === void 0 ? void 0 : _a.members.cache.get(process.env.SELENA_ID);
-            if (!selena)
-                return;
+            }
+            setCooldown("invocation");
             yield (0, sleep_1.sleep)(3000);
-            yield message.reply(`### ${selena}${getRandomInvocation()}`);
+            yield message.reply((0, discord_js_1.userMention)(process.env.SELENA_ID) + getRandomInvocation());
             (0, log_1.log)(`INFO: Invocation message sent to user ${message.author.id} in response to alias.`);
         });
     }

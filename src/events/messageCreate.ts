@@ -2,12 +2,23 @@ import { Events, Message } from "discord.js";
 import { sleep } from "../utils/sleep";
 import { log } from "../utils/log";
 
-
 const debilus = process.env.DEBILUS!;
 
-const COOLDOWN = 20000;
-const cooldowns = new Map<string, number>();
+// --- Cooldown global ---
+const globalCooldowns = new Map<string, number>();
+const COOLDOWN = 300000; // 5 minutes
 
+function isOnCooldown(trigger: string) {
+    const last = globalCooldowns.get(trigger);
+    const now = Date.now();
+    return last && now - last < COOLDOWN;
+}
+
+function setCooldown(trigger: string) {
+    globalCooldowns.set(trigger, Date.now());
+}
+
+// --- Punchlines ---
 const punchlines = [
     `## You're the witch! 🫵${debilus}`,
     `## Witch detected. Proceed with caution. 🧹`,
@@ -26,8 +37,7 @@ const punchlines = [
 ];
 
 function getRandomPunchline(): string {
-    const index = Math.floor(Math.random() * punchlines.length);
-    return punchlines[index];
+    return punchlines[Math.floor(Math.random() * punchlines.length)];
 }
 
 export default {
@@ -37,24 +47,24 @@ export default {
         if (message.channel.id !== process.env.CHANNEL_GENERAL_ID) return;
 
         const content = message.content.toLowerCase();
+
         const hasWitch = content.includes("witch");
         const hasWizard = content.includes("wizard");
 
+        // Condition : "witch" présent, mais PAS "wizard"
         if (!hasWitch || hasWizard) return;
 
-        const lastTrigger = cooldowns.get(message.author.id);
-        const now = Date.now();
-
-        if (lastTrigger && now - lastTrigger < COOLDOWN) {
-            return; 
+        // --- Cooldown global ---
+        if (isOnCooldown("invocation")) {
+            return;
         }
 
-        cooldowns.set(message.author.id, now);
+        setCooldown("invocation");
 
         await sleep(3000);
 
         await message.reply(getRandomPunchline());
 
-        log(`INFO: Punchline sent to user ${message.author.id} in response to "witch" keyword.`);
+        log(`INFO: Punchline sent to user ${message.author.id} after "witch" trigger.`);
     }
 };

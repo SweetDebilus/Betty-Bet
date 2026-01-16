@@ -13,8 +13,18 @@ const discord_js_1 = require("discord.js");
 const sleep_1 = require("../utils/sleep");
 const log_1 = require("../utils/log");
 const debilus = process.env.DEBILUS;
-const COOLDOWN = 20000;
-const cooldowns = new Map();
+// --- Cooldown global ---
+const globalCooldowns = new Map();
+const COOLDOWN = 300000; // 5 minutes
+function isOnCooldown(trigger) {
+    const last = globalCooldowns.get(trigger);
+    const now = Date.now();
+    return last && now - last < COOLDOWN;
+}
+function setCooldown(trigger) {
+    globalCooldowns.set(trigger, Date.now());
+}
+// --- Punchlines ---
 const punchlines = [
     `## You're the witch! 🫵${debilus}`,
     `## Witch detected. Proceed with caution. 🧹`,
@@ -32,8 +42,7 @@ const punchlines = [
     `## You shall not pass... without a punchline! 🧙‍♂️`
 ];
 function getRandomPunchline() {
-    const index = Math.floor(Math.random() * punchlines.length);
-    return punchlines[index];
+    return punchlines[Math.floor(Math.random() * punchlines.length)];
 }
 exports.default = {
     name: discord_js_1.Events.MessageCreate,
@@ -46,17 +55,17 @@ exports.default = {
             const content = message.content.toLowerCase();
             const hasWitch = content.includes("witch");
             const hasWizard = content.includes("wizard");
+            // Condition : "witch" présent, mais PAS "wizard"
             if (!hasWitch || hasWizard)
                 return;
-            const lastTrigger = cooldowns.get(message.author.id);
-            const now = Date.now();
-            if (lastTrigger && now - lastTrigger < COOLDOWN) {
+            // --- Cooldown global ---
+            if (isOnCooldown("invocation")) {
                 return;
             }
-            cooldowns.set(message.author.id, now);
+            setCooldown("invocation");
             yield (0, sleep_1.sleep)(3000);
             yield message.reply(getRandomPunchline());
-            (0, log_1.log)(`INFO: Punchline sent to user ${message.author.id} in response to "witch" keyword.`);
+            (0, log_1.log)(`INFO: Punchline sent to user ${message.author.id} after "witch" trigger.`);
         });
     }
 };

@@ -1,10 +1,21 @@
-import { Events, Message } from "discord.js";
+import { Events, Message, User, userMention } from "discord.js";
 import { sleep } from "../utils/sleep";
 import { log } from "../utils/log";
 
 
-const COOLDOWN = 60000;
-const cooldowns = new Map<string, number>();
+const globalCooldowns = new Map<string, number>();
+const COOLDOWN = 300000; // 5 minutes
+
+function isOnCooldown(trigger: string) {
+    const last = globalCooldowns.get(trigger);
+    const now = Date.now();
+    return last && now - last < COOLDOWN;
+}
+
+function setCooldown(trigger: string) {
+    globalCooldowns.set(trigger, Date.now());
+}
+
 
 const aliases = ["selena", "sweetheart", "selenya", "séléna", "sélénya", "sélena", "sélenna"];
 
@@ -45,19 +56,17 @@ export default {
             return;
         }
 
-        // Cooldown global pour éviter le spam
-        const last = cooldowns.get("invocation");
-        const now = Date.now();
+        // --- Cooldown global ---
+        if (isOnCooldown("invocation")) {
+            return;
+        }
 
-        if (last && now - last < COOLDOWN) return;
-        cooldowns.set("invocation", now);
-
-        const selena = message.guild?.members.cache.get(process.env.SELENA_ID!);
-        if (!selena) return;
+        setCooldown("invocation");
 
         await sleep(3000);
 
-        await message.reply(`### ${selena}${getRandomInvocation()}`);
+        await message.reply(userMention(process.env.SELENA_ID!)+getRandomInvocation());
+
         log(`INFO: Invocation message sent to user ${message.author.id} in response to alias.`);
     }
 };
