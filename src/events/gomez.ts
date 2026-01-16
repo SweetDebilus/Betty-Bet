@@ -48,7 +48,7 @@ export default {
 
         // --- Warnings 1 & 2 ---
         if (count === 1 || count === 2) {
-            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()}`);
+            await message.reply(`⚠️ ${message.author.displayName}, ${getRandomResponse()}`);
             log(`INFO: Warning ${count}/3 sent to user ${userId}.`);
             return;
         }
@@ -56,7 +56,7 @@ export default {
         // --- Warning 3 (final) ---
         if (count === WARNING_THRESHOLD) {
             const extra = isRegistered ? warningsForMembers : warningsForNonMembers;
-            await message.reply(`⚠️ ${message.author}, ${getRandomResponse()} ${extra}`);
+            await message.reply(`⚠️ ${message.author.displayName}, ${getRandomResponse()} ${extra}`);
             log(`INFO: Final warning sent to user ${userId}.`);
             return;
         }
@@ -68,14 +68,14 @@ export default {
             const { usersPoints, savePoints } = require("../services/pointsManager");
 
             if (!isRegistered) {
-                await message.reply(`⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n${warningsForNonMembers}`);
+                await message.reply(`⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n${warningsForNonMembers}`);
                 log(`WARNING: Unregistered user ${userId} reached punishment threshold.`);
                 return;
             }
 
             if (usersPoints[userId].points < POINTS_PENALTY) {
                 await message.reply(
-                    `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                    `⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n` +
                     `You're lucky to be poor, otherwise I would have taken away ${POINTS_PENALTY} points from you.`
                 );
                 log(`WARNING: User ${userId} has insufficient points for penalty.`);
@@ -86,7 +86,7 @@ export default {
             await savePoints();
 
             await message.reply(
-                `⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                `⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n` +
                 `I'm taking ${POINTS_PENALTY} points from your inventory and store them in my debilus closet.`
             );
 

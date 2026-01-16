@@ -52,14 +52,14 @@ exports.default = {
             yield (0, sleep_1.sleep)(2000);
             // --- Warnings 1 & 2 ---
             if (count === 1 || count === 2) {
-                yield message.reply(`⚠️ ${message.author}, ${getRandomResponse()}`);
+                yield message.reply(`⚠️ ${message.author.displayName}, ${getRandomResponse()}`);
                 (0, log_1.log)(`INFO: Warning ${count}/3 sent to user ${userId}.`);
                 return;
             }
             // --- Warning 3 (final) ---
             if (count === WARNING_THRESHOLD) {
                 const extra = isRegistered ? warningsForMembers : warningsForNonMembers;
-                yield message.reply(`⚠️ ${message.author}, ${getRandomResponse()} ${extra}`);
+                yield message.reply(`⚠️ ${message.author.displayName}, ${getRandomResponse()} ${extra}`);
                 (0, log_1.log)(`INFO: Final warning sent to user ${userId}.`);
                 return;
             }
@@ -68,19 +68,19 @@ exports.default = {
                 countMessages.set(userId, 0);
                 const { usersPoints, savePoints } = require("../services/pointsManager");
                 if (!isRegistered) {
-                    yield message.reply(`⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n${warningsForNonMembers}`);
+                    yield message.reply(`⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n${warningsForNonMembers}`);
                     (0, log_1.log)(`WARNING: Unregistered user ${userId} reached punishment threshold.`);
                     return;
                 }
                 if (usersPoints[userId].points < POINTS_PENALTY) {
-                    yield message.reply(`⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                    yield message.reply(`⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n` +
                         `You're lucky to be poor, otherwise I would have taken away ${POINTS_PENALTY} points from you.`);
                     (0, log_1.log)(`WARNING: User ${userId} has insufficient points for penalty.`);
                     return;
                 }
                 usersPoints[userId].points -= POINTS_PENALTY;
                 yield savePoints();
-                yield message.reply(`⚠️ ${message.author}, you have invoked the forbidden name **three times**.\n` +
+                yield message.reply(`⚠️ ${message.author.displayName}, you have invoked the forbidden name **three times**.\n` +
                     `I'm taking ${POINTS_PENALTY} points from your inventory and store them in my debilus closet.`);
                 (0, log_1.log)(`PENALTY: Removed ${POINTS_PENALTY} points from user ${userId}. Remaining: ${usersPoints[userId].points}`);
             }
