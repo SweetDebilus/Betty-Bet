@@ -12,7 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const discord_js_1 = require("discord.js");
 const sleep_1 = require("../utils/sleep");
 const log_1 = require("../utils/log");
-const COOLDOWN = 10000;
+const COOLDOWN = 60000;
 const cooldowns = new Map();
 const aliases = ["selena", "sweetheart", "selenya", "séléna", "sélénya", "sélena", "sélenna"];
 const invocations = [

@@ -1,6 +1,7 @@
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
+import {log as boobs} from 'console';
 
 dotenv.config();
 
@@ -40,6 +41,7 @@ export async function log(message: string): Promise<void> {
 
         const logMessage = `${new Date().toISOString()} - ${message}\n`;
         await fs.promises.appendFile(logFile, logMessage);
+        boobs(logMessage.trim());
     } catch (error) {
         console.error(`Erreur lors de l'écriture du log :`, error);
     }

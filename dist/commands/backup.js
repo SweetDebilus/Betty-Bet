@@ -48,7 +48,7 @@ const fs = __importStar(require("fs"));
 const pointsManager_1 = require("../services/pointsManager");
 const pointsManager_2 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
-const console_1 = require("console");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('backup')
@@ -63,7 +63,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
-                (0, console_1.log)(`ERROR: Backup command executed without proper permissions.`);
+                (0, log_1.log)(`WARNING: Backup command executed without proper permissions.`);
             }
         });
     }
@@ -77,7 +77,7 @@ const handleBackup = (interaction) => __awaiter(void 0, void 0, void 0, function
     createDataDebilusDir();
     if (!fs.existsSync('src/data/decrypted_backup.json')) {
         yield interaction.reply({ content: 'No decrypted backup found.', flags: discord_js_1.MessageFlags.Ephemeral });
-        (0, console_1.log)(`WARN: Backup command executed but no decrypted backup file found.`);
+        (0, log_1.log)(`WARN: Backup command executed but no decrypted backup file found.`);
         return;
     }
     const decryptedData = JSON.parse(fs.readFileSync('src/data/decrypted_backup.json', 'utf-8'));
@@ -92,5 +92,5 @@ const handleBackup = (interaction) => __awaiter(void 0, void 0, void 0, function
         content: 'Data from decrypted backup has been encrypted and **saved successfully** !',
         flags: discord_js_1.MessageFlags.Ephemeral
     });
-    (0, console_1.log)(`INFO: Data from decrypted backup has been encrypted and saved by a BetManager.`);
+    (0, log_1.log)(`INFO: Data from decrypted backup has been encrypted and saved by a BetManager.`);
 });

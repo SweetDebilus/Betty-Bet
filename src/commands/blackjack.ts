@@ -109,6 +109,7 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
         if (playerValue > 21) {
             delete blackjackGames[userId];
             addToDebilusCloset(40);
+            log(`INFO: User ${userId} busted in blackjack game and added 40 points to Debilus Closet.`);
             await savePoints();
 
             await interaction.update({
@@ -119,7 +120,6 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
 ## **You bust!** *Betty Bet wins.*`,
                 components: []
             });
-            log(`INFO: User ${userId} busted in blackjack game.`);
             return;
         }
 
@@ -166,13 +166,13 @@ export const handleBlackjackInteraction = async (interaction: ButtonInteraction)
         }
 
         delete blackjackGames[userId];
+        log(`INFO: Blackjack game for user ${userId} concluded.`);
         await savePoints();
 
         await interaction.update({
             content: resultMessage + `\n## You now have **${usersPoints[userId].points}** ${pointsEmoji}`,
             components: []
         });
-        log(`INFO: Blackjack game for user ${userId} concluded. Points updated.`);
     }
 };
 

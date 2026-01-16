@@ -3,7 +3,7 @@ import { sleep } from "../utils/sleep";
 import { log } from "../utils/log";
 
 
-const COOLDOWN = 10000;
+const COOLDOWN = 60000;
 const cooldowns = new Map<string, number>();
 
 const aliases = ["selena", "sweetheart", "selenya", "séléna", "sélénya", "sélena", "sélenna"];

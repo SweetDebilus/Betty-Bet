@@ -113,25 +113,30 @@ export const handleHighLowButton = async (interaction: ButtonInteraction) => {
     if (customId === 'highlow_higher') {
         if (hiddenCard > visibleCard) {
         usersPoints[userId].points += reward; 
-        usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; 
+        usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+        log(`INFO: User ${userId} won High-Low game and earned ${reward} points.`); 
         await savePoints(); 
         resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
         } else {
         resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+        log(`INFO: User ${userId} lost High-Low game.`);
         }
     } else if (customId === 'highlow_lower') {
         if (hiddenCard < visibleCard) {
             usersPoints[userId].points += reward; 
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+            log(`INFO: User ${userId} won High-Low game and earned ${reward} points.`);
             await savePoints(); 
             resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
         } else {
             resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
+            log(`INFO: User ${userId} lost High-Low game.`);
         }
     }
 
     if (usersPoints[userId].isDebilus) {
         resultMessage += `\n\nYou have ${usersPoints[userId].points}${pointsEmoji} ! You're now a Debilus. Play wisely next time! ${debilus}`;
+        log(`INFO: User ${userId} has become a Debilus.`);
     }
 
     await interaction.update({

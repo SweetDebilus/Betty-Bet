@@ -30,7 +30,7 @@ export function setBettingOpen(isOpen: boolean) {
 export const command = {
     data: new SlashCommandBuilder()
         .setName('placeyourbets')
-        .setDescription('Place your bets!')
+        .setDescription('Place your bets! (BetManager only)')
         .addStringOption(option =>
             option.setName('player1name')
                 .setDescription('Name of the first player')
@@ -47,6 +47,7 @@ export const command = {
                 content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`, 
                 flags: MessageFlags.Ephemeral 
             });
+            log(`WARNING: PlaceYourBets command executed without proper permissions.`);
             return;
         }
         if (hasRole('BetManager', (interaction.member as GuildMember).roles as GuildMemberRoleManager)) {
@@ -56,6 +57,7 @@ export const command = {
                 content: 'You do not have permission to use this command.',  
                 flags: MessageFlags.Ephemeral 
             });
+            log(`WARNING: PlaceYourBets command executed without proper permissions.`);
         }
     }
 };

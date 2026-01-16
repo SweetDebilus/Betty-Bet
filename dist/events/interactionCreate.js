@@ -16,7 +16,7 @@ const notification_1 = require("../services/notification");
 const placeyourbets_1 = require("../commands/placeyourbets");
 const blackjack_1 = require("../commands/blackjack");
 const higherlower_1 = require("../commands/higherlower");
-const console_1 = require("console");
+const log_1 = require("../utils/log");
 let maintenanceMode = false;
 const hasRole = (roleName, roles) => roles.cache.some(role => role.name === roleName);
 exports.hasRole = hasRole;
@@ -29,11 +29,11 @@ exports.default = {
                 const member = interaction.member;
                 if (!member) {
                     yield interaction.reply('An error has occurred. Unable to verify user roles.');
-                    (0, console_1.log)(`ERROR: interactionCreate event - member not found in interaction.`);
+                    (0, log_1.log)(`ERROR: interactionCreate event - member not found in interaction.`);
                     return;
                 }
                 const command = index_1.commands.get(interaction.commandName);
-                (0, console_1.log)(`DEBUG: Slash command interaction received: ${interaction.commandName}`);
+                (0, log_1.log)(`DEBUG: Slash command interaction received: ${interaction.commandName}`);
                 if (!command)
                     return;
                 try {
@@ -45,7 +45,7 @@ exports.default = {
                         content: 'There was an error executing this command.',
                         ephemeral: true
                     });
-                    (0, console_1.log)(`ERROR: Error executing command ${interaction.commandName}: ${error}`);
+                    (0, log_1.log)(`ERROR: Error executing command ${interaction.commandName}: ${error}`);
                 }
                 const roles = member.roles;
                 const hasRole = (roleName) => roles.cache.some(role => role.name === roleName);
@@ -54,7 +54,7 @@ exports.default = {
                         content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`,
                         flags: discord_js_1.MessageFlags.Ephemeral
                     });
-                    (0, console_1.log)('INFO: Command attempt by user without required role.');
+                    (0, log_1.log)('INFO: Command attempt by user without required role.');
                     return;
                 }
                 if (maintenanceMode && !hasRole('BetManager')) {
@@ -62,7 +62,7 @@ exports.default = {
                         content: 'Betty Bet is currently in maintenance mode. Please try again later.',
                         flags: discord_js_1.MessageFlags.Ephemeral
                     });
-                    (0, console_1.log)('INFO: Command attempt during maintenance mode by non-BetManager.');
+                    (0, log_1.log)('INFO: Command attempt during maintenance mode by non-BetManager.');
                     return;
                 }
                 return;
@@ -70,7 +70,7 @@ exports.default = {
             // --- BUTTONS ---
             if (interaction.isButton()) {
                 const id = interaction.customId;
-                (0, console_1.log)(`DEBUG: Button interaction received with customId: ${id}`);
+                (0, log_1.log)(`DEBUG: Button interaction received with customId: ${id}`);
                 switch (true) {
                     case id.startsWith('claim_'):
                         return (0, notification_1.handleClaimYesNo)(interaction);
@@ -87,7 +87,7 @@ exports.default = {
             // --- MODALS ---
             if (interaction.isModalSubmit()) {
                 yield (0, placeyourbets_1.handleBetModal)(interaction);
-                (0, console_1.log)(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
+                (0, log_1.log)(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
                 return;
             }
         });

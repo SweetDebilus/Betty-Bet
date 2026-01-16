@@ -15,7 +15,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
-            log(`ERROR: ClearBetHistory command executed without proper permissions.`);
+            log(`WARNING: ClearBetHistory command executed without proper permissions.`);
         }
     }
 };

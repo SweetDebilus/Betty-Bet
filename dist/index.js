@@ -55,6 +55,12 @@ const dns_1 = __importDefault(require("dns"));
 const node_schedule_1 = __importDefault(require("node-schedule"));
 const log_1 = require("./utils/log");
 const pointsManager_1 = require("./services/pointsManager");
+(0, log_1.log)(`\n` +
+    `   =============================\n` +
+    `   ||        BETTY BET        ||\n` +
+    `   =============================\n` +
+    `   ||       By Selena V       ||\n` +
+    `   =============================`);
 exports.client = new discord_js_1.Client({
     intents: [
         discord_js_1.GatewayIntentBits.Guilds,
@@ -65,7 +71,7 @@ exports.client = new discord_js_1.Client({
 });
 exports.commands = new Map();
 // -----------------------------
-// CHARGEMENT DES COMMANDES
+// COMMANDS LOADING
 // -----------------------------
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
@@ -77,7 +83,7 @@ for (const file of commandFiles) {
 const commandData = [...exports.commands.values()].map(cmd => cmd.data.toJSON());
 (0, log_1.log)(`INFO: Loaded ${commandData.length} commands.`);
 // -----------------------------
-// CHARGEMENT DES EVENTS
+// EVENTS LOADING
 // -----------------------------
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file => file.endsWith('.ts') || file.endsWith('.js'));
@@ -106,22 +112,22 @@ exports.client.once(discord_js_1.Events.ClientReady, () => __awaiter(void 0, voi
     var _a, _b;
     yield (0, pointsManager_1.loadPoints)();
     yield (0, pointsManager_1.addPointsToInventory)();
-    (0, log_1.log)(`Logged in as ${(_a = exports.client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
+    (0, log_1.log)(`INFO: Logged in as ${(_a = exports.client.user) === null || _a === void 0 ? void 0 : _a.tag}!`);
     (_b = exports.client.user) === null || _b === void 0 ? void 0 : _b.setActivity('/help | Gearbot', {
         type: discord_js_1.ActivityType.Playing
     });
     const rest = new discord_js_1.REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN);
     try {
-        (0, log_1.log)('Started refreshing application (/) commands.');
+        (0, log_1.log)('INFO: Started refreshing application (/) commands.');
         yield rest.put(discord_js_1.Routes.applicationCommands(exports.client.user.id), { body: commandData });
-        (0, log_1.log)('Successfully reloaded application (/) commands.');
+        (0, log_1.log)('INFO: Successfully reloaded application (/) commands.');
     }
     catch (error) {
-        (0, log_1.log)(`${error}`);
+        (0, log_1.log)(`ERROR: ${error}`);
     }
 }));
 // -----------------------------
-// CONNEXION AU BOT
+// BOT CONNECTION
 // -----------------------------
 function waitForDiscord() {
     return __awaiter(this, void 0, void 0, function* () {
@@ -129,11 +135,11 @@ function waitForDiscord() {
             const checkConnection = () => {
                 dns_1.default.lookup('discord.com', (err) => {
                     if (!err) {
-                        (0, log_1.log)('Connection to Discord servers detected!');
+                        (0, log_1.log)('INFO: Connection to Discord servers detected!');
                         resolve(undefined);
                     }
                     else {
-                        (0, log_1.log)('No connection to Discord yet, waiting...');
+                        (0, log_1.log)('WARNING: No connection to Discord yet, waiting...');
                         setTimeout(checkConnection, 5000);
                     }
                 });
@@ -146,15 +152,15 @@ function startBot() {
     return __awaiter(this, void 0, void 0, function* () {
         try {
             yield waitForDiscord();
-            (0, log_1.log)('Discord connection established!');
-            (0, log_1.log)('Connecting to Discord...');
+            (0, log_1.log)('INFO: Discord connection established!');
+            (0, log_1.log)('INFO: Connecting to Discord...');
             yield exports.client.login(process.env.DISCORD_TOKEN);
-            (0, log_1.log)('Bot successfully connected!');
+            (0, log_1.log)('INFO: Bot successfully connected!');
         }
         catch (error) {
-            (0, log_1.log)(`Bot connection failed: ${error}`);
+            (0, log_1.log)(`ERROR: Bot connection failed: ${error}`);
             yield exports.client.destroy();
-            (0, log_1.log)('Process exited due to critical failure.');
+            (0, log_1.log)('ERROR: Process exited due to critical failure.');
             process.exit(1);
         }
     });

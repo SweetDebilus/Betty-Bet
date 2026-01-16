@@ -91,6 +91,7 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
         if (playerValue > 21) {
             delete blackjackGames[userId];
             (0, pointsManager_1.addToDebilusCloset)(40);
+            (0, log_1.log)(`INFO: User ${userId} busted in blackjack game and added 40 points to Debilus Closet.`);
             yield (0, pointsManager_1.savePoints)();
             yield interaction.update({
                 content: `\n# *Your hand*: 
@@ -100,7 +101,6 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
 ## **You bust!** *Betty Bet wins.*`,
                 components: []
             });
-            (0, log_1.log)(`INFO: User ${userId} busted in blackjack game.`);
             return;
         }
         yield interaction.update({
@@ -143,12 +143,12 @@ const handleBlackjackInteraction = (interaction) => __awaiter(void 0, void 0, vo
             (0, log_1.log)(`INFO: User ${userId} tied the blackjack game.`);
         }
         delete blackjackGames[userId];
+        (0, log_1.log)(`INFO: Blackjack game for user ${userId} concluded.`);
         yield (0, pointsManager_1.savePoints)();
         yield interaction.update({
             content: resultMessage + `\n## You now have **${pointsManager_1.usersPoints[userId].points}** ${pointsEmoji}`,
             components: []
         });
-        (0, log_1.log)(`INFO: Blackjack game for user ${userId} concluded. Points updated.`);
     }
 });
 exports.handleBlackjackInteraction = handleBlackjackInteraction;

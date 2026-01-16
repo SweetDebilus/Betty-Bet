@@ -26,7 +26,7 @@ https://github.com/SweetDebilus/Betty-Bet?tab=readme-ov-file#betty-bet`;
                 content: text,
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
-            (0, log_1.log)(`INFO: User ${interaction.user.id} accessed the help command.`);
+            (0, log_1.log)(`INFO: User ${interaction.user.displayName} accessed the help command.`);
         });
     }
 };

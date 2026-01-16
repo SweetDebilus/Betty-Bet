@@ -28,7 +28,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
-                (0, log_1.log)(`ERROR: ClearBetHistory command executed without proper permissions.`);
+                (0, log_1.log)(`WARNING: ClearBetHistory command executed without proper permissions.`);
             }
         });
     }

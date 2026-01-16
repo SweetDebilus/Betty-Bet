@@ -100,26 +100,31 @@ const handleHighLowButton = (interaction) => __awaiter(void 0, void 0, void 0, f
         if (hiddenCard > visibleCard) {
             pointsManager_1.usersPoints[userId].points += reward;
             pointsManager_1.usersPoints[userId].isDebilus = pointsManager_1.usersPoints[userId].points <= 0;
+            (0, log_1.log)(`INFO: User ${userId} won High-Low game and earned ${reward} points.`);
             yield (0, pointsManager_1.savePoints)();
             resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${pointsManager_1.usersPoints[userId].points}${pointsEmoji}** !`;
         }
         else {
             resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${pointsManager_1.usersPoints[userId].points}${pointsEmoji}** !`;
+            (0, log_1.log)(`INFO: User ${userId} lost High-Low game.`);
         }
     }
     else if (customId === 'highlow_lower') {
         if (hiddenCard < visibleCard) {
             pointsManager_1.usersPoints[userId].points += reward;
             pointsManager_1.usersPoints[userId].isDebilus = pointsManager_1.usersPoints[userId].points <= 0;
+            (0, log_1.log)(`INFO: User ${userId} won High-Low game and earned ${reward} points.`);
             yield (0, pointsManager_1.savePoints)();
             resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${pointsManager_1.usersPoints[userId].points}${pointsEmoji}** !`;
         }
         else {
             resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${pointsManager_1.usersPoints[userId].points}${pointsEmoji}** !`;
+            (0, log_1.log)(`INFO: User ${userId} lost High-Low game.`);
         }
     }
     if (pointsManager_1.usersPoints[userId].isDebilus) {
         resultMessage += `\n\nYou have ${pointsManager_1.usersPoints[userId].points}${pointsEmoji} ! You're now a Debilus. Play wisely next time! ${debilus}`;
+        (0, log_1.log)(`INFO: User ${userId} has become a Debilus.`);
     }
     yield interaction.update({
         content: `# High-Low Game\n\n## |${visibleCard}| |${hiddenCard}|\n\n` + resultMessage,

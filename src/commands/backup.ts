@@ -3,7 +3,7 @@ import * as fs from 'fs';
 import { addToDebilusCloset, encrypt, setLastUpdateTime, setPurchaseHistory, setStore, filePath } from '../services/pointsManager';
 import { usersPoints} from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
-import { log } from 'console';
+import { log } from '../utils/log';
 
 export const command = {
     data: new SlashCommandBuilder() 
@@ -17,7 +17,7 @@ export const command = {
                 content: 'You do not have permission to use this command.',
                 flags: MessageFlags.Ephemeral 
             });
-            log(`ERROR: Backup command executed without proper permissions.`);
+            log(`WARNING: Backup command executed without proper permissions.`);
         }
     }
 };

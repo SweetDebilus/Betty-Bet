@@ -1,7 +1,7 @@
 import { GuildMember, SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, GuildMemberRoleManager, CommandInteraction } from 'discord.js';
 import { usersPoints, savePoints, addToDebilusCloset } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
-import { log } from 'console';
+import { log } from '../utils/log';
 
 const pointsEmoji = process.env.POINTS!;
 const bettyBettId = process.env.BETTYID!;
@@ -26,7 +26,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
-            log(`ERROR: AddPoints command executed without proper permissions.`);
+            log(`WARNING: AddPoints command executed without proper permissions.`);
         }
     }
 };

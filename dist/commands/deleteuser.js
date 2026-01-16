@@ -17,7 +17,10 @@ const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('deleteuser')
-        .setDescription('Delete a registered user. (BetManager only)'),
+        .setDescription('Delete a registered user. (BetManager only)')
+        .addStringOption(option => option.setName('userid')
+        .setDescription('The ID of the user to delete')
+        .setRequired(true)),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
             if ((0, interactionCreate_1.hasRole)('BetManager', interaction.member.roles)) {
@@ -28,7 +31,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_1.MessageFlags.Ephemeral
                 });
-                (0, log_1.log)(`ERROR: DeleteUser command executed without proper permissions.`);
+                (0, log_1.log)(`WARNING: DeleteUser command executed without proper permissions.`);
             }
         });
     }

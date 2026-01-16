@@ -26,7 +26,7 @@ exports.command = {
             }
             else {
                 yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_1.MessageFlags.Ephemeral });
-                (0, log_1.log)(`ERROR: ClearBets command executed without proper permissions.`);
+                (0, log_1.log)(`WARNING: ClearBets command executed without proper permissions.`);
             }
         });
     }

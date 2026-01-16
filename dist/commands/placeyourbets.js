@@ -42,7 +42,7 @@ function setBettingOpen(isOpen) {
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('placeyourbets')
-        .setDescription('Place your bets!')
+        .setDescription('Place your bets! (BetManager only)')
         .addStringOption(option => option.setName('player1name')
         .setDescription('Name of the first player')
         .setRequired(true))
@@ -56,6 +56,7 @@ exports.command = {
                     content: `Only users with the role *${process.env.ROLE}* are allowed to use Betty Bet`,
                     flags: discord_js_2.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARNING: PlaceYourBets command executed without proper permissions.`);
                 return;
             }
             if ((0, interactionCreate_1.hasRole)('BetManager', interaction.member.roles)) {
@@ -66,6 +67,7 @@ exports.command = {
                     content: 'You do not have permission to use this command.',
                     flags: discord_js_2.MessageFlags.Ephemeral
                 });
+                (0, log_1.log)(`WARNING: PlaceYourBets command executed without proper permissions.`);
             }
         });
     }

@@ -6,7 +6,12 @@ import { log } from '../utils/log';
 export const command = {
     data: new SlashCommandBuilder() 
         .setName('deleteuser') 
-        .setDescription('Delete a registered user. (BetManager only)'),
+        .setDescription('Delete a registered user. (BetManager only)')
+        .addStringOption(option => 
+            option.setName('userid')
+                .setDescription('The ID of the user to delete')
+                .setRequired(true)
+        ),
     async execute(interaction: ChatInputCommandInteraction) {
         if (hasRole('BetManager', (interaction.member as GuildMember).roles as GuildMemberRoleManager)) {
             await handleDeleteUser(interaction);
@@ -15,7 +20,7 @@ export const command = {
                 content: 'You do not have permission to use this command.',
                 flags: MessageFlags.Ephemeral 
             });
-            log(`ERROR: DeleteUser command executed without proper permissions.`);
+            log(`WARNING: DeleteUser command executed without proper permissions.`);
         }
     }
 };

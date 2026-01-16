@@ -4,7 +4,7 @@ import { handleClaimYesNo } from '../services/notification';
 import { handleBetSelection, handleBetModal } from '../commands/placeyourbets';
 import { handleBlackjackInteraction } from '../commands/blackjack';
 import { handleHighLowButton } from '../commands/higherlower';
-import { log } from 'console';
+import { log } from '../utils/log';
 
 let maintenanceMode: boolean = false;
 export const hasRole = (roleName: string, roles: GuildMemberRoleManager) => roles.cache.some(role => role.name === roleName);

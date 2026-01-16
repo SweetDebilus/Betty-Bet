@@ -16,7 +16,7 @@ export const command = {
             content: 'You are not registered yet. Use `/register` to register.', 
             flags: MessageFlags.Ephemeral 
         });
-        log(`WARN: Unregistered user ${userId} attempted to claim points from Point Vault.`);
+        log(`WARNING: Unregistered user ${userId} attempted to claim points from Point Vault.`);
         return;
     }
 

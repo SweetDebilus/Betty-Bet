@@ -3,7 +3,7 @@ import { hasRole } from '../events/interactionCreate';
 import dotenv from 'dotenv';
 import * as fs from 'fs';
 import * as path from 'path';
-import { log } from 'console';
+import { log } from '../utils/log';
 dotenv.config();
 
 const roleName = process.env.ROLE!;

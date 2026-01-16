@@ -49,6 +49,7 @@ exports.log = log;
 const dotenv_1 = __importDefault(require("dotenv"));
 const fs = __importStar(require("fs"));
 const path = __importStar(require("path"));
+const console_1 = require("console");
 dotenv_1.default.config();
 const logFile = process.env.PATHLOG;
 const maxSize = 5 * 1024 * 1024;
@@ -86,6 +87,7 @@ function log(message) {
             yield rotateLogs();
             const logMessage = `${new Date().toISOString()} - ${message}\n`;
             yield fs.promises.appendFile(logFile, logMessage);
+            (0, console_1.log)(logMessage.trim());
         }
         catch (error) {
             console.error(`Erreur lors de l'écriture du log :`, error);

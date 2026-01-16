@@ -19,7 +19,7 @@ export const command = {
                 content: 'You do not have permission to use this command.', 
                 flags: MessageFlags.Ephemeral 
             });
-            log(`ERROR: BetsList command executed without proper permissions.`);
+            log(`WARNING: BetsList command executed without proper permissions.`);
         }
     }
 };

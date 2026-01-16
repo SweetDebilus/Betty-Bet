@@ -13,14 +13,24 @@ exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const log_1 = require("../utils/log");
+const interactionCreate_1 = require("../events/interactionCreate");
 const pointsEmoji = process.env.POINTS;
 const debilus = process.env.DEBILUS;
+const role = process.env.ROLE;
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('register')
         .setDescription('Register to get initial points'),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
+            if (!(0, interactionCreate_1.hasRole)(role, interaction.member.roles)) {
+                yield interaction.reply({
+                    content: `Only users with the role *${role}* are allowed to use Betty Bet`,
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
+                (0, log_1.log)(`WARNING: Register command executed without proper permissions.`);
+                return;
+            }
             const userId = interaction.user.id;
             const member = interaction.member;
             const userName = member.nickname || interaction.user.displayName;
@@ -50,7 +60,7 @@ exports.command = {
                 content: `Registration successful!\n\nYou have received **100 ${pointsEmoji}** !!!\n\n **Optional**: This bot integrates a notification system, you can activate it by doing the command \`/togglenotification\` and Betty Bet will send you a DM when you reach 10 points in your inventory.`,
                 flags: discord_js_1.MessageFlags.Ephemeral
             });
-            (0, log_1.log)(`INFO: User ${userId} registered successfully.`);
+            (0, log_1.log)(`INFO: User ${userName} registered successfully.`);
         });
     }
 };

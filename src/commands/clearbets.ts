@@ -14,7 +14,7 @@ export const command = {
             await handleClearBets(interaction);
         } else {
             await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
-            log(`ERROR: ClearBets command executed without proper permissions.`);
+            log(`WARNING: ClearBets command executed without proper permissions.`);
         }
     }
 };

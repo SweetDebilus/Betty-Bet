@@ -9,6 +9,15 @@ import schedule from 'node-schedule';
 import { log } from './utils/log';
 import { addPointsToInventory, loadPoints } from './services/pointsManager';
 
+log(
+    `\n` +
+    `   =============================\n` +
+    `   ||        BETTY BET        ||\n` +
+    `   =============================\n` +
+    `   ||       By Selena V       ||\n` +
+    `   =============================`
+);
+
 export const client = new Client({
     intents: [
         GatewayIntentBits.Guilds,
@@ -21,7 +30,7 @@ export const client = new Client({
 export const commands: Map<string, any> = new Map();
 
 // -----------------------------
-// CHARGEMENT DES COMMANDES
+// COMMANDS LOADING
 // -----------------------------
 const commandsPath = path.join(__dirname, 'commands');
 const commandFiles = fs.readdirSync(commandsPath).filter(file =>
@@ -38,7 +47,7 @@ const commandData = [...commands.values()].map(cmd => cmd.data.toJSON());
 log(`INFO: Loaded ${commandData.length} commands.`);
 
 // -----------------------------
-// CHARGEMENT DES EVENTS
+// EVENTS LOADING
 // -----------------------------
 const eventsPath = path.join(__dirname, 'events');
 const eventFiles = fs.readdirSync(eventsPath).filter(file =>
@@ -72,8 +81,8 @@ client.once(Events.ClientReady, async () => {
 
     await loadPoints();
     await addPointsToInventory();
-    
-    log(`Logged in as ${client.user?.tag}!`);
+
+    log(`INFO: Logged in as ${client.user?.tag}!`);
 
     client.user?.setActivity('/help | Gearbot', {
         type: ActivityType.Playing
@@ -82,31 +91,31 @@ client.once(Events.ClientReady, async () => {
     const rest = new REST({ version: '10' }).setToken(process.env.DISCORD_TOKEN!);
 
     try {
-        log('Started refreshing application (/) commands.');
+        log('INFO: Started refreshing application (/) commands.');
 
         await rest.put(
             Routes.applicationCommands(client.user!.id),
             { body: commandData }
         );
 
-        log('Successfully reloaded application (/) commands.');
+        log('INFO: Successfully reloaded application (/) commands.');
     } catch (error) {
-        log(`${error}`);
+        log(`ERROR: ${error}`);
     }
 });
 
 // -----------------------------
-// CONNEXION AU BOT
+// BOT CONNECTION
 // -----------------------------
 async function waitForDiscord() {
     return new Promise((resolve) => {
         const checkConnection = () => {
             dns.lookup('discord.com', (err) => {
                 if (!err) {
-                    log('Connection to Discord servers detected!');
+                    log('INFO: Connection to Discord servers detected!');
                     resolve(undefined);
                 } else {
-                    log('No connection to Discord yet, waiting...');
+                    log('WARNING: No connection to Discord yet, waiting...');
                     setTimeout(checkConnection, 5000);
                 }
             });
@@ -118,14 +127,14 @@ async function waitForDiscord() {
 async function startBot(): Promise<void> {
     try {
         await waitForDiscord();
-        log('Discord connection established!');
-        log('Connecting to Discord...');
+        log('INFO: Discord connection established!');
+        log('INFO: Connecting to Discord...');
         await client.login(process.env.DISCORD_TOKEN!);
-        log('Bot successfully connected!');
+        log('INFO: Bot successfully connected!');
     } catch (error) {
-        log(`Bot connection failed: ${error}`);
+        log(`ERROR: Bot connection failed: ${error}`);
         await client.destroy();
-        log('Process exited due to critical failure.');
+        log('ERROR: Process exited due to critical failure.');
         process.exit(1);
     }
 }
