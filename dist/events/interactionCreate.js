@@ -16,6 +16,7 @@ const notification_1 = require("../services/notification");
 const placeyourbets_1 = require("../commands/placeyourbets");
 const blackjack_1 = require("../commands/blackjack");
 const higherlower_1 = require("../commands/higherlower");
+const win_1 = require("../commands/win");
 const log_1 = require("../utils/log");
 let maintenanceMode = false;
 const hasRole = (roleName, roles) => roles.cache.some(role => role.name === roleName);
@@ -89,6 +90,13 @@ exports.default = {
                 yield (0, placeyourbets_1.handleBetModal)(interaction);
                 (0, log_1.log)(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
                 return;
+            }
+            if (interaction.isStringSelectMenu()) {
+                if (interaction.customId === 'win_select') {
+                    const winnerValue = interaction.values[0]; // '1' ou '2'
+                    const winningKey = winnerValue === '1' ? 'bet_player1' : 'bet_player2';
+                    yield (0, win_1.handleWin)(interaction, winningKey);
+                }
             }
         });
     }
