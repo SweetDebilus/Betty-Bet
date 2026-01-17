@@ -51,5 +51,6 @@ And please change your nickname here according to your in-game name ^^`;
         }
 
         await interaction.reply(message);
+        log(`INFO: Welcome message sent for new ${type} ${name} by ${interaction.user.id}.`);
     }
 };

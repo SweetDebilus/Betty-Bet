@@ -91,6 +91,7 @@ exports.default = {
                 (0, log_1.log)(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
                 return;
             }
+            // --- SELECT MENUS ---
             if (interaction.isStringSelectMenu()) {
                 if (interaction.customId === 'win_select') {
                     const winnerValue = interaction.values[0]; // '1' ou '2'

@@ -94,6 +94,7 @@ export default {
             return;
         }
 
+        // --- SELECT MENUS ---
         if (interaction.isStringSelectMenu()) {
             if (interaction.customId === 'win_select') {
                 const winnerValue = interaction.values[0]; // '1' ou '2'

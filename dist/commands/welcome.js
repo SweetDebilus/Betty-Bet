@@ -12,6 +12,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const interactionCreate_1 = require("../events/interactionCreate");
+const log_1 = require("../utils/log");
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName("welcome")
@@ -51,6 +52,7 @@ Please check ⁠the <#${process.env.CHANNEL_WELCOME_ID}> channel to get the mand
 And please change your nickname here according to your in-game name ^^`;
             }
             yield interaction.reply(message);
+            (0, log_1.log)(`INFO: Welcome message sent for new ${type} ${name} by ${interaction.user.id}.`);
         });
     }
 };

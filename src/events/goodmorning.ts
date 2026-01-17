@@ -27,7 +27,12 @@ const morningLines = [
     "## The sun rises. Your sanity does not.",
     "## Awake already. Bold move.",
     "## May your coffee be strong and your decisions acceptable.",
-    "## Betty observes the dawn."
+    "## Betty observes the dawn.",
+    "## Another day, another chance to disappoint.",
+    "## Morning has broken, and so have you.",
+    "## Rise and shine, or just rise. Shine is optional.",
+    "## The early bird gets the worm, but the second mouse gets the cheese.",
+    "## May your day be as flawless as your Wi-Fi connection."
 ];
 
 const dataPath = path.join("src", "data", "goodmorningData.json");
