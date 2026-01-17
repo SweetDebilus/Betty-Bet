@@ -19,18 +19,37 @@ exports.command = {
         .setDescription('Check information about a user'),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
+            var _a, _b, _c;
             const userId = interaction.user.id;
-            const pointsEmoji = process.env.POINTS;
-            const debilus = process.env.DEBILUS;
-            if (!pointsManager_1.usersPoints[userId]) {
-                yield interaction.reply({ content: 'You are not registered yet. Use */register* to register.', flags: discord_js_1.MessageFlags.Ephemeral });
+            const pointsEmoji = (_a = process.env.POINTS) !== null && _a !== void 0 ? _a : '';
+            const debilus = (_b = process.env.DEBILUS) !== null && _b !== void 0 ? _b : '';
+            const userInfo = pointsManager_1.usersPoints[userId];
+            if (!userInfo) {
+                yield interaction.reply({
+                    content: 'You are not registered yet. Use */register* to register.',
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
                 return;
             }
-            const userInfo = pointsManager_1.usersPoints[userId];
-            const status = userInfo.isDebilus ? `you are a **Debilus** ${debilus}` : 'bettor';
+            const status = userInfo.isDebilus
+                ? `you are a **Debilus** ${debilus}`
+                : 'bettor';
             const notificationsEnabled = userInfo.notificationsEnabled ? 'enabled' : 'disabled';
-            const betHistory = userInfo.betHistory ? userInfo.betHistory.join(', ') : 'No bets placed yet.';
-            yield interaction.reply({ content: `**User Information for ${userInfo.name}**\n\n- **Points:** ${userInfo.points} ${pointsEmoji}\n- **Wins:** ${userInfo.wins}\n- **Losses:** ${userInfo.losses}\n- **Status:** ${status}\n - **Inventory:** ${userInfo.inventory}\n - Notifications: ${notificationsEnabled}\n - Bet History: ${betHistory}`, flags: discord_js_1.MessageFlags.Ephemeral });
+            const betHistory = ((_c = userInfo.betHistory) === null || _c === void 0 ? void 0 : _c.length)
+                ? userInfo.betHistory.join(', ')
+                : 'No bets placed yet.';
+            yield interaction.reply({
+                content: `**User Information for ${userInfo.name}**
+
+- **Points:** ${userInfo.points} ${pointsEmoji}
+- **Wins:** ${userInfo.wins}
+- **Losses:** ${userInfo.losses}
+- **Status:** ${status}
+- **Inventory:** ${userInfo.inventory}
+- **Notifications:** ${notificationsEnabled}
+- **Bet History:** ${betHistory}`,
+                flags: discord_js_1.MessageFlags.Ephemeral
+            });
             (0, log_1.log)(`INFO: User ${userId} checked their user information.`);
         });
     }
