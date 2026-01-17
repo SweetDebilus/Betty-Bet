@@ -1,9 +1,10 @@
-import { GuildMember, Interaction, GuildMemberRoleManager, MessageFlags } from 'discord.js';
+import { GuildMember, Interaction, GuildMemberRoleManager, MessageFlags, CommandInteraction } from 'discord.js';
 import { commands } from '../index'; // ou depuis ton module de commandes
 import { handleClaimYesNo } from '../services/notification';
 import { handleBetSelection, handleBetModal } from '../commands/placeyourbets';
 import { handleBlackjackInteraction } from '../commands/blackjack';
 import { handleHighLowButton } from '../commands/higherlower';
+import { handleWin } from '../commands/win';
 import { log } from '../utils/log';
 
 let maintenanceMode: boolean = false;
@@ -91,6 +92,15 @@ export default {
             await handleBetModal(interaction);
             log(`DEBUG: Modal interaction received with customId: ${interaction.customId}`);
             return;
+        }
+
+        if (interaction.isStringSelectMenu()) {
+            if (interaction.customId === 'win_select') {
+                const winnerValue = interaction.values[0]; // '1' ou '2'
+                const winningKey = winnerValue === '1' ? 'bet_player1' : 'bet_player2';
+
+                await handleWin(interaction, winningKey);
+            }
         }
     }
 };

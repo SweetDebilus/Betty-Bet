@@ -9,12 +9,11 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
     });
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.command = void 0;
+exports.handleWin = exports.command = void 0;
 const discord_js_1 = require("discord.js");
 const pointsManager_1 = require("../services/pointsManager");
 const interactionCreate_1 = require("../events/interactionCreate");
 const discord_js_2 = require("discord.js");
-const pointsManager_2 = require("../services/pointsManager");
 const placeyourbets_1 = require("./placeyourbets");
 const log_1 = require("../utils/log");
 const debilus = process.env.DEBILUS;
@@ -22,25 +21,41 @@ const pointsEmoji = process.env.POINTS;
 exports.command = {
     data: new discord_js_1.SlashCommandBuilder()
         .setName('win')
-        .setDescription('Declare the winner and redistribute points. (BetManager only)')
-        .addIntegerOption(option => option.setName('winner')
-        .setDescription('The winning player (1 or 2)')
-        .setRequired(true)),
+        .setDescription('Declare the winner and redistribute points. (BetManager only)'),
     execute(interaction) {
         return __awaiter(this, void 0, void 0, function* () {
-            var _a;
-            if ((0, interactionCreate_1.hasRole)('BetManager', interaction.member.roles)) {
-                const winner = (_a = interaction.options.get('winner')) === null || _a === void 0 ? void 0 : _a.value;
-                if (winner === 1 || winner === 2) {
-                    yield handleWin(interaction, winner === 1 ? 'bet_player1' : 'bet_player2');
-                }
-                else {
-                    yield interaction.reply('The winner must be 1 or 2.');
-                }
+            if (!(0, interactionCreate_1.hasRole)('BetManager', interaction.member.roles)) {
+                yield interaction.reply({
+                    content: 'You do not have permission to use this command.',
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
+                return;
             }
-            else {
-                yield interaction.reply({ content: 'You do not have permission to use this command.', flags: discord_js_1.MessageFlags.Ephemeral });
+            if (Object.keys(placeyourbets_1.currentBets).length === 0) {
+                yield interaction.reply({
+                    content: `No bets were placed, nothing to redistribute. ${debilus}`,
+                    flags: discord_js_1.MessageFlags.Ephemeral
+                });
+                return;
             }
+            const row = new discord_js_1.ActionRowBuilder().addComponents(new discord_js_1.StringSelectMenuBuilder()
+                .setCustomId('win_select')
+                .setPlaceholder('Choose the winning player')
+                .addOptions([
+                {
+                    label: placeyourbets_1.player1Name,
+                    value: '1'
+                },
+                {
+                    label: placeyourbets_1.player2Name,
+                    value: '2'
+                }
+            ]));
+            yield interaction.reply({
+                content: 'Select the winner:',
+                components: [row],
+                flags: discord_js_1.MessageFlags.Ephemeral
+            });
         });
     }
 };
@@ -71,9 +86,9 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
     }
     if (winnerBetAmount === 0) {
         (0, pointsManager_1.addToDebilusCloset)(totalBetAmount);
-        yield (0, pointsManager_2.savePoints)();
+        yield (0, pointsManager_1.savePoints)();
         const file = new discord_js_2.AttachmentBuilder('./images/crashboursier.png');
-        const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${pointsManager_2.debilusCloset}** ${pointsEmoji}`;
+        const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${pointsManager_1.debilusCloset}** ${pointsEmoji}`;
         yield interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
         for (const [userId, bet] of Object.entries(placeyourbets_1.currentBets)) {
             pointsManager_1.usersPoints[userId].losses += 1;
@@ -83,7 +98,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
         }
         (0, placeyourbets_1.setCurrentBets)({});
         (0, placeyourbets_1.setBettingOpen)(false);
-        yield (0, pointsManager_2.savePoints)();
+        yield (0, pointsManager_1.savePoints)();
         return;
     }
     for (const [userId, bet] of Object.entries(placeyourbets_1.currentBets)) {
@@ -102,7 +117,7 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
             pointsManager_1.usersPoints[userId].isDebilus = pointsManager_1.usersPoints[userId].points <= 0;
         }
     }
-    yield (0, pointsManager_2.savePoints)();
+    yield (0, pointsManager_1.savePoints)();
     (0, placeyourbets_1.setCurrentBets)({});
     (0, placeyourbets_1.setBettingOpen)(false);
     const message = `The winner is **${winningPlayerName}** ! Congratulations to all those who bet on this player, the GearPoints have been redistributed !`;
@@ -118,3 +133,4 @@ const handleWin = (interaction, winningPlayer) => __awaiter(void 0, void 0, void
     (0, placeyourbets_1.setPlayerNames)('Player 1', 'Player 2');
     (0, log_1.log)(`INFO: Win command executed. Winner: ${winningPlayerName}. Points redistributed.`);
 });
+exports.handleWin = handleWin;

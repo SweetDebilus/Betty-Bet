@@ -1,8 +1,7 @@
-import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, CommandInteraction, GuildMember, GuildMemberRoleManager } from 'discord.js';
-import { addToDebilusCloset, usersPoints } from '../services/pointsManager';
+import { SlashCommandBuilder, MessageFlags, ChatInputCommandInteraction, CommandInteraction, GuildMember, GuildMemberRoleManager, ActionRowBuilder, StringSelectMenuBuilder, StringSelectMenuInteraction } from 'discord.js';
+import { addToDebilusCloset, usersPoints, savePoints, debilusCloset } from '../services/pointsManager';
 import { hasRole } from '../events/interactionCreate';
 import { AttachmentBuilder } from 'discord.js';
-import { savePoints, debilusCloset } from '../services/pointsManager';
 import { currentBets, player1Name, player2Name, setCurrentBets, setBettingOpen, setPlayerNames } from './placeyourbets';
 import { log } from '../utils/log';
 
@@ -11,27 +10,51 @@ const pointsEmoji = process.env.POINTS!;
 
 export const command = {
     data: new SlashCommandBuilder()
-        .setName('win') 
-        .setDescription('Declare the winner and redistribute points. (BetManager only)') 
-        .addIntegerOption(option => 
-            option.setName('winner') 
-                .setDescription('The winning player (1 or 2)') 
-                .setRequired(true)), 
+        .setName('win')
+        .setDescription('Declare the winner and redistribute points. (BetManager only)'),
+
     async execute(interaction: ChatInputCommandInteraction) {
-        if (hasRole('BetManager', (interaction.member as GuildMember).roles as GuildMemberRoleManager)) {
-            const winner = interaction.options.get('winner')?.value;
-            if (winner === 1 || winner === 2) {
-                await handleWin(interaction, winner === 1 ? 'bet_player1' : 'bet_player2');
-            } else {
-                await interaction.reply('The winner must be 1 or 2.');
-            }
-        } else {
-            await interaction.reply({ content: 'You do not have permission to use this command.', flags: MessageFlags.Ephemeral });
-        }   
+        if (!hasRole('BetManager', (interaction.member as GuildMember).roles as GuildMemberRoleManager)) {
+            await interaction.reply({
+                content: 'You do not have permission to use this command.',
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
+
+        if (Object.keys(currentBets).length === 0) {
+            await interaction.reply({
+                content: `No bets were placed, nothing to redistribute. ${debilus}`,
+                flags: MessageFlags.Ephemeral
+            });
+            return;
+        }
+
+        const row = new ActionRowBuilder<StringSelectMenuBuilder>().addComponents(
+            new StringSelectMenuBuilder()
+                .setCustomId('win_select')
+                .setPlaceholder('Choose the winning player')
+                .addOptions([
+                    {
+                        label: player1Name,
+                        value: '1'
+                    },
+                    {
+                        label: player2Name,
+                        value: '2'
+                    }
+                ])
+        );
+
+        await interaction.reply({
+            content: 'Select the winner:',
+            components: [row],
+            flags: MessageFlags.Ephemeral
+        });
     }
 };
 
-const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_player1' | 'bet_player2') => {
+export const handleWin = async (interaction: CommandInteraction | StringSelectMenuInteraction, winningPlayer: 'bet_player1' | 'bet_player2') => {
     let totalBetAmount = 0;
     let winnerBetAmount = 0;
     let loserBetAmount = 0;
@@ -52,12 +75,12 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
             loserBetAmount += bet.amount;
         }
     }
-    
+
     if (winnerBetAmount === 0 && loserBetAmount === 0) {
         const message = `No bets, no money ! ${debilus}`;
         await interaction.reply({ content: message, flags: MessageFlags.Ephemeral });
         return;
-    }  
+    }
 
     if (winnerBetAmount === 0) {
         addToDebilusCloset(totalBetAmount);
@@ -67,7 +90,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
         await interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
 
         for (const [userId, bet] of Object.entries(currentBets)) {
-            usersPoints[userId].losses += 1; 
+            usersPoints[userId].losses += 1;
 
             const betHistory = usersPoints[userId].betHistory;
             betHistory[betHistory.length - 1].result = 'loss';
@@ -85,7 +108,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
             const gainFromLosers = Math.floor(bet.amount / winnerBetAmount * loserTotalPoints);
             usersPoints[userId].points += bet.amount + gainFromLosers;
             usersPoints[userId].wins += 1;
-        
+
             const betHistory = usersPoints[userId].betHistory;
             betHistory[betHistory.length - 1].result = 'win';
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
@@ -96,7 +119,6 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
             usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
         }
     }
-    
 
     await savePoints();
     setCurrentBets({});
@@ -105,6 +127,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'bet_pl
     const message = `The winner is **${winningPlayerName}** ! Congratulations to all those who bet on this player, the GearPoints have been redistributed !`;
     const message2 = `The winner is **${winningPlayerName}** ! It's the stock market crash, you had to believe a little more in this player !`;
     const file = new AttachmentBuilder('./images/petitcrashboursier.png');
+
     if (winnerBetAmount < loserBetAmount) {
         await interaction.reply({ content: message2, files: [file] });
     } else {
