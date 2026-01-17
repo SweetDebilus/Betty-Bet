@@ -55,7 +55,6 @@ exports.default = {
             const isInvoked = aliases.some(a => content.includes(a));
             if (!isInvoked)
                 return;
-            // Ne pas invoquer si le message contient "gomez" ou ses variantes
             if (content.includes("gomez") || content.includes("gómez") || content.includes("gomezz") || content.includes("gomees") || content.includes("gomeez")) {
                 return;
             }
