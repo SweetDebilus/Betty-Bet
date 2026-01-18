@@ -25,7 +25,8 @@ const morningTriggers = [
     "おはよう",
     "buenos dias",
     "buenos días",
-    "morning"
+    "morning",
+    "mornin",
 ];
 const morningGifs = [
     "https://tenor.com/view/good-morning-cyberpunk-2077-night-city-gif-19591988",

@@ -13,7 +13,8 @@ const morningTriggers = [
     "おはよう",
     "buenos dias",
     "buenos días",
-    "morning"
+    "morning",
+    "mornin",
 ];
 
 const morningGifs = [
