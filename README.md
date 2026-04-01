@@ -9,23 +9,12 @@
 - **/pointvault**: Check the GearPoints in your Point Vault.
 - **/claim**: Claim GearPoints from your Point Vault to add them to your balance.
 - **/bethistory**: View your betting history.
-- **/stats**: View your detailed statistics.
-- **/globalstats**: View global betting statistics.
 - **/togglenotifications**: Toggle notifications for inventory GearPoints.
-- **/clearmessages**: Clear all private messages sent by the bot.
-- **/presentation**: Present Betty Bet and its features.
-- **/blackjack**: Pay 10 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 10 points are gone and added to the Debilus Closet.
-- **/stopblackjack**: to stop a gaming session in the event of a problem and be reimbursed for the 10 points wagered.
-- **/highlow**: Play a game of High-Low. You need to have at least 40 points to play.
-- **/stophighlow**: Stop the current game of High-Low and refund your 40 points.
-- **/exchange**: exchange points with another user
-- **/buyitem**: Buy an item in Betty Bet's shop with your GearPoints.
-  - **Options**:
-    - `itemname`: Name of item.
-    - `quantity`: The number of items you want to buy.
-- **/listitems**: view items for sale in the store.
-- **/myitems**: view items in your inventory.
+- **/help**: Present Betty Bet and its features.
+- **/blackjack**: Pay 40 points and play with Betty Bet in a game of blackjack, if you win you win double, if you lose the 40 points are gone and added to the Debilus Closet.
+- **/higherlower**: Play a game of Higher or Lower
 
+  
 ### Commands reserved for **BetManager** roles:
 
 - **/placeyourbets**: Start a betting period between two players.
@@ -46,36 +35,38 @@
     - `userid`: ID of the user to delete.
 - **/backup**: Encrypt and save data from decrypted backup.
 - **/leaderboard**: Show the leaderboard of top betters.
-- **/sendbackup**: Send the decrypted backup file.
-- **/addtournamentparticipant**: Add a user to the tournament participant list.
-  - **Option**:
-    - `user`: User to add.
-- **/removetournamentparticipant**: Remove a user from the tournament participant list.
-  - **Option**:
-    - `user`: User to remove.
-- **/listtournamentparticipants**: List all tournament participants.
-- **/addwinmatch**: adds 1 winning point to a user. (the user must be registered and be in the list of participants in the tournament)
-  - **Option**:
-    - `user`: Winning user
-- **/addlosematch**: adds 1 lossing point to a user. (the user must be registered and be in the list of participants in the tournament)
-  - **Option**:
-    - `user`: Losing user.
-- **/cleartournamentparticipants**: Clear the list of tournament participants.
-- **/transferdebilus**: Transfer all GearPoints from the debilus closet to a specific user and empty the closet.
-  - **Options**:
-    - `user`: User to transfer the GearPoints to.
-- **/additem**: Add an item to Betty Bet's shop.
-  - **Option**:
-    - `itemname`: Name of item.
-    - `quantity`: The number of items you want to add.
-    - `unitprice`: Enter the price of the item per unit.
-- **/tournamentranking**: view the ranking of the tournament participants.
-- **/purchasehistory**: View purchase history in the store
+- **/clearbethistory**: Clear the betting history of all users.
+- **/topbettor**: Display the best bettors based on their betting history
+- **/veteranlist**: Displays and adds users who have been present on the Discord server for more than a year
+
 
 ## Additional Features
 
 - **Automatic Points System**: Points are added to your Point Vault at fixed times every day (12:00 AM and 12:00 PM Local Time), up to a maximum of 15 points. You can claim these points using the `/claim` command.
 - **Debilus Closet**: Every point lost is sent to the Debilus Closet. 
+
+## Event‑Based Behaviors
+
+   Beyond slash commands, Betty Bet reacts dynamically to certain messages in the server through event listeners located in the `events/` directory.
+
+### **Witch / Wizard Detection**
+
+   When a user writes the word **“witch”** (without “wizard” in the same message), Betty responds with a random magical punchline.  
+   These punchlines are thematic, humorous, and reinforce Betty’s occult personality.
+
+   A cooldown prevents spam and ensures the feature remains fun and surprising.
+
+### **Creator Invocation (Name Detection)**
+
+   When someone mentions the creator’s name — **Selena Sweetheart** — Betty performs a ritualistic “summoning”.
+
+   When triggered, Betty pings the creator directly using a real Discord mention and adds a dramatic invocation line chosen from a curated list of ritual phrases.
+
+   A global cooldown ensures the summoning remains a rare and amusing event.
+
+### **Good morning vibe**
+
+   Once a day, Betty sends a GIF and potentially (20% chance) an additional message to wish you a good morning.
       
 ## Installation
 
@@ -136,4 +127,16 @@
 
    This README provides a comprehensive overview of Betty Bet, its features, and how to install and use it. If you need more details or additional modifications, let me know!
 
-Made with ❤️ by [Selena V](https://github.com/SweetDebilus)
+Made with ❤️ & ☠️ by [Selena V](https://github.com/SweetDebilus)
+
+## Personal note:
+
+Betty Bet started as a small, cobbled‑together bot meant for friendly bets.
+As time went on, I kept adding features and behaviors, until the whole thing quietly turned into a complex little monster.
+So I refactored everything.
+
+I revisited the entire architecture; a task that took more than 18 hours, done calmly and at my own pace... to reach the version you see today.
+Now it’s a clean, modular, maintainable project that keeps evolving because I learn alongside it.
+
+This bot was never meant to be perfect.
+It was meant to be alive, dynamic, and tailored to the specific needs of my Discord server.
