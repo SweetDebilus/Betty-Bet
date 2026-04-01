@@ -65,7 +65,7 @@ const calculateHandValue = (hand: string[]) => {
   let aces = 0;
 
   hand.forEach(card => {
-    const match = card.match(/[0-9]+|[JQKA]/); // Extrait la valeur de la carte (2, 3, ..., A)
+    const match = card.match(/[0-9]+|[JQKA]/);
     const cardValue = match ? match[0] : null;
     if (cardValue) {
       value += cardValues[cardValue];
@@ -106,7 +106,6 @@ const formatDate = (date: Date) => {
   return `${year}/${month}/${day} - ${hours}:${minutes}:${seconds}`;
 };
 
-// Fonction pour créer le dossier si nécessaire 
 const ensureLogDirectoryExists = (filePath: string): void => { 
   const logDir = path.dirname(filePath); 
   if (!fs1.existsSync(logDir)) { 
@@ -114,10 +113,9 @@ const ensureLogDirectoryExists = (filePath: string): void => {
   } 
 }; 
 
-// Appeler la fonction pour s'assurer que le dossier existe 
 ensureLogDirectoryExists(logFile); 
 
-const maxSize = 5 * 1024 * 1024; // Taille max en octets (5MB)
+const maxSize = 5 * 1024 * 1024;
 
 const rotateLogs = async (): Promise<void> => {
   try {
@@ -125,8 +123,8 @@ const rotateLogs = async (): Promise<void> => {
       const stats = fs.statSync(logFile);
       if (stats.size >= maxSize) {
         const timestamp = new Date().toISOString().replace(/:/g, '-');
-        const archivedLog = `bot-${timestamp}.log`; // Nouveau fichier avec timestamp
-        await fs.promises.rename(logFile, archivedLog); // Archive le log actuel
+        const archivedLog = `bot-${timestamp}.log`;
+        await fs.promises.rename(logFile, archivedLog);
         console.log(`Log archivé sous : ${archivedLog}`);
       }
     }
@@ -137,7 +135,7 @@ const rotateLogs = async (): Promise<void> => {
 
 const log = async (message: string): Promise<void> => {
   try {
-    await rotateLogs(); // Vérifie si le log doit être archivé avant d’écrire
+    await rotateLogs();
     const logMessage = `${new Date().toISOString()} - ${message}\n`;
     await fs.promises.appendFile(logFile, logMessage);
   } catch (error) {
@@ -185,7 +183,7 @@ const saveDecryptedBackup = () => {
       purchaseHistory,
       lastUpdateTime: lastUpdateTime.toISOString()
     };
-    fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+    fs.writeFileSync('DataDebilus/decrypted_backup.json', JSON.stringify(data, null, 2));
     log("INFO: Decrypted backup data saved.");
   } catch (error) {
     log(`ERROR: Error saving points: ${error}`)
@@ -239,18 +237,15 @@ const savePoints = async () => {
 
   function tryWriteFile() {
   try {
-    // Vérification de l'accès en écriture avant d'essayer de sauvegarder
     if (fs.existsSync(filePath)) {
       fs.accessSync(filePath, fs.constants.W_OK);
     } else {
       log("WARNING: Le fichier n'existe pas, création d'un nouveau...");
     }
 
-    // Écriture du fichier
     fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
     log("INFO: Data saved successfully.");
 
-    // Créer un fichier de sauvegarde des données déchiffrées
     saveDecryptedBackup();
   } catch (error) {
     attempts++;
@@ -266,11 +261,10 @@ const savePoints = async () => {
   tryWriteFile();
 };
 
-// Fonction pour ajouter des points à l'inventaire
 const addPointsToInventory = async () => {
   const now = new Date();
   const timeDifference = now.getTime() - lastUpdateTime.getTime();
-  const cyclesPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 12)); // Nombre de cycles de 12 heures écoulés
+  const cyclesPassed = Math.floor(timeDifference / (1000 * 60 * 60 * 12));
 
   for (const userId in usersPoints) {
     if (usersPoints[userId].inventory < 15) {
@@ -278,22 +272,21 @@ const addPointsToInventory = async () => {
       if (potentialNewInventory > 15) { 
         const excessPoints = potentialNewInventory - 15; 
         usersPoints[userId].inventory = 15; 
-        debilusCloset += excessPoints; // Ajouter les points excédentaires au debilusCloset 
-        log(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`); // log points ajouter au userId
+        debilusCloset += excessPoints;
+        log(`Added ${cyclesPassed} points to user ${userId}'s inventory. Excess points added to debilusCloset.`);
       } else { 
         usersPoints[userId].inventory = potentialNewInventory; 
-        log(`Added ${cyclesPassed} points to user ${userId}'s inventory.`); // log points ajouter au userId
+        log(`Added ${cyclesPassed} points to user ${userId}'s inventory.`);
       }
 
       if (usersPoints[userId].inventory === 10) {
-        await sendNotification(userId, 10); // Notification à 10 points
-        log(`Notification sent to user ${userId} for 10 points.`); // log notification
+        await sendNotification(userId, 10);
+        log(`Notification sent to user ${userId} for 10 points.`);
       } else if (usersPoints[userId].inventory === 15) {
-        await sendNotification(userId, 15); // Notification à 15 points
-        log(`Notification sent to user ${userId} for 15 points.`); // log notification
+        await sendNotification(userId, 15);
+        log(`Notification sent to user ${userId} for 15 points.`);
       } else {
         debilusCloset += cyclesPassed;
-        // log points ajouter au debilusCloset
         log(`Added ${cyclesPassed} points to debilusCloset for user ${userId}.`);
       }
     }
@@ -310,36 +303,31 @@ const addPointsToInventory = async () => {
 
 const notificationsFile = 'notifications.json';
 
-// Interface pour structurer les données des notifications
 interface NotificationsData {
   [userId: string]: number;
 }
 
-// Charger les données des notifications
 const loadNotificationData = (): NotificationsData => {
   if (!fs.existsSync(notificationsFile)) return {};
   return JSON.parse(fs.readFileSync(notificationsFile, 'utf-8'));
 };
 
-// Enregistrer la dernière notification envoyée
 const saveNotificationData = (data: NotificationsData) => {
   fs.writeFileSync(notificationsFile, JSON.stringify(data, null, 2));
 };
 
-// Vérifie si l'utilisateur a déjà été notifié récemment
 const hasBeenNotifiedRecently = (userId: string): boolean => {
   const data = loadNotificationData();
   const lastNotification = data[userId] || 0;
   return Date.now() - lastNotification < 12 * 60 * 60 * 1000; // 12 heures
 };
 
-// Supprimer un utilisateur du suivi des notifications après qu'il ait claim ses points
 const removeNotificationEntry = (userId: string) => {
   const data = loadNotificationData();
   
   if (data[userId]) {
-    delete data[userId]; // Supprime l'entrée de l'utilisateur
-    saveNotificationData(data); // Sauvegarde la mise à jour
+    delete data[userId]; 
+    saveNotificationData(data);
     log(`INFO: User ${userId} removed from notification tracking.`);
   }
 };
@@ -373,7 +361,6 @@ const sendNotification = async (userId: string, points: number) => {
 
       log(`INFO: Notification sent successfully to user ${userId} for ${points} points.`);
 
-      // Enregistrement de l'envoi de la notification
       const data = loadNotificationData();
       data[userId] = Date.now();
       saveNotificationData(data);
@@ -383,7 +370,6 @@ const sendNotification = async (userId: string, points: number) => {
   }
 };
 
-// Planifier la tâche pour qu'elle s'exécute à des heures fixes (12:00 AM et 12:00 PM)
 schedule.scheduleJob('0 0 * * *', addPointsToInventory); // Exécute tous les jours à minuit
 schedule.scheduleJob('0 12 * * *', addPointsToInventory); // Exécute tous les jours à midi
 
@@ -991,11 +977,9 @@ client.on('interactionCreate', async interaction => {
   if (!interaction.isModalSubmit()) return;
 
   if (interaction.customId === 'bet_modal') {
-    // Récupérer les données saisies par l'utilisateur
     const betAmount = interaction.fields.getTextInputValue('bet_amount');
     const userId = interaction.user.id;
 
-    // Vérifier si le montant est valide
     if (!/^\d+$/.test(betAmount) || parseInt(betAmount) <= 0) {
       await interaction.reply({
         content: 'Invalid bet amount. Please enter a positive numeric value.',
@@ -1006,7 +990,6 @@ client.on('interactionCreate', async interaction => {
 
     const betAmountInt = parseInt(betAmount);
 
-    // Vérifier les points de l'utilisateur
     if (usersPoints[userId].points < betAmountInt) {
       await interaction.reply({
         content: `${pointsEmoji} Not enough points. Try a lower amount.`,
@@ -1015,12 +998,10 @@ client.on('interactionCreate', async interaction => {
       return;
     }
 
-    // Ajouter le pari
     usersPoints[userId].points -= betAmountInt;
     const playerBetOn = interaction.message!.content.includes(player1Name) ? 'player1' : 'player2';
     currentBets[userId] = { amount: betAmountInt, betOn: playerBetOn };
 
-    // Mettre à jour l'historique
     usersPoints[userId].betHistory.push({
       betOn: playerBetOn === 'player1' ? player1Name : player2Name,
       amount: betAmountInt,
@@ -1030,7 +1011,6 @@ client.on('interactionCreate', async interaction => {
 
     await savePoints();
 
-    // Confirmation
     await interaction.reply({
       content: `You have successfully placed a bet of **${betAmountInt}** ${pointsEmoji} on **${playerBetOn === 'player1' ? player1Name : player2Name}**.`,
       flags: MessageFlags.Ephemeral
@@ -1068,11 +1048,9 @@ const handleToggleNotifications = async (interaction: CommandInteraction) => {
 };
 
 const handlePlaceYourBets = async (interaction: CommandInteraction) => {
-  // Initialisation des variables
   bettingOpen = true;
   currentBets = {};
 
-  // Récupération des noms des joueurs
   if (!interaction.isChatInputCommand()) {
     return interaction.reply('An error has occurred. Please try again.');
   }
@@ -1085,7 +1063,6 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
 
   log(`Bets are open for ${player1Name} and ${player2Name}`);
 
-  // Création des boutons pour les paris
   const actionRow = new ActionRowBuilder<ButtonBuilder>()
     .addComponents(
       new ButtonBuilder()
@@ -1098,55 +1075,48 @@ const handlePlaceYourBets = async (interaction: CommandInteraction) => {
         .setStyle(ButtonStyle.Danger)
     );
 
-  // Envoi du message initial
   await interaction.reply({
     content: `## The bets are open!!!\n\nYou have **60 seconds** to choose between **${player1Name}** and **${player2Name}**.\n\n`,
     components: [actionRow]
   });
 
-  // Récupérer le message après l'envoi
   const replyMessage = await interaction.fetchReply();
 
-  // Affichage d'un effet visuel supplémentaire dans le canal
   const channel = interaction.channel as TextChannel;
   if (channel) {
     channel.send(`${betyEmoji}    ${betyEmoji}    ${betyEmoji}    ${betyEmoji}`);
   }
 
-  // Fermeture des paris après 60 secondes
   setTimeout(async () => {
     try {
       bettingOpen = false;
 
-      // Désactivation des boutons
       const disabledRow = new ActionRowBuilder<ButtonBuilder>()
         .addComponents(
           new ButtonBuilder()
             .setCustomId('player1')
             .setLabel('Bet on ' + player1Name)
             .setStyle(ButtonStyle.Primary)
-            .setDisabled(true), // Désactiver le bouton
+            .setDisabled(true), 
           new ButtonBuilder()
             .setCustomId('player2')
             .setLabel('Bet on ' + player2Name)
             .setStyle(ButtonStyle.Danger)
-            .setDisabled(true) // Désactiver le bouton
+            .setDisabled(true) 
         );
 
-      // Mise à jour du message pour indiquer que les paris sont fermés
       await replyMessage.edit({
         content: `## Bets are now closed!`,
         components: [disabledRow],
       });
 
-      // Message de fin de session dans le canal
       if (channel) {
         channel.send('*Thanks for the money!*');
       }
     } catch (error) {
       log(`Error closing bets: ${error}`);
     }
-  }, 60000); // Temps pour fermer les paris (60 secondes)
+  }, 60000); 
 };
 
 const handleBetSelection = async (interaction: ButtonInteraction) => {
@@ -1161,7 +1131,6 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
     return;
   }
 
-  // Vérifier si l'utilisateur a parié sur l'autre joueur
   if (currentBets[userId] && currentBets[userId].betOn !== customId) {
     await interaction.reply({
       content: 'You have already placed a bet on the other player.',
@@ -1170,7 +1139,6 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
     return;
   }
 
-  // Vérifier si l'utilisateur a déjà parié
   if (currentBets[userId]) {
     await interaction.reply({
       content: 'You have already placed a bet on this player.',
@@ -1181,7 +1149,6 @@ const handleBetSelection = async (interaction: ButtonInteraction) => {
 
   const playerName = customId === 'player1' ? player1Name : player2Name;
 
-  // Créer un modal pour demander le montant du pari
   const modal = new ModalBuilder()
     .setCustomId(`bet_modal_${customId}`)
     .setTitle(`Bet on ${playerName}`);
@@ -1204,7 +1171,6 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
     const userId = interaction.user.id;
     const betAmountStr = interaction.fields.getTextInputValue('bet_amount');
 
-    // Vérification stricte : uniquement des nombres
     if (!/^\d+$/.test(betAmountStr)) {
       await interaction.reply({
         content: 'Invalid input. Please enter only numbers.',
@@ -1223,7 +1189,7 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
       return;
     }
 
-    const customId = interaction.customId.replace('bet_modal_', ''); // Extract the player ID
+    const customId = interaction.customId.replace('bet_modal_', ''); 
     const chosenPlayerName = customId === 'player1' ? player1Name : player2Name;
 
     if (!usersPoints[userId]) {
@@ -1234,7 +1200,6 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
       return;
     }
 
-    // Vérifier les points disponibles
     if (usersPoints[userId].points < betAmount) {
       await interaction.reply({
         content: `${pointsEmoji} Not enough points. Try a lower amount.`,
@@ -1243,7 +1208,6 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
       return;
     }
 
-    // Enregistrer le pari
     usersPoints[userId].points -= betAmount;
     currentBets[userId] = { amount: betAmount, betOn: customId as 'player1' | 'player2' };
     usersPoints[userId].betHistory.push({
@@ -1255,7 +1219,6 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
 
     await savePoints();
 
-    // Confirmation
     await interaction.reply({
       content: `You successfully placed a bet of **${betAmount}** ${pointsEmoji} on **${chosenPlayerName}**!`,
       flags: MessageFlags.Ephemeral,
@@ -1271,8 +1234,8 @@ const handleBetModal = async (interaction: ModalSubmitInteraction) => {
 
 client.on('interactionCreate', async (interaction) => {
   if (interaction.isModalSubmit() && interaction.customId.startsWith('bet_modal')) {
-    console.log('Modal submit captured:', interaction.customId); // Debugging
-    await handleBetModal(interaction); // Appel de ta fonction spécifique
+    console.log('Modal submit captured:', interaction.customId);
+    await handleBetModal(interaction); 
   }
 });
 
@@ -1312,12 +1275,11 @@ const handleLeaderboard = async (interaction: CommandInteraction) => {
   const sortedUsers = Object.entries(usersPoints).sort((a, b) => b[1].points - a[1].points);
   const top20 = sortedUsers.slice(0, 20);
 
-  // Définir les largeurs de colonnes pour un alignement uniforme
-  const rankWidth = 6; // Largeur de la colonne "Rank"
-  const nameWidth = 32; // Largeur de la colonne "Name"
-  const pointsWidth = 10; // Largeur de la colonne "Points"
-  const winsWidth = 8; // Largeur de la colonne "Wins"
-  const lossesWidth = 8; // Largeur de la colonne "Losses"
+  const rankWidth = 6; 
+  const nameWidth = 32; 
+  const pointsWidth = 10; 
+  const winsWidth = 8; 
+  const lossesWidth = 8; 
 
   const leaderboard = top20.map(([userId, userInfo], index) => {
     const userName = userInfo.name.padEnd(nameWidth, ' ');
@@ -1358,17 +1320,14 @@ const handleBetsList = async (interaction: CommandInteraction) => {
 
   const totalBets = totalPlayer1Bets + totalPlayer2Bets;
 
-  // Déterminer qui a le plus gros pari
   const player1HasHigherBet = totalPlayer1Bets >= totalPlayer2Bets;
 
-  // Définir le ratio avec le plus gros pari toujours à gauche
   const ratio = totalPlayer1Bets === 0 || totalPlayer2Bets === 0
     ? 'N/A'
     : player1HasHigherBet
       ? `${(totalPlayer1Bets / totalPlayer2Bets).toFixed(2)}:1`
       : `${(totalPlayer2Bets / totalPlayer1Bets).toFixed(2)}:1`;
 
-  // Ajuster l'affichage des noms selon le plus gros pari
   const formattedNames = player1HasHigherBet
     ? `(${player1Name} / ${player2Name})`
     : `(${player2Name} / ${player1Name})`;
@@ -1392,7 +1351,7 @@ const handleWin = async (interaction: CommandInteraction, winningPlayer: 'player
 
 for (const bet of Object.values(currentBets)) {
   if (bet.betOn !== winningPlayer) {
-    loserTotalPoints += bet.amount; // Somme totale des mises des perdants
+    loserTotalPoints += bet.amount;
   }
 }
 
@@ -1412,24 +1371,20 @@ for (const bet of Object.values(currentBets)) {
   }  
 
   if (winnerBetAmount === 0) {
-    // Ajouter tous les points dans le placard à debilus
     debilusCloset += totalBetAmount;
-    await savePoints(); // Sauvegarder après avoir mis à jour debilusCloset
+    await savePoints();
     const file = new AttachmentBuilder('./images/crashboursier.png');
     const message2 = `Thanks for money, Debilus !\n\nAll GearPoints have been added to the **debilus closet** ! \nTotal GearPoints in debilus closet: **${debilusCloset}** ${pointsEmoji}`;
     await interaction.reply({ content: `The winner is **${winningPlayerName}** ! No bets were placed on the winner. ${message2}`, files: [file] });
 
-    // Marquer tous les paris comme des pertes
     for (const [userId, bet] of Object.entries(currentBets)) {
-      usersPoints[userId].losses += 1; // Incrémenter le nombre de défaites
+      usersPoints[userId].losses += 1; 
 
-      // Mettre à jour le résultat du pari dans l'historique
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'loss';
       usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     }
 
-    // Effacer les paris même si le vainqueur n'a pas de paris
     currentBets = {};
     bettingOpen = false;
     await savePoints();
@@ -1438,17 +1393,14 @@ for (const bet of Object.values(currentBets)) {
 
   for (const [userId, bet] of Object.entries(currentBets)) {
     if (bet.betOn === winningPlayer) {
-      // Calculer la proportion pour chaque gagnant
       const gainFromLosers = Math.floor(bet.amount / winnerBetAmount * loserTotalPoints);
-      usersPoints[userId].points += bet.amount + gainFromLosers; // Ajouter le pari initial + le gain
+      usersPoints[userId].points += bet.amount + gainFromLosers;
       usersPoints[userId].wins += 1;
   
-      // Mettre à jour l'historique
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'win';
       usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
     } else {
-      // Déduire les points pour les perdants
       usersPoints[userId].losses += 1;
       const betHistory = usersPoints[userId].betHistory;
       betHistory[betHistory.length - 1].result = 'loss';
@@ -1532,7 +1484,7 @@ const handleClaim = async (interaction: CommandInteraction) => {
   if (pointsToClaim > 0) {
     usersPoints[userId].points += pointsToClaim;
     usersPoints[userId].inventory = 0;
-    usersPoints[userId].isDebilus = false; // Mettre à jour le statut debilus
+    usersPoints[userId].isDebilus = false;
     await savePoints();
 
     await interaction.reply({ content: `You have claimed **${pointsToClaim}** ${pointsEmoji}.\n\nYou now have **${usersPoints[userId].points}** ${pointsEmoji}`, flags: MessageFlags.Ephemeral });
@@ -1566,9 +1518,8 @@ const handleBackup = async (interaction: CommandInteraction) => {
   const decryptedData = JSON.parse(fs.readFileSync('DataDebilus/decrypted_backup.json', 'utf-8'));
   const encryptedData = encrypt(JSON.stringify(decryptedData));
 
-  fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2)); // Ajout de l'indentation pour une meilleure lisibilité
+  fs.writeFileSync(filePath, JSON.stringify(encryptedData, null, 2));
 
-  // Mettre à jour les variables locales après la sauvegarde
   usersPoints = decryptedData.usersPoints;
   debilusCloset = decryptedData.debilusCloset;
   store = decryptedData.store;
@@ -1598,8 +1549,8 @@ const handleAddTournamentParticipant = async (interaction: CommandInteraction) =
   const user = userOption?.user;
 
   if (user) {
-    tournamentParticipants.set(user.id, user.displayName); // Ajouter l'ID et le pseudo à la Map
-    await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+    tournamentParticipants.set(user.id, user.displayName); 
+    await saveTournamentParticipants();
     await interaction.reply({ content: `${user.displayName} has been added to the tournament.`, flags: MessageFlags.Ephemeral });
   } else {
     await interaction.reply({ content: 'User not found.', flags: MessageFlags.Ephemeral });
@@ -1617,7 +1568,7 @@ const handleRemoveTournamentParticipant = async (interaction: CommandInteraction
     tournamentParticipants.delete(user.id);
     usersPoints[user.id].winMatch = 0;
     usersPoints[user.id].loseMatch = 0;
-    await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+    await saveTournamentParticipants(); 
     await savePoints();
     await interaction.reply({ content: `${user.displayName} has been removed from the tournament.`, flags: MessageFlags.Ephemeral });
   } else {
@@ -1645,8 +1596,8 @@ const handleClearTournamentParticipants = async (interaction: CommandInteraction
       usersPoints[userId].loseMatch = 0;
     }
   })
-  tournamentParticipants.clear(); // Effacer tous les participants
-  await saveTournamentParticipants(); // Appel de la fonction asynchrone de sauvegarde
+  tournamentParticipants.clear(); 
+  await saveTournamentParticipants(); 
   await savePoints();
   await interaction.reply({ content: 'All tournament participants have been cleared.', flags: MessageFlags.Ephemeral });
 };
@@ -1667,7 +1618,7 @@ const handleClaimYesNo = async (interaction: ButtonInteraction) => {
     usersPoints[userId].inventory = 0;
     await savePoints();
 
-    removeNotificationEntry(userId); // Suppression de l'entrée du fichier JSON de notifications
+    removeNotificationEntry(userId);
 
     if (!interaction.replied) {
         await interaction.update({ 
@@ -1833,7 +1784,6 @@ const handleTransferDebilus = async (interaction: CommandInteraction) => {
     return;
   }
 
-  // Transfer the points from the debilus closet to the user
   usersPoints[userId].points += debilusCloset;
   const transferredPoints = debilusCloset;
   debilusCloset = 0;
@@ -1846,19 +1796,16 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   if (!interaction.isChatInputCommand()) {
     return interaction.reply('An error has occurred. Please try again.');
   }
-  await loadPoints();  // Charger les points depuis le fichier
+  await loadPoints();
 
   const userId = interaction.user.id;
   const itemName = interaction.options.get('itemname', true)?.value as string;
   const quantity = interaction.options.get('quantity', true)?.value as number;
 
-  // Vérifier si l'utilisateur existe
   if (!usersPoints[userId]) {
     await interaction.reply({ content: 'User not found', flags: MessageFlags.Ephemeral });
     return;
   }
-
-  // Vérifier si l'article existe dans la boutique
   if (!store[itemName]) {
     await interaction.reply({ content: 'Item not found', flags: MessageFlags.Ephemeral });
     return;
@@ -1867,23 +1814,19 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
   const item = store[itemName];
   const totalPrice = item.unitPrice * quantity;
 
-  // Vérifier si l'utilisateur a suffisamment de points
   if (usersPoints[userId].points < totalPrice) {
     await interaction.reply({ content: 'Not enough points', flags: MessageFlags.Ephemeral });
     return;
   }
 
-  // Vérifier si la boutique a suffisamment d'articles en stock
   if (item.quantity < quantity) {
     await interaction.reply({ content: 'Not enough items in stock', flags: MessageFlags.Ephemeral });
     return;
   }
 
-  // Déduire les points de l'utilisateur et mettre à jour l'inventaire
   usersPoints[userId].points -= totalPrice;
   const userInventory = usersPoints[userId].inventoryShop.find(i => i.name === itemName);
 
-  // Mettre à jour la quantité de l'article dans l'inventaire de l'utilisateur
   if (userInventory) {
     userInventory.quantity += quantity;
     debilusCloset += totalPrice;
@@ -1892,10 +1835,8 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
     debilusCloset += totalPrice;
   }
 
-  // Déduire les items du stock
   item.quantity -= quantity;
 
-  // Enregistrer l'achat dans l'historique
   const transactionId = `txn_${Date.now()}`;
   purchaseHistory[transactionId] = {
     userId: userId,
@@ -1906,9 +1847,8 @@ const handleBuyItem = async (interaction: CommandInteraction) => {
     timestamp: new Date()
   };
 
-  await savePoints();  // Sauvegarder les points dans le fichier
+  await savePoints();  
 
-  // Répondre à l'interaction pour confirmer l'achat
   await interaction.reply({ content: `Successfully purchased ${quantity} ${item.name}(s)`, flags: MessageFlags.Ephemeral });
 };
 
@@ -1981,7 +1921,6 @@ const handleListTournamentParticipantsByRanking = async (interaction: CommandInt
     return;
   }
 
-  // Récupérer les données des participants
   const participants = Array.from(tournamentParticipants.keys()).map(userId => {
     return {
       id: userId,
@@ -1991,15 +1930,13 @@ const handleListTournamentParticipantsByRanking = async (interaction: CommandInt
     };
   });
 
-  // Classer les participants
   participants.sort((a, b) => {
     if (a.wins === b.wins) {
-      return a.losses - b.losses; // Si les victoires sont égales, trier par nombre de défaites (moins de défaites est mieux)
+      return a.losses - b.losses;
     }
-    return b.wins - a.wins; // Trier par nombre de victoires (plus de victoires est mieux)
+    return b.wins - a.wins; 
   });
 
-  // Générer la liste classée
   const rankedList = participants.map((participant, index) => {
     return `${index + 1}. ${participant.name} - Wins: ${participant.wins}, Losses: ${participant.losses}`;
   }).join('\n');
@@ -2007,7 +1944,6 @@ const handleListTournamentParticipantsByRanking = async (interaction: CommandInt
   await interaction.reply({ content: `**Tournament Participants Ranked:**\n\n${rankedList}` });
 };
 
-// echange de points entre deux utilisateurs
 const handleExchangePoints = async (interaction: CommandInteraction) => {
   if (!interaction.isChatInputCommand()) {
     return interaction.reply('An error has occurred. Please try again.');
@@ -2061,7 +1997,7 @@ const handleStopBlackjack = async (interaction: CommandInteraction) => {
     await interaction.reply({ content: 'No active blackjack game found.', flags: MessageFlags.Ephemeral });
     return;
   }
-  usersPoints[userId].points += 10; // Rembourser 10 points
+  usersPoints[userId].points += 10; 
   usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
   delete blackjackGames[userId];
   await savePoints();
@@ -2073,15 +2009,13 @@ const handleStopBlackjack = async (interaction: CommandInteraction) => {
 const handleHighLow = async (interaction: CommandInteraction) => {
   const userId = interaction.user.id;
 
-  let randomCardVisible = Math.floor(Math.random() * 9) + 1; // Carte visible (entre 1 et 9)
-  let randomCardHidden = Math.floor(Math.random() * 9) + 1; // Carte cachée (entre 1 et 9)
+  let randomCardVisible = Math.floor(Math.random() * 9) + 1; 
+  let randomCardHidden = Math.floor(Math.random() * 9) + 1; 
 
-  // Assurez-vous que les deux cartes sont différentes
   while (randomCardVisible === randomCardHidden) {
     randomCardHidden = Math.floor(Math.random() * 9) + 1;
   }
 
-  // Ajouter l'utilisateur à la liste des jeux High-Low en cours
   highlowGames[userId] = {
     visibleCard: randomCardVisible,
     hiddenCard: randomCardHidden,
@@ -2091,35 +2025,32 @@ const handleHighLow = async (interaction: CommandInteraction) => {
     return new ActionRowBuilder<ButtonBuilder>()
       .addComponents(
         new ButtonBuilder()
-          .setCustomId('highlow_higher') // Custom ID pour "Higher"
-          .setLabel('Higher') // Texte sur le bouton
-          .setStyle(ButtonStyle.Success), // Style vert pour un choix positif
+          .setCustomId('highlow_higher') 
+          .setLabel('Higher') 
+          .setStyle(ButtonStyle.Success), 
         new ButtonBuilder()
-          .setCustomId('highlow_lower') // Custom ID pour "Lower"
-          .setLabel('Lower') // Texte sur le bouton
-          .setStyle(ButtonStyle.Danger) // Style rouge pour un choix négatif
+          .setCustomId('highlow_lower') 
+          .setLabel('Lower') 
+          .setStyle(ButtonStyle.Danger)
       );
   };
 
   // Message initial du jeu
   await interaction.reply({
     content: `# High-Low Game\n\n## |${randomCardVisible}| |?|\n\nDo you think the hidden card is higher or lower?`,
-    components: [createHighLowActionRow()], // Ajout des boutons au message
-    flags: MessageFlags.Ephemeral, // Réponse éphémère
+    components: [createHighLowActionRow()], 
+    flags: MessageFlags.Ephemeral, 
   });
 
-  // Stocker les données de jeu dans une mémoire temporaire (à implémenter)
-  usersPoints[userId].points -= 40; // Déduire 10 points pour jouer
-  usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
+  usersPoints[userId].points -= 40;
+  usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; 
   await savePoints();
 };
 
-// Fonction pour gérer les clics sur les boutons
 const handleHighLowButton = async (interaction: ButtonInteraction) => {
   const userId = interaction.user.id;
   const customId = interaction.customId;
 
-  // Récupérer les données du jeu depuis une mémoire temporaire (à implémenter)
   if (!highlowGames[userId]) {
     await interaction.reply({ content: 'No active game found. Please start a new game using the High-Low command.', flags: MessageFlags.Ephemeral });
     return;
@@ -2130,31 +2061,30 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
 
   const calculateReward = (visibleCard: number) => {
     if (visibleCard <= 2 || visibleCard >= 8) {
-      return 48; // Gain faible pour un faible risque
+      return 48; 
     } else if (visibleCard >= 4 && visibleCard <= 6) {
-      return 60; // Gain élevé pour une probabilité équilibrée
+      return 60; 
     } else {
-      return 50; // Gain standard pour les zones de risque moyen
+      return 50; 
     }
   };
 
-  const reward: number = calculateReward(visibleCard); // Calculer le gain en fonction de la carte visible
+  const reward: number = calculateReward(visibleCard); 
 
-  // Comparer en fonction du choix de l'utilisateur et attribuer 10 point s'il gagne
   if (customId === 'highlow_higher') {
     if (hiddenCard > visibleCard) {
-      usersPoints[userId].points += reward; // Ajouter 20 points si l'utilisateur gagne
-      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
-      await savePoints(); // Sauvegarder les points après la mise à jour
+      usersPoints[userId].points += reward; 
+      usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; 
+      await savePoints(); 
       resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
     } else {
       resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not higher than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
     }
 } else if (customId === 'highlow_lower') {
   if (hiddenCard < visibleCard) {
-    usersPoints[userId].points += reward; // Ajouter 5 à 15 points si l'utilisateur gagne
-    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0; // Vérifier si l'utilisateur est debilus
-    await savePoints(); // Sauvegarder les points après la mise à jour
+    usersPoints[userId].points += reward; 
+    usersPoints[userId].isDebilus = usersPoints[userId].points <= 0;
+    await savePoints(); 
     resultMessage = `**Congratulations!** The hidden card **|${hiddenCard}|** is lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
   } else {
     resultMessage = `**Sorry**, the hidden card **|${hiddenCard}|** is not lower than **|${visibleCard}|**.\n\nYou have **${usersPoints[userId].points}${pointsEmoji}** !`;
@@ -2165,13 +2095,11 @@ const handleHighLowButton = async (interaction: ButtonInteraction) => {
     resultMessage += `\n\nYou have ${usersPoints[userId].points}${pointsEmoji} ! You're now a Debilus. Play wisely next time! ${debilus}`;
   }
 
-  // Répondre et terminer le jeu
   await interaction.update({
     content: `# High-Low Game\n\n## |${visibleCard}| |${hiddenCard}|\n\n`+ resultMessage,
-    components: [], // Supprimer les boutons après un choix
+    components: [],
   });
 
-  // Supprimer les données de jeu de la mémoire temporaire
   delete highlowGames[userId];
   log(`User ${userId} has finished the game: high-low`);
 };
@@ -2192,20 +2120,17 @@ const handleStopHighLow = async (interaction: CommandInteraction) => {
 
 const veteranFilePath = path.join('DataDebilus', 'veterans.json');
 
-// Assure que le dossier existe
 const ensureVeteranFile = () => {
   if (!fs.existsSync('DataDebilus')) fs.mkdirSync('DataDebilus', { recursive: true });
   if (!fs.existsSync(veteranFilePath)) fs.writeFileSync(veteranFilePath, JSON.stringify([]));
 };
 
-// Charge les IDs déjà enregistrés
 const loadVeteranIds = (): Set<string> => {
   ensureVeteranFile();
   const data = JSON.parse(fs.readFileSync(veteranFilePath, 'utf-8'));
   return new Set(data);
 };
 
-// Sauvegarde les nouveaux IDs
 const saveVeteranIds = (ids: Set<string>) => {
   fs.writeFileSync(veteranFilePath, JSON.stringify([...ids], null, 2));
 };
@@ -2302,7 +2227,7 @@ async function waitForDiscord() {
           resolve(undefined);
         } else {
           log('No connection to Discord yet, waiting...');
-          setTimeout(checkConnection, 5000); // Réessaye toutes les 5 secondes
+          setTimeout(checkConnection, 5000);
         }
       });
     };
@@ -2312,17 +2237,16 @@ async function waitForDiscord() {
 
 async function startBot(): Promise<void> {
   try {
-    await waitForDiscord(); // Attendre la connexion à Discord
+    await waitForDiscord();
     log('Discord connection established!');
-    // Initialiser le client Discord
     log('Connecting to Discord...');
     await client.login(process.env.DISCORD_TOKEN!);
     log('Bot successfully connected!');
   } catch (error) {
     log(`Bot connection failed: ${error}`);
-    await client.destroy(); // Détruire le client si la connexion échoue
+    await client.destroy();
     log('Process exited due to critical failure.');
-    process.exit(1); // Quitte le processus en cas d'erreur critique
+    process.exit(1);
   }
 }
 
